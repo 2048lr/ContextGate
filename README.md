@@ -36,31 +36,39 @@ ContextGate is a powerful AI context management and API proxy system designed to
 
 ### Installation
 
-#### From Debian Package (Recommended)
+Download from [GitHub Releases](https://github.com/2048lr/ContextGate/releases/tag/v3.0.1)
+
+#### Debian/Ubuntu (.deb)
 
 ```bash
-# Download the latest .deb package
 sudo dpkg -i contextgate_3.0.1_amd64.deb
-
-# Or use apt
+# Or
 sudo apt install ./contextgate_3.0.1_amd64.deb
+```
+
+#### Fedora/RHEL/CentOS (.rpm)
+
+```bash
+sudo dnf install contextgate-3.0.1-2.x86_64.rpm
+# Or
+sudo rpm -i contextgate-3.0.1-2.x86_64.rpm
+```
+
+#### AppImage (Universal)
+
+```bash
+chmod +x ContextGate-3.0.1-x86_64.AppImage
+./ContextGate-3.0.1-x86_64.AppImage
 ```
 
 #### From Source
 
 ```bash
-# Clone the repository
 git clone https://github.com/2048lr/ContextGate.git
 cd ContextGate
-
-# Create virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run
 python main.py gui
 ```
 
@@ -102,11 +110,14 @@ Or use the visual settings dialog: **Menu → Settings** (菜单 → 打开设�
 ### Build from Source
 
 ```bash
-# Build release version (optimized, smaller size)
+# Build Debian package
 bash build_deb.sh release
 
-# Build debug version (with debug symbols)
-bash build_deb.sh debug
+# Build AppImage
+bash build_appimage.sh
+
+# Build RPM (requires alien)
+bash build_rpm.sh
 ```
 
 ### Changelog
@@ -116,6 +127,7 @@ bash build_deb.sh debug
 - 🌐 Full Chinese localization for settings interface
 - 🔧 Debug/Release build mode support
 - 📦 Optimized package size (~60MB)
+- 📦 Added AppImage and RPM package formats
 
 #### v3.0.0
 - 🎉 Initial release
@@ -147,31 +159,39 @@ ContextGate 是一个强大的 AI 上下文管理和 API 代理系统，旨在�
 
 ### 安装
 
-#### Debian 包安装（推荐）
+从 [GitHub Releases](https://github.com/2048lr/ContextGate/releases/tag/v3.0.1) 下载
+
+#### Debian/Ubuntu (.deb)
 
 ```bash
-# 下载最新的 .deb 包
 sudo dpkg -i contextgate_3.0.1_amd64.deb
-
-# 或使用 apt
+# 或
 sudo apt install ./contextgate_3.0.1_amd64.deb
+```
+
+#### Fedora/RHEL/CentOS (.rpm)
+
+```bash
+sudo dnf install contextgate-3.0.1-2.x86_64.rpm
+# 或
+sudo rpm -i contextgate-3.0.1-2.x86_64.rpm
+```
+
+#### AppImage (通用)
+
+```bash
+chmod +x ContextGate-3.0.1-x86_64.AppImage
+./ContextGate-3.0.1-x86_64.AppImage
 ```
 
 #### 源码安装
 
 ```bash
-# 克隆仓库
 git clone https://github.com/2048lr/ContextGate.git
 cd ContextGate
-
-# 创建虚拟环境
 python3 -m venv .venv
 source .venv/bin/activate
-
-# 安装依赖
 pip install -r requirements.txt
-
-# 运行
 python main.py gui
 ```
 
@@ -213,11 +233,14 @@ providers:
 ### 从源码构建
 
 ```bash
-# 构建发布版（优化后，体积更小）
+# 构建 Debian 包
 bash build_deb.sh release
 
-# 构建调试版（包含调试符号）
-bash build_deb.sh debug
+# 构建 AppImage
+bash build_appimage.sh
+
+# 构建 RPM (需要 alien)
+bash build_rpm.sh
 ```
 
 ### 更新日志
@@ -227,6 +250,7 @@ bash build_deb.sh debug
 - 🌐 设置界面完整中文本地化
 - 🔧 支持 Debug/Release 构建模式
 - 📦 优化安装包体积（约 60MB）
+- 📦 新增 AppImage 和 RPM 包格式
 
 #### v3.0.0
 - 🎉 初始发布
