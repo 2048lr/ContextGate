@@ -32,6 +32,7 @@ from PySide6.QtGui import (
 from .i18n import get_i18n, I18n
 from .currency import CurrencyDetector, Currency
 from .styles import DARK_THEME
+from .settings_dialog import SettingsDialog
 
 
 @dataclass
@@ -455,6 +456,12 @@ class MainWindow(QMainWindow):
         
         file_menu = menubar.addMenu(self.i18n.t("settings"))
         
+        settings_action = QAction(self.i18n.t("open_settings"), self)
+        settings_action.triggered.connect(self._show_settings)
+        file_menu.addAction(settings_action)
+        
+        file_menu.addSeparator()
+        
         select_action = QAction(self.i18n.t("select_project"), self)
         select_action.triggered.connect(self.sidebar._on_select_project)
         file_menu.addAction(select_action)
@@ -491,6 +498,22 @@ class MainWindow(QMainWindow):
         self.currency_detector._current_currency = currency
         self.bottom_bar.set_currency(currency)
         self._save_settings()
+    
+    def _show_settings(self):
+        dialog = SettingsDialog(self.config_path, self)
+        dialog.config_saved.connect(self._on_config_saved)
+        dialog.exec()
+    
+    def _on_config_saved(self):
+        self._detect_currency_from_config()
+        
+        if self._proxy_worker and self._proxy_worker.isRunning():
+            self.tray_icon.showMessage(
+                "ContextGate",
+                "配置已更新，部分设置需要重启代理生效",
+                QSystemTrayIcon.Information,
+                3000
+            )
     
     def _show_about(self):
         about_text = """

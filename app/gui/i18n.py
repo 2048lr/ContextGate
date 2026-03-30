@@ -56,6 +56,16 @@ class Translations:
             "miss": "未命中",
             "time": "时间",
             "provider": "提供商",
+            "save": "保存",
+            "cancel": "取消",
+            "config_saved": "配置已保存",
+            "open_settings": "打开设置",
+            "providers": "提供商",
+            "proxy": "代理",
+            "monitor": "监控",
+            "scanner": "扫描器",
+            "context": "上下文",
+            "currency": "货币",
         }
         
         self.en_US = {
@@ -100,6 +110,16 @@ class Translations:
             "miss": "Miss",
             "time": "Time",
             "provider": "Provider",
+            "save": "Save",
+            "cancel": "Cancel",
+            "config_saved": "Configuration saved",
+            "open_settings": "Open Settings",
+            "providers": "Providers",
+            "proxy": "Proxy",
+            "monitor": "Monitor",
+            "scanner": "Scanner",
+            "context": "Context",
+            "currency": "Currency",
         }
 
 
