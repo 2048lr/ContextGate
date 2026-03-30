@@ -47,7 +47,7 @@ sudo apt install ./contextgate_3.0.0_amd64.deb
 
 ```bash
 # Clone the repository
-git clone https://github.com/JerryLiu-Run/ContextGate.git
+git clone https://github.com/2048lr/ContextGate.git
 cd ContextGate
 
 # Create virtual environment
@@ -136,7 +136,7 @@ sudo apt install ./contextgate_3.0.0_amd64.deb
 
 ```bash
 # 克隆仓库
-git clone https://github.com/JerryLiu-Run/ContextGate.git
+git clone https://github.com/2048lr/ContextGate.git
 cd ContextGate
 
 # 创建虚拟环境
@@ -195,7 +195,7 @@ bash build_deb.sh
 ## Bug Report / 问题反馈
 
 - **Email:** liurun637@gmail.com
-- **Issues:** [GitHub Issues](https://github.com/JerryLiu-Run/ContextGate/issues)
+- **Issues:** [GitHub Issues](https://github.com/2048lr/ContextGate/issues)
 
 ---
 

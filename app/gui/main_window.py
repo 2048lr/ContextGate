@@ -508,11 +508,11 @@ class MainWindow(QMainWindow):
         </ul>
         <hr style='border-color: #3c3c3c;'>
         <p style='color: #9cdcfe;'>项目地址:</p>
-        <p style='color: #4ec9b0;'><a href='https://github.com/JerryLiu-Run/ContextGate' style='color: #4ec9b0;'>https://github.com/JerryLiu-Run/ContextGate</a></p>
+        <p style='color: #4ec9b0;'><a href='https://github.com/2048lr/ContextGate' style='color: #4ec9b0;'>https://github.com/2048lr/ContextGate</a></p>
         <hr style='border-color: #3c3c3c;'>
         <p style='color: #9cdcfe;'>Bug 反馈:</p>
         <p style='color: #cccccc;'>Email: liurun637@gmail.com</p>
-        <p style='color: #cccccc;'>Issues: <a href='https://github.com/JerryLiu-Run/ContextGate/issues' style='color: #4ec9b0;'>GitHub Issues</a></p>
+        <p style='color: #cccccc;'>Issues: <a href='https://github.com/2048lr/ContextGate/issues' style='color: #4ec9b0;'>GitHub Issues</a></p>
         <hr style='border-color: #3c3c3c;'>
         <p style='color: #6a9955;'>© 2026 JerryLiu</p>
         """
