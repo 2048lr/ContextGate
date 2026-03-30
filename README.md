@@ -36,9 +36,11 @@ ContextGate is a powerful AI context management and API proxy system designed to
 
 ### Installation
 
-Download from [GitHub Releases](https://github.com/2048lr/ContextGate/releases/tag/v3.0.1)
+#### x86_64 (Recommended)
 
-#### Debian/Ubuntu (.deb)
+Download from [GitHub Releases v3.0.1](https://github.com/2048lr/ContextGate/releases/tag/v3.0.1)
+
+##### Debian/Ubuntu (.deb)
 
 ```bash
 sudo dpkg -i contextgate_3.0.1_amd64.deb
@@ -46,7 +48,7 @@ sudo dpkg -i contextgate_3.0.1_amd64.deb
 sudo apt install ./contextgate_3.0.1_amd64.deb
 ```
 
-#### Fedora/RHEL/CentOS (.rpm)
+##### Fedora/RHEL/CentOS (.rpm)
 
 ```bash
 sudo dnf install contextgate-3.0.1-2.x86_64.rpm
@@ -54,11 +56,27 @@ sudo dnf install contextgate-3.0.1-2.x86_64.rpm
 sudo rpm -i contextgate-3.0.1-2.x86_64.rpm
 ```
 
-#### AppImage (Universal)
+##### AppImage (Universal)
 
 ```bash
 chmod +x ContextGate-3.0.1-x86_64.AppImage
 ./ContextGate-3.0.1-x86_64.AppImage
+```
+
+#### ARM64 (Beta)
+
+> ⚠️ **Note**: ARM64 version is in beta testing. Download from [v3.0.1-beta](https://github.com/2048lr/ContextGate/releases/tag/v3.0.1-beta)
+
+##### Debian/Ubuntu (.deb)
+
+```bash
+sudo dpkg -i contextgate_3.0.1-beta_arm64.deb
+```
+
+##### Fedora/RHEL/CentOS (.rpm)
+
+```bash
+sudo dnf install contextgate-3.0.1-1.arm64.rpm
 ```
 
 #### From Source
@@ -122,6 +140,10 @@ bash build_rpm.sh
 
 ### Changelog
 
+#### v3.0.1-beta
+- 🖥️ Added ARM64 architecture support (beta)
+- 📦 ARM64 packages: deb and rpm formats
+
 #### v3.0.1
 - ✨ Added visual settings dialog with 6 configuration tabs
 - 🌐 Full Chinese localization for settings interface
@@ -159,9 +181,11 @@ ContextGate 是一个强大的 AI 上下文管理和 API 代理系统，旨在�
 
 ### 安装
 
-从 [GitHub Releases](https://github.com/2048lr/ContextGate/releases/tag/v3.0.1) 下载
+#### x86_64 架构（推荐）
 
-#### Debian/Ubuntu (.deb)
+从 [GitHub Releases v3.0.1](https://github.com/2048lr/ContextGate/releases/tag/v3.0.1) 下载
+
+##### Debian/Ubuntu (.deb)
 
 ```bash
 sudo dpkg -i contextgate_3.0.1_amd64.deb
@@ -169,7 +193,7 @@ sudo dpkg -i contextgate_3.0.1_amd64.deb
 sudo apt install ./contextgate_3.0.1_amd64.deb
 ```
 
-#### Fedora/RHEL/CentOS (.rpm)
+##### Fedora/RHEL/CentOS (.rpm)
 
 ```bash
 sudo dnf install contextgate-3.0.1-2.x86_64.rpm
@@ -177,11 +201,27 @@ sudo dnf install contextgate-3.0.1-2.x86_64.rpm
 sudo rpm -i contextgate-3.0.1-2.x86_64.rpm
 ```
 
-#### AppImage (通用)
+##### AppImage (通用)
 
 ```bash
 chmod +x ContextGate-3.0.1-x86_64.AppImage
 ./ContextGate-3.0.1-x86_64.AppImage
+```
+
+#### ARM64 架构（测试版）
+
+> ⚠️ **注意**：ARM64 版本为测试版。从 [v3.0.1-beta](https://github.com/2048lr/ContextGate/releases/tag/v3.0.1-beta) 下载
+
+##### Debian/Ubuntu (.deb)
+
+```bash
+sudo dpkg -i contextgate_3.0.1-beta_arm64.deb
+```
+
+##### Fedora/RHEL/CentOS (.rpm)
+
+```bash
+sudo dnf install contextgate-3.0.1-1.arm64.rpm
 ```
 
 #### 源码安装
@@ -244,6 +284,10 @@ bash build_rpm.sh
 ```
 
 ### 更新日志
+
+#### v3.0.1-beta
+- 🖥️ 新增 ARM64 架构支持（测试版）
+- 📦 ARM64 安装包：deb 和 rpm 格式
 
 #### v3.0.1
 - ✨ 新增可视化设置对话框，包含 6 个配置选项卡
