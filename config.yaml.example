@@ -1,0 +1,91 @@
+# ContextGate 配置文件
+# 请复制此文件为 config.yaml 并填入您的实际配置
+
+# 当前工作空间 - 正在代理的项目路径
+current_workspace: ""
+
+# 货币配置
+currency:
+  # 固定货币 (可选: CNY, USD, EUR)，留空则自动检测
+  fixed_currency: ""
+  # 固定汇率 (可选)，留空则使用默认汇率
+  fixed_rate: null
+  # 汇率 API (可选)
+  exchange_rate_api: ""
+  # 默认汇率
+  default_rates:
+    CNY: 7.2
+    EUR: 0.92
+
+# 多后端 API 配置
+providers:
+  # OpenAI 配置
+  openai:
+    api_key: "your-openai-api-key"
+    base_url: "https://api.openai.com/v1"
+    models:
+      - "gpt-4"
+      - "gpt-4-turbo"
+      - "gpt-4o"
+      - "gpt-4o-mini"
+      - "gpt-3.5-turbo"
+  
+  # 智谱 AI 配置
+  zhipu:
+    api_key: "your-zhipu-api-key"
+    base_url: "https://open.bigmodel.cn/api/paas/v4"
+    models:
+      - "glm-4"
+      - "glm-4-flash"
+      - "glm-4-plus"
+  
+  # DeepSeek 配置
+  deepseek:
+    api_key: "your-deepseek-api-key"
+    base_url: "https://api.deepseek.com/v1"
+    models:
+      - "deepseek-chat"
+      - "deepseek-coder"
+
+# 默认后端
+default_provider: "openai"
+
+# 代理服务器配置
+proxy:
+  host: "127.0.0.1"
+  port: 8080
+  sanitize_requests: true
+
+# Token 监控配置
+monitor:
+  budget_limit: 10.00
+  warning_threshold: 75
+  critical_threshold: 90
+  db_path: "contextgate.db"
+
+# 上下文配置
+context:
+  output_file: "full_context.txt"
+  watch_enabled: true
+  debounce_seconds: 1.0
+
+# 扫描配置
+scanner:
+  max_file_size: 1048576
+  include_extensions:
+    - ".py"
+    - ".js"
+    - ".ts"
+    - ".jsx"
+    - ".tsx"
+    - ".java"
+    - ".go"
+    - ".rs"
+    - ".c"
+    - ".cpp"
+    - ".h"
+    - ".md"
+    - ".txt"
+    - ".json"
+    - ".yaml"
+    - ".yml"

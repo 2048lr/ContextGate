@@ -1,0 +1,12 @@
+# 保护 ContextGate 不被自己扫描
+ContextGate/
+.git/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.env
+*.egg-info/
+dist/
+build/
