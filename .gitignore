@@ -67,3 +67,13 @@ htmlcov/
 *.png
 *.ico
 !resources/icon.png
+
+# Build artifacts
+rpmbuild/
+AppDir/
+dist/
+build/
+*.spec
+*.deb
+*.rpm
+*.AppImage
