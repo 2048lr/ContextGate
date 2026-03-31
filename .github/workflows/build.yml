@@ -6,9 +6,6 @@ on:
       - 'v*'
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build-linux:
     runs-on: ubuntu-latest
@@ -26,6 +23,11 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: app/gui-js/package-lock.json
+      
+      - name: Prepare build resources
+        run: |
+          mkdir -p app/gui-js/build
+          cp resources/icon.png app/gui-js/build/icon.png
       
       - name: Install dependencies
         working-directory: app/gui-js
@@ -75,6 +77,12 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: app/gui-js/package-lock.json
+      
+      - name: Prepare build resources
+        shell: bash
+        run: |
+          mkdir -p app/gui-js/build
+          cp resources/icon.png app/gui-js/build/icon.png
       
       - name: Install dependencies
         working-directory: app/gui-js

@@ -127,7 +127,7 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "build/icon.ico",
+      "icon": "build/icon.png",
       "sign": null,
       "signingHashAlgorithms": []
     },
