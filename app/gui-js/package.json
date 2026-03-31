@@ -1,0 +1,139 @@
+{
+  "name": "contextgate",
+  "version": "3.1.0",
+  "description": "AI Context Management & Proxy System",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "cli": "node cli.js",
+    "build": "electron-builder",
+    "build:linux": "electron-builder --linux",
+    "build:linux:x64": "electron-builder --linux --x64",
+    "build:linux:arm64": "electron-builder --linux --arm64",
+    "build:linux:ia32": "electron-builder --linux --ia32",
+    "build:all": "electron-builder --linux -l deb,rpm,AppImage --x64 --arm64 --ia32",
+    "build:deb": "electron-builder --linux deb",
+    "build:rpm": "electron-builder --linux rpm",
+    "build:appimage": "electron-builder --linux AppImage",
+    "build:deb:x64": "electron-builder --linux deb --x64",
+    "build:deb:arm64": "electron-builder --linux deb --arm64",
+    "build:deb:ia32": "electron-builder --linux deb --ia32",
+    "build:rpm:x64": "electron-builder --linux rpm --x64",
+    "build:rpm:arm64": "electron-builder --linux rpm --arm64",
+    "build:appimage:x64": "electron-builder --linux AppImage --x64",
+    "build:appimage:arm64": "electron-builder --linux AppImage --arm64",
+    "build:win": "electron-builder --win",
+    "build:win:x64": "electron-builder --win --x64",
+    "build:win:ia32": "electron-builder --win --ia32",
+    "build:win:arm64": "electron-builder --win --arm64"
+  },
+  "author": "JerryLiu",
+  "homepage": "https://github.com/2048lr/ContextGate",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "sql.js": "^1.9.0",
+    "chokidar": "^3.5.3",
+    "commander": "^12.0.0",
+    "chalk": "^4.1.2",
+    "ignore": "^5.3.0",
+    "cli-table3": "^0.6.3",
+    "ora": "^5.4.1"
+  },
+  "build": {
+    "appId": "com.contextgate.app",
+    "productName": "ContextGate",
+    "copyright": "Copyright © 2026 JerryLiu",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ],
+    "extraResources": [
+      {
+        "from": "../../resources",
+        "to": "resources",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../../config.yaml.example",
+        "to": "config.yaml.example"
+      }
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "deb",
+          "arch": ["x64", "ia32", "arm64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64", "ia32", "arm64"]
+        },
+        {
+          "target": "AppImage",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "Development",
+      "icon": "build/icon",
+      "maintainer": "JerryLiu <jerry@example.com>",
+      "desktop": {
+        "Name": "ContextGate",
+        "Comment": "AI Context Management & Proxy System",
+        "Categories": "Development;Utility;",
+        "StartupWMClass": "contextgate"
+      },
+      "executableName": "contextgate",
+      "synopsis": "AI Context Management & Proxy System",
+      "description": "ContextGate is an AI context management and proxy system that helps manage code context for AI assistants."
+    },
+    "deb": {
+      "priority": "optional",
+      "compression": "xz",
+      "packageCategory": "devel"
+    },
+    "rpm": {
+      "compression": "xz"
+    },
+    "appImage": {},
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "sign": null,
+      "signingHashAlgorithms": []
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

@@ -1,0 +1,126 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 3.0.1)'
+        required: false
+        default: ''
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app/gui-js/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: app/gui-js
+        run: npm ci
+      
+      - name: Build deb x64
+        working-directory: app/gui-js
+        run: npm run build:deb:x64
+      
+      - name: Build deb arm64
+        working-directory: app/gui-js
+        run: npm run build:deb:arm64
+      
+      - name: Build rpm x64
+        working-directory: app/gui-js
+        run: npm run build:rpm:x64
+      
+      - name: Build rpm arm64
+        working-directory: app/gui-js
+        run: npm run build:rpm:arm64
+      
+      - name: Build AppImage x64
+        working-directory: app/gui-js
+        run: npm run build:appimage:x64
+      
+      - name: Build AppImage arm64
+        working-directory: app/gui-js
+        run: npm run build:appimage:arm64
+      
+      - name: Clean temp files
+        run: rm -rf app/gui-js/dist/linux-* app/gui-js/dist/*.yml
+      
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: app/gui-js/dist/*
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app/gui-js/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: app/gui-js
+        run: npm ci
+      
+      - name: Build Windows x64
+        working-directory: app/gui-js
+        run: npx electron-builder --win nsis --x64
+      
+      - name: Build Windows ia32
+        working-directory: app/gui-js
+        run: npx electron-builder --win nsis --ia32
+      
+      - name: Build Portable x64
+        working-directory: app/gui-js
+        run: npx electron-builder --win portable --x64
+      
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-packages
+          path: |
+            app/gui-js/dist/*.exe
+            app/gui-js/dist/*.msi
+
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-packages
+          path: dist/
+      
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-packages
+          path: dist/
+      
+      - name: List files
+        run: ls -la dist/
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          generate_release_notes: true
