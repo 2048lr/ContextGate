@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: app/gui-js/package-lock.json
       
@@ -31,7 +31,7 @@ jobs:
       
       - name: Install dependencies
         working-directory: app/gui-js
-        run: npm ci
+        run: npm install
       
       - name: Build deb x64
         working-directory: app/gui-js
@@ -74,7 +74,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: app/gui-js/package-lock.json
       
@@ -86,7 +86,7 @@ jobs:
       
       - name: Install dependencies
         working-directory: app/gui-js
-        run: npm ci
+        run: npm install
       
       - name: Build Windows x64
         working-directory: app/gui-js
