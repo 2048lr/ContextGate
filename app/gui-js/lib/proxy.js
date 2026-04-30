@@ -137,7 +137,7 @@ class ConfigManager {
   }
 
   getProxyConfig() {
-    return this.config.proxy || { host: '127.0.0.1', port: 8000 }
+    return this.config.proxy || { host: '127.0.0.1', port: 12306 }
   }
 
   getMonitorConfig() {
@@ -398,7 +398,7 @@ this.app.post('/v1/*', async (req, res) => {
     })
   }
 
-  async run(host = '127.0.0.1', port = 8000) {
+  async run(host = '127.0.0.1', port = 12306) {
     return new Promise((resolve, reject) => {
       this.server = this.app.listen(port, host, () => {
         resolve({ port, host })

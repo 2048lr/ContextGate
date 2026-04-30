@@ -11,7 +11,7 @@ let mainWindow = null
 let tray = null
 let config = {}
 let proxyServer = null
-let proxyPort = 10086
+let proxyPort = 12306
 let isProxyRunning = false
 let tokenMonitor = null
 

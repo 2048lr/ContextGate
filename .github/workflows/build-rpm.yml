@@ -1,0 +1,54 @@
+name: Build RPM Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-rpm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd app/gui-js
+          npm install
+
+      - name: Build RPM (x64)
+        run: |
+          cd app/gui-js
+          npx electron-builder --linux rpm --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build RPM (arm64)
+        run: |
+          cd app/gui-js
+          npx electron-builder --linux rpm --arm64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload RPM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-packages
+          path: app/gui-js/dist/*.rpm
+          retention-days: 30
+
+      - name: Create Release (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: app/gui-js/dist/*.rpm
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

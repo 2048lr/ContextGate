@@ -84,7 +84,7 @@ contextgate
 
 # CLI mode
 node cli.js build /path/to/project
-node cli.js serve /path/to/project --port 8000
+node cli.js serve /path/to/project --port 12306
 node cli.js stats
 ```
 
@@ -225,7 +225,7 @@ contextgate
 
 # CLI 模式
 node cli.js build /path/to/project
-node cli.js serve /path/to/project --port 8000
+node cli.js serve /path/to/project --port 12306
 node cli.js stats
 ```
 

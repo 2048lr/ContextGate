@@ -53,7 +53,7 @@ default_provider: "openai"
 # 代理服务器配置
 proxy:
   host: "127.0.0.1"
-  port: 8080
+  port: 12306
   sanitize_requests: true
 
 # Token 监控配置

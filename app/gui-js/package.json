@@ -83,11 +83,11 @@
       "target": [
         {
           "target": "deb",
-          "arch": ["x64", "ia32", "arm64"]
+          "arch": ["x64", "arm64"]
         },
         {
           "target": "rpm",
-          "arch": ["x64", "ia32", "arm64"]
+          "arch": ["x64", "arm64"]
         },
         {
           "target": "AppImage",
@@ -110,10 +110,14 @@
     "deb": {
       "priority": "optional",
       "compression": "xz",
-      "packageCategory": "devel"
+      "packageCategory": "devel",
+      "afterInstall": "build/after-install.sh",
+      "afterRemove": "build/after-remove.sh"
     },
     "rpm": {
-      "compression": "xz"
+      "compression": "bzip2",
+      "afterInstall": "build/after-install.sh",
+      "afterRemove": "build/after-remove.sh"
     },
     "appImage": {},
     "win": {
