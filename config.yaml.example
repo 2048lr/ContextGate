@@ -68,6 +68,7 @@ context:
   output_file: "full_context.txt"
   watch_enabled: true
   debounce_seconds: 1.0
+  dynamic_enabled: false
 
 # 扫描配置
 scanner:

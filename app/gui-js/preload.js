@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   stopProxy: () => ipcRenderer.invoke('stop-proxy'),
   proxyStatus: () => ipcRenderer.invoke('proxy-status'),
   buildContext: (projectPath) => ipcRenderer.invoke('build-context', projectPath),
+  runScript: (scriptPath, action) => ipcRenderer.invoke('run-script', scriptPath, action),
   onProxyLog: (callback) => ipcRenderer.on('proxy-log', (event, data) => callback(data)),
   onProxyError: (callback) => ipcRenderer.on('proxy-error', (event, data) => callback(data)),
   onProxyStopped: (callback) => ipcRenderer.on('proxy-stopped', () => callback()),

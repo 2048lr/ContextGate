@@ -11,7 +11,7 @@ let mainWindow = null
 let tray = null
 let config = {}
 let proxyServer = null
-let proxyPort = 8000
+let proxyPort = 10086
 let isProxyRunning = false
 let tokenMonitor = null
 
@@ -66,7 +66,7 @@ function saveConfig(newConfig) {
   }
 }
 
-async function startProxy(port = 8000) {
+async function startProxy(port = 12306) {
   if (proxyServer) {
     return { success: false, error: 'Proxy already running' }
   }
@@ -83,7 +83,8 @@ async function startProxy(port = 8000) {
 
   const proxy = new AIProxy({
     contextFile,
-    configPath: path.join(getDataDir(), 'config.yaml')
+    configPath: path.join(getDataDir(), 'config.yaml'),
+    projectRoot: workspace
   })
 
   tokenMonitor = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') })
@@ -320,7 +321,7 @@ ipcMain.handle('quit-app', () => {
 })
 
 ipcMain.handle('start-proxy', async (event, port) => {
-  return await startProxy(port || 8000)
+  return await startProxy(port || 12306)
 })
 
 ipcMain.handle('stop-proxy', () => {
@@ -333,6 +334,23 @@ ipcMain.handle('proxy-status', () => {
 
 ipcMain.handle('build-context', async (event, projectPath) => {
   return await buildContext(projectPath)
+})
+
+ipcMain.handle('run-script', async (event, scriptPath, action) => {
+  const { exec } = require('child_process')
+  const scriptFullPath = path.join(process.resourcesPath, scriptPath)
+  if (!fs.existsSync(scriptFullPath)) {
+    return { success: false, error: 'Script not found' }
+  }
+  return new Promise((resolve) => {
+    exec(`bash "${scriptFullPath}" ${action}`, (error, stdout, stderr) => {
+      if (error) {
+        resolve({ success: false, error: error.message })
+      } else {
+        resolve({ success: true, output: stdout })
+      }
+    })
+  })
 })
 
 ipcMain.handle('get-stats', () => {

@@ -77,3 +77,4 @@ build/
 *.deb
 *.rpm
 *.AppImage
+full_context.txt

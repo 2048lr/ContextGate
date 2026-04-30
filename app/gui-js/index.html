@@ -15,6 +15,7 @@
       <div class="title-left">
         <span class="app-icon">⬡</span>
         <span class="app-title">ContextGate</span>
+        <span class="version-tag">v3.1.0</span>
       </div>
       <div class="title-right">
         <button id="btn-settings" class="title-btn" title="设置">⚙</button>
@@ -28,44 +29,167 @@
     
     <div id="main-content">
       <div id="sidebar">
-        <h2 class="sidebar-title">项目概览</h2>
-        <div class="separator"></div>
-        
-        <div class="project-section">
-          <label id="project-label">当前项目: -</label>
-          <button id="btn-select-project" class="primary-btn">选择项目</button>
+        <div class="sidebar-header">
+          <div class="status-indicator" id="proxy-status-indicator">
+            <span class="status-dot"></span>
+            <span class="status-text">未启动</span>
+          </div>
+          <div class="port-display">端口: <span id="sidebar-port">12306</span></div>
         </div>
         
-        <div class="separator"></div>
-        
-        <div class="stats-section">
-          <label id="tokens-label">总 Token: 0</label>
-          <label id="savings-label">本月节省: $0.00</label>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">今日请求</div>
+            <div class="stat-value" id="stat-today-requests">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">今日 Token</div>
+            <div class="stat-value" id="stat-today-tokens">0</div>
+          </div>
+          <div class="stat-card highlight">
+            <div class="stat-label">今日节省</div>
+            <div class="stat-value" id="stat-today-savings">$0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">缓存命中</div>
+            <div class="stat-value" id="stat-cache-hit">0%</div>
+          </div>
         </div>
         
-        <div class="separator"></div>
+        <div class="quick-actions">
+          <button id="btn-toggle-proxy" class="action-btn">
+            <span class="action-icon">▶</span>
+            <span class="action-text">启动代理</span>
+          </button>
+          <button id="btn-quick-build" class="action-btn secondary">
+            <span class="action-icon">⟳</span>
+            <span class="action-text">重建上下文</span>
+          </button>
+          <button id="btn-clear-cache" class="action-btn secondary">
+            <span class="action-icon">🗑</span>
+            <span class="action-text">清空缓存</span>
+          </button>
+        </div>
         
-        <button id="btn-build-context" class="primary-btn">构建上下文</button>
-        
-        <div class="sidebar-spacer"></div>
-        
-        <div class="proxy-section">
-          <button id="btn-start-proxy" class="primary-btn">启动代理</button>
-          <button id="btn-stop-proxy" class="secondary-btn" disabled>停止代理</button>
+        <div class="sidebar-footer">
+          <div class="context-hash" id="context-hash-display">
+            <span class="hash-label">上下文:</span>
+            <span class="hash-value">未设置</span>
+          </div>
         </div>
       </div>
       
-      <div id="log-area">
-        <div id="log-header">请求日志</div>
-        <div id="log-content"></div>
+      <div id="content-area">
+        <div class="cards-container">
+          <div class="card" id="card-project">
+            <div class="card-header">
+              <div class="card-icon">📁</div>
+              <div class="card-title">项目工作区</div>
+              <div class="card-badge" id="project-badge">未选择</div>
+            </div>
+            <div class="card-body">
+              <div class="project-info" id="project-path-display">
+                <span class="info-label">路径:</span>
+                <span class="info-value">点击选择项目...</span>
+              </div>
+              <div class="file-stats">
+                <span class="file-count" id="file-count">0 文件</span>
+                <span class="char-count" id="char-count">0 字符</span>
+                <span class="token-estimate" id="token-estimate">~0 Token</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button id="btn-select-project" class="card-btn primary">选择项目</button>
+              <button id="btn-build-context" class="card-btn">构建上下文</button>
+            </div>
+          </div>
+          
+          <div class="card" id="card-proxy">
+            <div class="card-header">
+              <div class="card-icon">🔄</div>
+              <div class="card-title">API 代理</div>
+              <div class="card-badge" id="proxy-badge">已停止</div>
+            </div>
+            <div class="card-body">
+              <div class="proxy-info">
+                <div class="info-row">
+                  <span class="info-label">地址:</span>
+                  <span class="info-value">http://127.0.0.1:12306</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">转发:</span>
+                  <span class="info-value" id="proxy-forward-to">OpenAI</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">缓存:</span>
+                  <span class="info-value" id="proxy-cache-status">未启用</span>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button id="btn-start-proxy" class="card-btn primary">启动</button>
+              <button id="btn-stop-proxy" class="card-btn danger" disabled>停止</button>
+            </div>
+          </div>
+          
+          <div class="card" id="card-tools">
+            <div class="card-header">
+              <div class="card-icon">🛠</div>
+              <div class="card-title">IDE 集成</div>
+              <div class="card-badge">推荐</div>
+            </div>
+            <div class="card-body">
+              <p class="card-desc">一键配置主流 AI 编程工具</p>
+              <div class="tools-list">
+                <div class="tool-item" data-tool="cursor">
+                  <span class="tool-icon">🔵</span>
+                  <span class="tool-name">Cursor</span>
+                  <button class="copy-btn" data-config="cursor">复制</button>
+                </div>
+                <div class="tool-item" data-tool="cline">
+                  <span class="tool-icon">⚡</span>
+                  <span class="tool-name">cline</span>
+                  <button class="copy-btn" data-config="cline">复制</button>
+                </div>
+                <div class="tool-item" data-tool="continue">
+                  <span class="tool-icon">▶</span>
+                  <span class="tool-name">Continue</span>
+                  <button class="copy-btn" data-config="continue">复制</button>
+                </div>
+                <div class="tool-item" data-tool="windsurf">
+                  <span class="tool-icon">🌀</span>
+                  <span class="tool-name">Windsurf</span>
+                  <button class="copy-btn" data-config="windsurf">复制</button>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button id="btn-enable-transparent" class="card-btn">启用透明代理</button>
+            </div>
+          </div>
+          
+          <div class="card wide" id="card-log">
+            <div class="card-header">
+              <div class="card-icon">📋</div>
+              <div class="card-title">请求日志</div>
+              <div class="log-filters">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="cache">命中</button>
+                <button class="filter-btn" data-filter="miss">未命中</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="log-content"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     
     <div id="bottom-bar">
-      <span id="port-label">代理端口: 8000</span>
-      <span id="status-label">连接状态: 已断开</span>
+      <span id="connection-status">就绪</span>
       <span class="spacer"></span>
-      <span id="currency-label">计费币种: USD ($)</span>
+      <span id="memory-usage">内存: 0 MB</span>
     </div>
   </div>
   
@@ -119,7 +243,7 @@
           </div>
           <div class="form-group">
             <label>端口:</label>
-            <input type="number" id="proxy-port" value="8080" min="1" max="65535">
+            <input type="number" id="proxy-port" value="12306" min="1" max="65535">
           </div>
           <div class="form-group">
             <label class="checkbox-label">
