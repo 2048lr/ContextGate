@@ -15,7 +15,13 @@ let proxyPort = 10086
 let isProxyRunning = false
 let tokenMonitor = null
 
-const BACKGROUND_URL = 'https://liurun.click/133084259_p4.jpg'
+function getBackgroundPath() {
+  const isDev = !app.isPackaged
+  if (isDev) {
+    return path.join(__dirname, '..', '..', 'resources', 'background.jpg')
+  }
+  return path.join(process.resourcesPath, 'resources', 'background.jpg')
+}
 
 function getDataDir() {
   const isDev = !app.isPackaged
@@ -286,7 +292,8 @@ ipcMain.handle('select-folder', async () => {
 })
 
 ipcMain.handle('get-background-url', () => {
-  return BACKGROUND_URL
+  const bgPath = getBackgroundPath()
+  return `file://${bgPath}`
 })
 
 ipcMain.handle('get-locale', () => {

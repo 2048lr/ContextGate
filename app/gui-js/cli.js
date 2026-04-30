@@ -203,10 +203,10 @@ program
   .description('显示使用统计')
   .option('--period <period>', '统计周期 (week/month/year/all)', 'week')
   .option('--db <path>', '数据库路径', 'contextgate.db')
-  .action((options) => {
-    showStats(options.period, options.db)
+  .action(async (options) => {
+    await showStats(options.period, options.db)
     console.log()
-    showSavings(options.db)
+    await showSavings(options.db)
   })
 
 program

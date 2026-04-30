@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Electron](https://img.shields.io/badge/Electron-28-blue.svg)](https://www.electronjs.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange.svg)](https://github.com/2048lr/ContextGate)
-[![Version](https://img.shields.io/badge/version-3.1.0-green.svg)](https://github.com/2048lr/ContextGate/releases)
+[![Version](https://img.shields.io/badge/version-4.0.0-green.svg)](https://github.com/2048lr/ContextGate/releases)
 
 [English](#english) | [中文](#中文)
 
@@ -38,34 +38,34 @@ ContextGate is a powerful AI context management and API proxy system built with 
 
 #### Download from Releases
 
-Download from [GitHub Releases v3.1.0](https://github.com/2048lr/ContextGate/releases/tag/v3.1.0)
+Download from [GitHub Releases v4.0.0](https://github.com/2048lr/ContextGate/releases/tag/v4.0.0)
 
 ##### Debian/Ubuntu (.deb)
 
 ```bash
-sudo dpkg -i contextgate_3.1.0_amd64.deb
+sudo dpkg -i contextgate_4.0.0_amd64.deb
 # Or
-sudo apt install ./contextgate_3.1.0_amd64.deb
+sudo apt install ./contextgate_4.0.0_amd64.deb
 ```
 
 ##### Fedora/RHEL/CentOS (.rpm)
 
 ```bash
-sudo dnf install contextgate-3.1.0.x86_64.rpm
+sudo dnf install contextgate-4.0.0.x86_64.rpm
 # Or
-sudo rpm -i contextgate-3.1.0.x86_64.rpm
+sudo rpm -i contextgate-4.0.0.x86_64.rpm
 ```
 
 ##### AppImage (Universal)
 
 ```bash
-chmod +x ContextGate-3.1.0-x86_64.AppImage
-./ContextGate-3.1.0-x86_64.AppImage
+chmod +x ContextGate-4.0.0-x86_64.AppImage
+./ContextGate-4.0.0-x86_64.AppImage
 ```
 
 ##### Windows
 
-Download `ContextGate-Setup-3.1.0.exe` or `ContextGate-3.1.0-Portable.exe` from Releases.
+Download `ContextGate-Setup-4.0.0.exe` or `ContextGate-4.0.0-Portable.exe` from Releases.
 
 #### From Source
 
@@ -138,13 +138,13 @@ Use GitHub Actions to build Windows packages automatically:
 
 Or create a release tag to trigger automatic build:
 ```bash
-git tag v3.1.0
-git push origin v3.1.0
+git tag v4.0.0
+git push origin v4.0.0
 ```
 
 ### Changelog
 
-#### v3.1.0
+#### v4.0.0
 - 🔄 **Complete Rewrite** - Migrated from Python/PySide6 to JavaScript/Electron
 - 🖥️ **GNOME-style UI** - Native window controls (minimize, maximize, close) in top-right corner
 - 🎨 **Chinese Font Support** - Added Noto Sans CJK, WenQuanYi Micro Hei fonts
@@ -179,34 +179,34 @@ ContextGate 是一个基于 Electron 构建的 AI 上下文管理和 API 代理�
 
 #### 从 Releases 下载
 
-从 [GitHub Releases v3.1.0](https://github.com/2048lr/ContextGate/releases/tag/v3.1.0) 下载
+从 [GitHub Releases v4.0.0](https://github.com/2048lr/ContextGate/releases/tag/v4.0.0) 下载
 
 ##### Debian/Ubuntu (.deb)
 
 ```bash
-sudo dpkg -i contextgate_3.1.0_amd64.deb
+sudo dpkg -i contextgate_4.0.0_amd64.deb
 # 或
-sudo apt install ./contextgate_3.1.0_amd64.deb
+sudo apt install ./contextgate_4.0.0_amd64.deb
 ```
 
 ##### Fedora/RHEL/CentOS (.rpm)
 
 ```bash
-sudo dnf install contextgate-3.1.0.x86_64.rpm
+sudo dnf install contextgate-4.0.0.x86_64.rpm
 # 或
-sudo rpm -i contextgate-3.1.0.x86_64.rpm
+sudo rpm -i contextgate-4.0.0.x86_64.rpm
 ```
 
 ##### AppImage (通用)
 
 ```bash
-chmod +x ContextGate-3.1.0-x86_64.AppImage
-./ContextGate-3.1.0-x86_64.AppImage
+chmod +x ContextGate-4.0.0-x86_64.AppImage
+./ContextGate-4.0.0-x86_64.AppImage
 ```
 
 ##### Windows
 
-从 Releases 下载 `ContextGate-Setup-3.1.0.exe` 或 `ContextGate-3.1.0-Portable.exe`。
+从 Releases 下载 `ContextGate-Setup-4.0.0.exe` 或 `ContextGate-4.0.0-Portable.exe`。
 
 #### 源码安装
 
@@ -279,13 +279,13 @@ npm run build:win:x64
 
 或创建发布标签触发自动构建：
 ```bash
-git tag v3.1.0
-git push origin v3.1.0
+git tag v4.0.0
+git push origin v4.0.0
 ```
 
 ### 更新日志
 
-#### v3.1.0
+#### v4.0.0
 - 🔄 **完全重写** - 从 Python/PySide6 迁移到 JavaScript/Electron
 - 🖥️ **GNOME 风格界面** - 右上角原生窗口控制按钮（最小化、最大化、关闭）
 - 🎨 **中文字体支持** - 添加思源黑体、文泉驿等宽字体
