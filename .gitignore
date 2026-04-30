@@ -8,6 +8,7 @@ __pycache__/
 *.so
 .Python
 build/
+!app/gui-js/build/
 develop-eggs/
 dist/
 downloads/
@@ -59,6 +60,7 @@ config.yaml
 
 # Build artifacts
 build/
+!app/gui-js/build/
 dist/
 *.spec
 
@@ -77,6 +79,7 @@ rpmbuild/
 AppDir/
 dist/
 build/
+!app/gui-js/build/
 *.spec
 *.deb
 *.rpm
