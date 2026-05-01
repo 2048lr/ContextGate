@@ -3,6 +3,10 @@ const path = require('path')
 const fs = require('fs')
 const yaml = require('js-yaml')
 
+// 修复某些Linux环境下的崩溃问题
+app.commandLine.appendSwitch('no-sandbox')
+app.commandLine.appendSwitch('disable-gpu-sandbox')
+
 const { CodeScanner } = require('./lib/scanner')
 const { AIProxy, ConfigManager } = require('./lib/proxy')
 const { TokenMonitor } = require('./lib/monitor')
