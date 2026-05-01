@@ -96,13 +96,14 @@ async function startProxy(port = 12306) {
     scanner.buildContext(contextFile)
   }
 
+  tokenMonitor = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') })
+
   const proxy = new AIProxy({
     contextFile,
     configPath: path.join(getDataDir(), 'config.yaml'),
-    projectRoot: workspace
+    projectRoot: workspace,
+    onRequestComplete: (data) => tokenMonitor && tokenMonitor.recordRequest(data)
   })
-
-  tokenMonitor = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') })
 
   try {
     const result = await proxy.run('127.0.0.1', port)
@@ -116,12 +117,20 @@ async function startProxy(port = 12306) {
 
     return { success: true, port: result.port }
   } catch (e) {
+    proxy.stop()
+    proxyServer = null
+    if (tokenMonitor) {
+      tokenMonitor.close()
+      tokenMonitor = null
+    }
     return { success: false, error: e.message }
   }
 }
 
 function stopProxy() {
+  let wasRunning = false
   if (proxyServer) {
+    wasRunning = true
     try {
       proxyServer.stop()
     } catch (e) {
@@ -129,9 +138,12 @@ function stopProxy() {
     }
     proxyServer = null
     isProxyRunning = false
-    return { success: true }
   }
-  return { success: false, error: 'Proxy not running' }
+  if (tokenMonitor) {
+    tokenMonitor.close()
+    tokenMonitor = null
+  }
+  return wasRunning ? { success: true } : { success: false, error: 'Proxy not running' }
 }
 
 function checkProxyStatus() {
@@ -212,6 +224,22 @@ function createTray() {
   }
 
   tray = new Tray(icon)
+  tray.setToolTip('ContextGate')
+
+  updateTrayMenu()
+
+  tray.on('double-click', () => {
+    if (mainWindow.isVisible()) {
+      mainWindow.hide()
+    } else {
+      mainWindow.show()
+      mainWindow.focus()
+    }
+  })
+}
+
+function updateTrayMenu() {
+  if (!tray || tray.isDestroyed()) return
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -233,8 +261,9 @@ function createTray() {
       click: () => {
         if (isProxyRunning) {
           stopProxy()
+          updateTrayMenu()
         } else {
-          startProxy(proxyPort)
+          startProxy(proxyPort).then(() => updateTrayMenu())
         }
       }
     },
@@ -249,17 +278,7 @@ function createTray() {
     }
   ])
 
-  tray.setToolTip('ContextGate')
   tray.setContextMenu(contextMenu)
-
-  tray.on('double-click', () => {
-    if (mainWindow.isVisible()) {
-      mainWindow.hide()
-    } else {
-      mainWindow.show()
-      mainWindow.focus()
-    }
-  })
 }
 
 app.whenReady().then(() => {

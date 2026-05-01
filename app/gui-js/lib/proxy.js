@@ -156,6 +156,7 @@ class AIProxy {
     this.projectRoot = options.projectRoot || null
     this.configManager = new ConfigManager(this.configPath)
     this.dynamicContext = options.dynamicContext || false
+    this.onRequestComplete = options.onRequestComplete || null
     this.app = express()
     this.server = null
     this.cache = new Map()
@@ -163,6 +164,24 @@ class AIProxy {
     this.contextSignature = null
     this._setupRoutes()
     this._loadContextSignature()
+  }
+
+  _recordRequest(provider, model, responseData, cached, responseTime) {
+    if (!this.onRequestComplete) return
+    try {
+      const usage = responseData && responseData.usage
+      this.onRequestComplete({
+        provider: provider || 'unknown',
+        model: model || 'unknown',
+        input_tokens: (usage && usage.prompt_tokens) || 0,
+        output_tokens: (usage && usage.completion_tokens) || 0,
+        cost: 0,
+        cached: !!cached,
+        response_time: responseTime || 0
+      })
+    } catch (e) {
+      console.error('Failed to record request:', e)
+    }
   }
 
   _loadContextSignature() {
@@ -221,6 +240,7 @@ this.app.post('/v1/*', async (req, res) => {
         if (req.body.stream) {
           return this._streamChatRequest(
             providerConfig,
+            provider,
             req.body.model,
             req.body.messages,
             req.body,
@@ -232,10 +252,14 @@ this.app.post('/v1/*', async (req, res) => {
         const cacheKey = this._getCacheKey(req)
         if (this.cache.has(cacheKey)) {
           console.log(`[Cache HIT] ${cacheKey}`)
-          return res.json(this.cache.get(cacheKey))
+          const cachedData = this.cache.get(cacheKey)
+          this._recordRequest(provider, req.body.model, cachedData, true, 0)
+          return res.json(cachedData)
         }
 
+        const requestStart = Date.now()
         const response = await this._forwardRequest(providerConfig, backendPath, req.body)
+        const responseTime = Date.now() - requestStart
 
         if (response.data && this._shouldCache(req.method)) {
           this.cache.set(cacheKey, response.data)
@@ -243,6 +267,7 @@ this.app.post('/v1/*', async (req, res) => {
         }
 
         this.requestCount++
+        this._recordRequest(provider, req.body.model, response.data, false, responseTime)
         res.json(response.data)
       } catch (error) {
         console.error('Proxy error:', error.message)
@@ -265,13 +290,18 @@ this.app.post('/v1/*', async (req, res) => {
 
       const cacheKey = this._getCacheKey(req)
       if (this.cache.has(cacheKey)) {
-        return res.json(this.cache.get(cacheKey))
+        const cachedData = this.cache.get(cacheKey)
+        this._recordRequest(provider, model, cachedData, true, 0)
+        return res.json(cachedData)
       }
 
       try {
+        const requestStart = Date.now()
         const response = await this._forwardChatRequest(providerConfig, model, messages, options)
+        const responseTime = Date.now() - requestStart
         this.cache.set(cacheKey, response.data)
         this.requestCount++
+        this._recordRequest(provider, model, response.data, false, responseTime)
         res.json(response.data)
       } catch (error) {
         res.status(500).json({ error: error.message })
@@ -371,8 +401,9 @@ this.app.post('/v1/*', async (req, res) => {
     }
   }
 
-  _streamChatRequest(providerConfig, model, messages, options, req, res) {
+  _streamChatRequest(providerConfig, provider, model, messages, options, req, res) {
     const url = `${providerConfig.base_url}/chat/completions`
+    const requestStart = Date.now()
 
     const axiosReq = axios({
       method: 'POST',
@@ -394,11 +425,28 @@ this.app.post('/v1/*', async (req, res) => {
         'X-Accel-Buffering': 'no'
       })
 
+      let lastChunkData = ''
       response.data.on('data', (chunk) => {
         res.write(chunk)
+        const text = chunk.toString()
+        const lines = text.split('\n')
+        for (const line of lines) {
+          if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+            lastChunkData = line.substring(6)
+          }
+        }
       })
 
       response.data.on('end', () => {
+        try {
+          if (lastChunkData) {
+            const parsed = JSON.parse(lastChunkData)
+            const responseTime = Date.now() - requestStart
+            this._recordRequest(provider, model, parsed, false, responseTime)
+          }
+        } catch (e) {
+          console.error('Failed to parse stream usage:', e)
+        }
         res.end()
       })
 

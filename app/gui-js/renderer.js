@@ -1,6 +1,7 @@
 let config = {}
 let currentProject = null
 let proxyRunning = false
+let proxyPort = 12306
 let stats = {
   todayRequests: 0,
   todayTokens: 0,
@@ -179,6 +180,10 @@ function setupEventListeners() {
   document.getElementById('btn-save-settings').addEventListener('click', saveSettings)
   document.getElementById('btn-cancel-settings').addEventListener('click', closeSettings)
 
+  document.getElementById('btn-add-provider').addEventListener('click', addProvider)
+  document.getElementById('btn-remove-provider').addEventListener('click', removeProvider)
+  document.getElementById('provider-select').addEventListener('change', selectProvider)
+
   document.getElementById('btn-minimize').addEventListener('click', () => window.electronAPI.minimizeWindow())
   document.getElementById('btn-maximize').addEventListener('click', () => window.electronAPI.maximizeWindow())
   document.getElementById('btn-close').addEventListener('click', () => window.electronAPI.closeWindow())
@@ -273,6 +278,8 @@ async function startProxy() {
 
   if (result.success) {
     proxyRunning = true
+    proxyPort = result.port
+    updateToolConfigs(result.port)
     updateProxyUI()
     document.getElementById('connection-status').textContent = `运行中 :${result.port}`
   } else {
@@ -291,7 +298,7 @@ async function stopProxy() {
 
 async function clearCache() {
   try {
-    await fetch('http://127.0.0.1:12306/cache', { method: 'DELETE' })
+    await fetch(`http://127.0.0.1:${proxyPort}/cache`, { method: 'DELETE' })
     addLogEntry({ method: 'DELETE', path: '/cache', model: '-', tokens: 0, cost: 0, cacheHit: true })
     alert('缓存已清空')
   } catch (e) {
@@ -331,6 +338,7 @@ async function checkProxyStatus() {
   try {
     const status = await window.electronAPI.proxyStatus()
     proxyRunning = status.running
+    proxyPort = status.port || 12306
     updateToolConfigs(status.port || 12306)
     updateProxyUI()
   } catch (e) {
@@ -366,6 +374,82 @@ function showToast(message) {
   setTimeout(() => toast.remove(), 3000)
 }
 
+function populateProviderSelect() {
+  const select = document.getElementById('provider-select')
+  if (!select) return
+  const currentValue = select.value
+  select.innerHTML = ''
+  const providers = config.providers || {}
+  for (const name of Object.keys(providers)) {
+    const option = document.createElement('option')
+    option.value = name
+    option.textContent = name
+    select.appendChild(option)
+  }
+  if (select.options.length > 0) {
+    if (Array.from(select.options).some(o => o.value === currentValue)) {
+      select.value = currentValue
+    } else {
+      select.selectedIndex = 0
+    }
+    selectProvider()
+  } else {
+    document.getElementById('provider-api-key').value = ''
+    document.getElementById('provider-base-url').value = ''
+    document.getElementById('provider-models').value = ''
+  }
+}
+
+function selectProvider() {
+  const select = document.getElementById('provider-select')
+  const name = select.value
+  if (!name) return
+  const providers = config.providers || {}
+  const provider = providers[name]
+  if (!provider) return
+  document.getElementById('provider-api-key').value = provider.api_key || ''
+  document.getElementById('provider-base-url').value = provider.base_url || ''
+  document.getElementById('provider-models').value = (provider.models || []).join('\n')
+}
+
+function saveCurrentProvider() {
+  const select = document.getElementById('provider-select')
+  const name = select.value
+  if (!name) return
+  if (!config.providers) config.providers = {}
+  config.providers[name] = {
+    api_key: document.getElementById('provider-api-key').value,
+    base_url: document.getElementById('provider-base-url').value,
+    models: document.getElementById('provider-models').value.split('\n').filter(m => m.trim())
+  }
+}
+
+function addProvider() {
+  saveCurrentProvider()
+  const name = prompt('输入提供商名称 (例如: openai, zhipu):')
+  if (!name || !name.trim()) return
+  const trimmed = name.trim()
+  if (!config.providers) config.providers = {}
+  config.providers[trimmed] = config.providers[trimmed] || { api_key: '', base_url: '', models: [] }
+  populateProviderSelect()
+  document.getElementById('provider-select').value = trimmed
+  selectProvider()
+}
+
+function removeProvider() {
+  const select = document.getElementById('provider-select')
+  const name = select.value
+  if (!name) return
+  if (!confirm(`确认删除提供商 "${name}"?`)) return
+  delete (config.providers || {})[name]
+  populateProviderSelect()
+}
+
+function saveConfigProviders() {
+  saveCurrentProvider()
+  if (!config.providers) config.providers = {}
+}
+
 function openSettings() {
   loadConfigToSettings()
   document.getElementById('settings-modal').classList.remove('hidden')
@@ -381,6 +465,8 @@ function loadConfigToSettings() {
   document.getElementById('proxy-port').value = proxyConfig.port || 12306
   document.getElementById('proxy-sanitize').checked = proxyConfig.sanitize_requests !== false
   document.getElementById('default-provider').value = config.default_provider || 'openai'
+
+  populateProviderSelect()
 
   const monitorConfig = config.monitor || {}
   document.getElementById('budget-limit').value = monitorConfig.budget_limit || 10
@@ -442,6 +528,8 @@ async function saveSettings() {
   if (fixedCurrency) config.currency.fixed_currency = fixedCurrency
   if (fixedRate) config.currency.fixed_rate = parseFloat(fixedRate)
 
+  saveConfigProviders()
+
   const success = await window.electronAPI.saveConfig(config)
   if (success) {
     closeSettings()
@@ -473,8 +561,10 @@ function setupProxyListeners() {
     })
     stats.todayRequests++
     stats.todayTokens += data.tokens || 0
-    stats.todaySavings += data.cost || 0
-    if (data.cacheHit) stats.cacheHits++
+    if (data.cacheHit) {
+      stats.todaySavings += data.cost || 0
+      stats.cacheHits++
+    }
     updateStatsUI()
   })
 

@@ -212,7 +212,7 @@ class TokenMonitor {
       const cacheHits = this.db.exec('SELECT SUM(cache_hits) as sum FROM daily_stats')[0]?.values[0][0] || 0
 
       const today = new Date().toISOString().split('T')[0]
-      const todayStats = this.db.exec(`SELECT * FROM daily_stats WHERE date = '${today}'`)[0]
+      const todayStats = this.db.exec('SELECT * FROM daily_stats WHERE date = ?', [today])[0]
       const todayData = todayStats ? {
         requests: todayStats.values[0][1],
         tokens: todayStats.values[0][2],
@@ -221,7 +221,7 @@ class TokenMonitor {
       } : { requests: 0, tokens: 0, cost: 0, cacheHits: 0 }
 
       const month = today.substring(0, 7)
-      const monthStats = this.db.exec(`SELECT * FROM monthly_stats WHERE month = '${month}'`)[0]
+      const monthStats = this.db.exec('SELECT * FROM monthly_stats WHERE month = ?', [month])[0]
       const monthData = monthStats ? {
         requests: monthStats.values[0][1],
         tokens: monthStats.values[0][2],

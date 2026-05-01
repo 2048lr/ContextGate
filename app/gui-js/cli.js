@@ -186,7 +186,26 @@ program
     })
 
     try {
-      const { port } = await proxy.run(options.host, options.port)
+      let currentPort = options.port
+      let port = null
+      const maxRetries = 10
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          const result = await proxy.run(options.host, currentPort)
+          port = result.port
+          break
+        } catch (err) {
+          if (err.code === 'EADDRINUSE' && attempt < maxRetries - 1) {
+            console.log(chalk.yellow(`端口 ${currentPort} 被占用，尝试 ${currentPort + 1}...`))
+            proxy.stop()
+            currentPort++
+            continue
+          }
+          throw err
+        }
+      }
+
       console.log(chalk.green.bold('\n代理服务器已启动!'))
       console.log(chalk.yellow.bold(`>>> 实际端口: ${port} <<<`))
       console.log(chalk.dim(`Goose BaseURL: http://${options.host}:${port}`))
