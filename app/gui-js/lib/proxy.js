@@ -306,8 +306,10 @@ this.app.post('/v1/*', async (req, res) => {
   }
 
   _detectProvider(backendPath) {
-    if (backendPath.includes('zhipu')) return 'zhipu'
-    if (backendPath.includes('deepseek')) return 'deepseek'
+    const lowerPath = backendPath.toLowerCase()
+    if (lowerPath.includes('zhipu')) return 'zhipu'
+    if (lowerPath.includes('deepseek')) return 'deepseek'
+    if (lowerPath.includes('openai')) return 'openai'
     return 'openai'
   }
 
@@ -331,30 +333,42 @@ this.app.post('/v1/*', async (req, res) => {
 
   async _forwardRequest(providerConfig, backendPath, data) {
     const url = `${providerConfig.base_url}${backendPath}`
-    return axios({
-      method: 'POST',
-      url,
-      data,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${providerConfig.api_key}`
-      },
-      timeout: providerConfig.timeout || 60000
-    })
+    try {
+      const response = await axios({
+        method: 'POST',
+        url,
+        data,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${providerConfig.api_key}`
+        },
+        timeout: providerConfig.timeout || 60000
+      })
+      return response
+    } catch (error) {
+      // 重新抛出错误以便上层处理
+      throw error
+    }
   }
 
   async _forwardChatRequest(providerConfig, model, messages, options) {
     const url = `${providerConfig.base_url}/chat/completions`
-    return axios({
-      method: 'POST',
-      url,
-      data: { model, messages, ...options },
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${providerConfig.api_key}`
-      },
-      timeout: providerConfig.timeout || 60000
-    })
+    try {
+      const response = await axios({
+        method: 'POST',
+        url,
+        data: { model, messages, ...options },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${providerConfig.api_key}`
+        },
+        timeout: providerConfig.timeout || 60000
+      })
+      return response
+    } catch (error) {
+      // 重新抛出错误以便上层处理
+      throw error
+    }
   }
 
   _streamChatRequest(providerConfig, model, messages, options, req, res) {

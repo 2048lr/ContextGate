@@ -88,31 +88,31 @@ const INTENT_PATTERNS = {
 
 const CODE_BLOCK_PATTERNS = {
   javascript: {
-    function: /(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*\{[\s\S]*?\n\}/g,
-    arrowFunction: /(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:\([^)]*\)|[^=])\s*=>\s*\{[\s\S]*?\n\}/g,
-    class: /(?:export\s+)?class\s+(\w+)(?:\s+extends\s+\w+)?\s*\{[\s\S]*?\n\}/g,
-    method: /(?:async\s+)?(\w+)\s*\([^)]*\)\s*\{[\s\S]*?\n\s{2,4}\}/g
+    function: /(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*\{[\s\S]*?\n\s*\}/g,
+    arrowFunction: /(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:\([^)]*\)|[^=])\s*=>\s*\{[\s\S]*?\n\s*\}/g,
+    class: /(?:export\s+)?class\s+(\w+)(?:\s+extends\s+\w+)?\s*\{[\s\S]*?\n\s*\}/g,
+    method: /(?:async\s+)?(\w+)\s*\([^)]*\)\s*\{[\s\S]*?\n\s*\}/g
   },
   typescript: {
-    function: /(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*(?:<[^>]+>)?\s*\([^)]*\)(?:\s*:\s*\w+)?\s*\{[\s\S]*?\n\}/g,
-    arrowFunction: /(?:export\s+)?(?:const|let|var)\s+(\w+)\s*(?::\s*\w+)?\s*=\s*(?:async\s+)?(?:\([^)]*\)|[^=])\s*=>\s*\{[\s\S]*?\n\}/g,
-    class: /(?:export\s+)?(?:abstract\s+)?class\s+(\w+)(?:\s+extends\s+\w+)?(?:\s+implements\s+[\w,\s]+)?\s*\{[\s\S]*?\n\}/g,
-    interface: /(?:export\s+)?interface\s+(\w+)(?:\s+extends\s+[\w,\s]+)?\s*\{[\s\S]*?\n\}/g,
+    function: /(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*(?:<[^>]+>)?\s*\([^)]*\)(?:\s*:\s*[\w<>\[\]|&]+)?\s*\{[\s\S]*?\n\s*\}/g,
+    arrowFunction: /(?:export\s+)?(?:const|let|var)\s+(\w+)\s*(?::\s*[\w<>\[\]|&]+)?\s*=\s*(?:async\s+)?(?:\([^)]*\)|[^=])\s*=>\s*\{[\s\S]*?\n\s*\}/g,
+    class: /(?:export\s+)?(?:abstract\s+)?class\s+(\w+)(?:\s+extends\s+[\w<>,\s]+)?(?:\s+implements\s+[\w,\s]+)?\s*\{[\s\S]*?\n\s*\}/g,
+    interface: /(?:export\s+)?interface\s+(\w+)(?:\s+extends\s+[\w,\s]+)?\s*\{[\s\S]*?\n\s*\}/g,
     type: /(?:export\s+)?type\s+(\w+)\s*=\s*[\s\S]*?;\n/g
   },
   python: {
-    function: /(?:async\s+)?def\s+(\w+)\s*\([^)]*\)(?:\s*->\s*\w+)?:\n(?:[\t ][\s\S]*?)+(?=\n\S|\n$)/g,
-    class: /class\s+(\w+)(?:\([^)]*\))?:\n(?:[\t ][\s\S]*?)+(?=\n\S|\n$)/g,
-    method: /def\s+(\w+)\s*\([^)]*\):\n(?:[\t ][\s\S]*?)+(?=\n\s{0,4}def|\n\S|\n$)/g
+    function: /(?:async\s+)?def\s+(\w+)\s*\([^)]*\)(?:\s*->\s*[\w<>\[\]|&]+)?:\n(?:[\t ][\s\S]*?)+(?=\n\s*(?:def|class)|\n\S|\n$)/g,
+    class: /class\s+(\w+)(?:\([^)]*\))?:\n(?:[\t ][\s\S]*?)+(?=\n\s*(?:def|class)|\n\S|\n$)/g,
+    method: /def\s+(\w+)\s*\([^)]*\):\n(?:[\t ][\s\S]*?)+(?=\n\s{0,4}def|\n\s{0,4}class|\n\S|\n$)/g
   },
   go: {
-    function: /func\s+(?:\([^)]+\)\s+)?(\w+)\s*\([^)]*\)(?:\s*\([^)]*\))?\s*\{[\s\S]*?\n\}/g,
-    struct: /type\s+(\w+)\s+struct\s*\{[\s\S]*?\n\}/g,
-    interface: /type\s+(\w+)\s+interface\s*\{[\s\S]*?\n\}/g
+    function: /func\s+(?:\([^)]+\)\s+)?(\w+)\s*\([^)]*\)(?:\s*\([^)]*\))?\s*\{[\s\S]*?\n\s*\}/g,
+    struct: /type\s+(\w+)\s+struct\s*\{[\s\S]*?\n\s*\}/g,
+    interface: /type\s+(\w+)\s+interface\s*\{[\s\S]*?\n\s*\}/g
   },
   java: {
-    class: /(?:public|private|protected)?\s*(?:abstract|final)?\s*class\s+(\w+)(?:\s+extends\s+\w+)?(?:\s+implements\s+[\w,\s]+)?\s*\{[\s\S]*?\n\}/g,
-    method: /(?:public|private|protected)?\s*(?:static|final|abstract)?\s*\w+\s+(\w+)\s*\([^)]*\)\s*(?:throws\s+[\w,\s]+)?\s*\{[\s\S]*?\n\s{2,4}\}/g
+    class: /(?:public|private|protected)?\s*(?:abstract|final)?\s*class\s+(\w+)(?:\s+extends\s+\w+)?(?:\s+implements\s+[\w,\s]+)?\s*\{[\s\S]*?\n\s*\}/g,
+    method: /(?:public|private|protected)?\s*(?:static|final|abstract)?\s*\w+\s+(\w+)\s*\([^)]*\)\s*(?:throws\s+[\w,\s]+)?\s*\{[\s\S]*?\n\s*\}/g
   }
 }
 

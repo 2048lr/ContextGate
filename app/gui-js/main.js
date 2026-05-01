@@ -18,8 +18,10 @@ let tokenMonitor = null
 function getBackgroundPath() {
   const isDev = !app.isPackaged
   if (isDev) {
+    // 在开发模式下，resources目录位于项目根目录
     return path.join(__dirname, '..', '..', 'resources', 'background.jpg')
   }
+  // 在打包模式下，resources位于process.resourcesPath
   return path.join(process.resourcesPath, 'resources', 'background.jpg')
 }
 

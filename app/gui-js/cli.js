@@ -11,7 +11,6 @@ const { VERSION } = require('./lib/config')
 const { CodeScanner } = require('./lib/scanner')
 const { AIProxy, ConfigManager } = require('./lib/proxy')
 const { showStats, showSavings } = require('./lib/report')
-const { TokenMonitor } = require('./lib/monitor')
 
 function formatSize(size) {
   const units = ['B', 'KB', 'MB', 'GB']
