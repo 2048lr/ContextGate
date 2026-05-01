@@ -52,7 +52,10 @@ function loadConfig() {
       const fileContents = fs.readFileSync(configPath, 'utf8')
       config = yaml.load(fileContents) || {}
     } else {
-      const examplePath = path.join(process.resourcesPath, 'config.yaml.example')
+      const isDev = !app.isPackaged
+      const examplePath = isDev
+        ? path.join(__dirname, '..', '..', 'config.yaml.example')
+        : path.join(process.resourcesPath, 'config.yaml.example')
       if (fs.existsSync(examplePath)) {
         const exampleContents = fs.readFileSync(examplePath, 'utf8')
         config = yaml.load(exampleContents) || {}
@@ -351,7 +354,10 @@ ipcMain.handle('build-context', async (event, projectPath) => {
 
 ipcMain.handle('run-script', async (event, scriptPath, action) => {
   const { exec } = require('child_process')
-  const scriptFullPath = path.join(process.resourcesPath, scriptPath)
+  const isDev = !app.isPackaged
+  const scriptFullPath = isDev
+    ? path.join(__dirname, '..', '..', scriptPath)
+    : path.join(process.resourcesPath, scriptPath)
   if (!fs.existsSync(scriptFullPath)) {
     return { success: false, error: 'Script not found' }
   }
@@ -371,4 +377,13 @@ ipcMain.handle('get-stats', () => {
     tokenMonitor = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') })
   }
   return tokenMonitor.getSummary()
+})
+
+ipcMain.handle('get-memory-usage', () => {
+  const memUsage = process.memoryUsage()
+  return {
+    heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+    heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+    rss: Math.round(memUsage.rss / 1024 / 1024)
+  }
 })

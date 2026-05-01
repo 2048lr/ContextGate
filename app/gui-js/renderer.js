@@ -157,11 +157,11 @@ function updateContextHash() {
 }
 
 async function updateMemoryUsage() {
-  const mem = await fetch('http://127.0.0.1:12306/stats').catch(() => null)
-  if (mem) {
-    const data = await mem.json()
-    const memMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
-    document.getElementById('memory-usage').textContent = `内存: ${memMB} MB`
+  try {
+    const memData = await window.electronAPI.getMemoryUsage()
+    document.getElementById('memory-usage').textContent = `内存: ${memData.heapUsed} MB`
+  } catch (e) {
+    console.error('Failed to get memory usage:', e)
   }
 }
 
