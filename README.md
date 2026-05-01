@@ -216,7 +216,7 @@ providers:
 
 ## Changelog
 
-### v4.0.5-beta
+### v4.0.6-beta
 - 修复 Electron 在某些 Linux 环境下的崩溃问题
 - 改进代码扫描器的正则表达式匹配
 - 优化错误处理机制
