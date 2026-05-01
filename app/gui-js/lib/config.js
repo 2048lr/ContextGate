@@ -1,3 +1,3 @@
-const VERSION = '4.0.4-beta'
+const VERSION = '4.0.5-beta'
 
 module.exports = { VERSION }

@@ -1,6 +1,6 @@
 {
   "name": "contextgate",
-  "version": "4.0.4-beta",
+  "version": "4.0.5-beta",
   "description": "AI Context Management & Proxy System",
   "main": "main.js",
   "scripts": {
