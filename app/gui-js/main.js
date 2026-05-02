@@ -6,6 +6,8 @@ const yaml = require('js-yaml')
 // 修复某些Linux环境下的崩溃问题
 app.commandLine.appendSwitch('no-sandbox')
 app.commandLine.appendSwitch('disable-gpu-sandbox')
+app.commandLine.appendSwitch('disable-software-rasterizer')
+app.commandLine.appendSwitch('disable-gpu-compositing')
 
 const { CodeScanner } = require('./lib/scanner')
 const { AIProxy, ConfigManager } = require('./lib/proxy')
@@ -18,6 +20,11 @@ let proxyServer = null
 let proxyPort = 12306
 let isProxyRunning = false
 let tokenMonitor = null
+
+function isCLIMode() {
+  const args = process.argv.slice(1)
+  return args.some(arg => ['build', 'serve', 'stats', 'scan'].includes(arg))
+}
 
 function getBackgroundPath() {
   const isDev = !app.isPackaged
@@ -295,7 +302,7 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   stopProxy()
-  if (process.platform !== 'darwin') {
+  if (process.platform !== 'darwin' && !isCLIMode()) {
     app.quit()
   }
 })

@@ -1,6 +1,6 @@
 {
   "name": "contextgate",
-  "version": "4.0.6",
+  "version": "4.0.7",
   "description": "AI Context Management & Proxy System",
   "main": "main.js",
   "scripts": {
@@ -119,16 +119,34 @@
       "description": "ContextGate is an AI context management and proxy system that helps manage code context for AI assistants."
     },
     "deb": {
+      "section": "devel",
       "priority": "optional",
       "compression": "xz",
       "packageCategory": "devel",
       "afterInstall": "build/after-install.sh",
-      "afterRemove": "build/after-remove.sh"
+      "afterRemove": "build/after-remove.sh",
+      "depends": [
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "libasound2",
+        "libgbm1"
+      ]
     },
     "rpm": {
       "compression": "bzip2",
       "afterInstall": "build/after-install.sh",
-      "afterRemove": "build/after-remove.sh"
+      "afterRemove": "build/after-remove.sh",
+      "requires": [
+        "gtk3",
+        "libnotify",
+        "nss",
+        "libXScrnSaver",
+        "alsa-lib",
+        "gbm"
+      ]
     },
     "appImage": {},
     "win": {
