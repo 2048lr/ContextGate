@@ -49,6 +49,7 @@
           <div class="stat-card highlight">
             <div class="stat-label">今日节省</div>
             <div class="stat-value" id="stat-today-savings">$0.00</div>
+            <div class="stat-percent" id="stat-savings-percent">0%</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">缓存命中</div>
@@ -229,7 +230,10 @@
                 <input type="text" id="provider-base-url" placeholder="https://api.example.com/v1">
               </div>
               <div class="form-group">
-                <label>模型列表 (每行一个):</label>
+                <div class="model-list-header">
+                  <label>模型列表 (每行一个):</label>
+                  <button id="btn-fetch-models" class="small-btn" type="button">⟳ 从API拉取</button>
+                </div>
                 <textarea id="provider-models" rows="6" placeholder="gpt-4&#10;gpt-3.5-turbo"></textarea>
               </div>
             </div>

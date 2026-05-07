@@ -1,0 +1,4 @@
+c:\Users\Administrator\ContextGate\csharp\publish\Desktop\appsettings.Development.json
+c:\Users\Administrator\ContextGate\csharp\publish\Desktop\appsettings.json
+c:\Users\Administrator\ContextGate\csharp\publish\Desktop\ContextGate.Desktop.pdb
+c:\Users\Administrator\ContextGate\csharp\publish\Desktop\ContextGate.Desktop.exe

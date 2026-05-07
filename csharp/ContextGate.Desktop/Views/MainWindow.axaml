@@ -1,0 +1,305 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ContextGate.Desktop.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="ContextGate.Desktop.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="ContextGate"
+        Width="1200" Height="800"
+        WindowStartupLocation="CenterScreen"
+        Background="#19191e">
+
+  <Design.DataContext>
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+
+  <Panel>
+    <Grid RowDefinitions="Auto,*,Auto">
+
+      <Border Grid.Row="0" Background="#14141a" Padding="16,8">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <TextBlock Text="⬡" FontSize="20" Foreground="#4a6cf7"/>
+            <TextBlock Text="ContextGate" FontSize="16" FontWeight="Bold" Foreground="White"/>
+            <Border Background="#333" CornerRadius="4" Padding="6,2">
+              <TextBlock Text="v4.0.7" FontSize="10" Foreground="#999"/>
+            </Border>
+          </StackPanel>
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+            <Button Command="{Binding OpenSettingsCommand}" Content="⚙" Classes="ghost"/>
+            <Button Content="─" Classes="ghost" Click="MinimizeClick"/>
+            <Button Content="□" Classes="ghost" Click="MaximizeClick"/>
+            <Button Content="✕" Classes="ghost" Click="CloseClick"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <Grid Grid.Row="1" ColumnDefinitions="280,*">
+
+        <Border Grid.Column="0" Background="#1e1e24" Padding="16">
+          <ScrollViewer>
+            <StackPanel Spacing="16">
+
+              <StackPanel Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Panel VerticalAlignment="Center">
+                    <Ellipse Width="10" Height="10" Fill="#27ae60" IsVisible="{Binding IsProxyRunning}"/>
+                    <Ellipse Width="10" Height="10" Fill="#e74c3c" IsVisible="{Binding !IsProxyRunning}"/>
+                  </Panel>
+                  <TextBlock Text="{Binding ProxyStatusText}" Foreground="White" FontWeight="SemiBold"/>
+                </StackPanel>
+                <TextBlock Text="{Binding ProxyPort, StringFormat='端口: {0}'}" Foreground="#888" FontSize="12"/>
+              </StackPanel>
+
+              <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                <Border Grid.Row="0" Grid.Column="0" Background="#2a2a32" CornerRadius="8" Padding="12">
+                  <StackPanel>
+                    <TextBlock Text="今日请求" FontSize="11" Foreground="#888"/>
+                    <TextBlock Text="{Binding TodayRequests}" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" Background="#2a2a32" CornerRadius="8" Padding="12">
+                  <StackPanel>
+                    <TextBlock Text="今日Token" FontSize="11" Foreground="#888"/>
+                    <TextBlock Text="{Binding TodayTokens}" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="0" Background="#2a2a32" CornerRadius="8" Padding="12" BorderBrush="#4a6cf7" BorderThickness="1">
+                  <StackPanel>
+                    <TextBlock Text="今日节省" FontSize="11" Foreground="#888"/>
+                    <TextBlock Text="{Binding TodaySavings}" FontSize="18" FontWeight="Bold" Foreground="#4a6cf7"/>
+                    <TextBlock Text="{Binding SavingsPercent}" FontSize="11" Foreground="#4a6cf7"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" Background="#2a2a32" CornerRadius="8" Padding="12">
+                  <StackPanel>
+                    <TextBlock Text="缓存命中" FontSize="11" Foreground="#888"/>
+                    <TextBlock Text="{Binding CacheHitRate}" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <StackPanel Spacing="8">
+                <Button Command="{Binding ToggleProxyCommand}" Content="{Binding ProxyToggleText}" Classes="accent" HorizontalAlignment="Stretch"/>
+                <Button Command="{Binding BuildContextCommand}" Content="重建上下文" Classes="ghost" HorizontalAlignment="Stretch"/>
+                <Button Command="{Binding ClearCacheCommand}" Content="清空缓存" Classes="ghost" HorizontalAlignment="Stretch"/>
+              </StackPanel>
+
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="上下文:" Foreground="#888" FontSize="12"/>
+                <TextBlock Text="{Binding ContextHash}" Foreground="#4a6cf7" FontSize="12" FontFamily="Consolas"/>
+              </StackPanel>
+
+            </StackPanel>
+          </ScrollViewer>
+        </Border>
+
+        <ScrollViewer Grid.Column="1" Padding="16">
+          <StackPanel Spacing="16">
+
+            <Border Background="#25252b" CornerRadius="8" Padding="16">
+              <StackPanel Spacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="📁" FontSize="18"/>
+                  <TextBlock Text="项目工作区" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+                  <Panel>
+                    <Border Background="#27ae60" CornerRadius="4" Padding="6,2" IsVisible="{Binding IsProjectLoaded}">
+                      <TextBlock Text="已加载" FontSize="11" Foreground="White"/>
+                    </Border>
+                    <Border Background="#e74c3c" CornerRadius="4" Padding="6,2" IsVisible="{Binding !IsProjectLoaded}">
+                      <TextBlock Text="未选择" FontSize="11" Foreground="White"/>
+                    </Border>
+                  </Panel>
+                </StackPanel>
+                <TextBlock Text="{Binding ProjectPath}" Foreground="#aaa" FontSize="13"/>
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                  <TextBlock Text="{Binding FileCount, StringFormat='{}{0} 文件'}" Foreground="#888" FontSize="12"/>
+                  <TextBlock Text="{Binding CharCount, StringFormat='{}{0} 字符'}" Foreground="#888" FontSize="12"/>
+                  <TextBlock Text="{Binding TokenEstimate, StringFormat='{}{0} Token'}" Foreground="#888" FontSize="12"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Command="{Binding SelectProjectCommand}" Content="选择项目" Classes="accent"/>
+                  <Button Command="{Binding BuildContextCommand}" Content="构建上下文" Classes="ghost"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Background="#25252b" CornerRadius="8" Padding="16">
+              <StackPanel Spacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="🔄" FontSize="18"/>
+                  <TextBlock Text="API 代理" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+                  <Panel>
+                    <Border Background="#27ae60" CornerRadius="4" Padding="6,2" IsVisible="{Binding IsProxyRunning}">
+                      <TextBlock Text="运行中" FontSize="11" Foreground="White"/>
+                    </Border>
+                    <Border Background="#e74c3c" CornerRadius="4" Padding="6,2" IsVisible="{Binding !IsProxyRunning}">
+                      <TextBlock Text="已停止" FontSize="11" Foreground="White"/>
+                    </Border>
+                  </Panel>
+                </StackPanel>
+                <StackPanel Spacing="4">
+                  <TextBlock Text="{Binding ProxyPort, StringFormat='地址: http://127.0.0.1:{0}'}" Foreground="#aaa" FontSize="13"/>
+                  <TextBlock Text="{Binding ConnectionStatus}" Foreground="#888" FontSize="12"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Command="{Binding ToggleProxyCommand}" Content="{Binding ProxyToggleText}" Classes="accent"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Background="#25252b" CornerRadius="8" Padding="16">
+              <StackPanel Spacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="🛠" FontSize="18"/>
+                  <TextBlock Text="IDE 集成" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+                  <Border Background="#4a6cf7" CornerRadius="4" Padding="6,2">
+                    <TextBlock Text="推荐" FontSize="11" Foreground="White"/>
+                  </Border>
+                </StackPanel>
+                <TextBlock Text="一键配置主流 AI 编程工具" Foreground="#888" FontSize="13"/>
+                <ItemsControl ItemsSource="{Binding ToolConfigs}" x:CompileBindings="False">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Background="#2a2a32" CornerRadius="6" Padding="12" Margin="0,4">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                          <TextBlock Text="{Binding Icon}" FontSize="16" VerticalAlignment="Center"/>
+                          <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="White" FontSize="14" VerticalAlignment="Center" Margin="8,0"/>
+                          <Button Grid.Column="2" Content="复制配置" Classes="ghost" FontSize="12"
+                                  Command="{Binding $parent[Window].DataContext.CopyToolConfigCommand}"
+                                  CommandParameter="{Binding Name}"/>
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+
+            <Border Background="#25252b" CornerRadius="8" Padding="16">
+              <StackPanel Spacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="📋" FontSize="18"/>
+                  <TextBlock Text="请求日志" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+                </StackPanel>
+                <Border Background="#1e1e24" CornerRadius="4" MaxHeight="300">
+                  <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding LogEntries}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LogEntry">
+                          <Border CornerRadius="4" Padding="8,4" Margin="0,2">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                              <TextBlock Text="{Binding Time}" Foreground="#666" FontSize="11" FontFamily="Consolas"/>
+                              <TextBlock Text="{Binding Method}" Foreground="#4a6cf7" FontSize="11" FontWeight="Bold"/>
+                              <TextBlock Text="{Binding Path}" Foreground="#aaa" FontSize="11"/>
+                              <TextBlock Text="{Binding Model}" Foreground="#888" FontSize="11"/>
+                              <TextBlock Text="{Binding Tokens}" Foreground="#888" FontSize="11"/>
+                              <TextBlock Text="{Binding Cost}" Foreground="#888" FontSize="11"/>
+                              <TextBlock Text="{Binding CacheHitText}" Foreground="#888" FontSize="11"/>
+                            </StackPanel>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </ScrollViewer>
+                </Border>
+              </StackPanel>
+            </Border>
+
+          </StackPanel>
+        </ScrollViewer>
+
+      </Grid>
+
+      <Border Grid.Row="2" Background="#14141a" Padding="16,6">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <TextBlock Text="{Binding ConnectionStatus}" Foreground="#888" FontSize="12" VerticalAlignment="Center"/>
+          <TextBlock Grid.Column="2" Text="{Binding MemoryUsage}" Foreground="#888" FontSize="12" VerticalAlignment="Center"/>
+        </Grid>
+      </Border>
+
+      <Border Grid.RowSpan="3" IsVisible="{Binding IsSettingsOpen}" Background="#000000AA" ZIndex="100">
+        <Border Background="#25252b" CornerRadius="12" Width="700" Height="550" VerticalAlignment="Center" HorizontalAlignment="Center">
+          <Grid RowDefinitions="Auto,Auto,*,Auto">
+            <Border Grid.Row="0" Padding="16,12" BorderBrush="#333" BorderThickness="0,0,0,1">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="⚙ 设置" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                <Button Grid.Column="1" Command="{Binding CloseSettingsCommand}" Content="✕" Classes="ghost"/>
+              </Grid>
+            </Border>
+            <Border Grid.Row="1" Padding="16,8" BorderBrush="#333" BorderThickness="0,0,0,1">
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Button Content="提供商" Classes="tab" CommandParameter="0" Click="SwitchSettingsTab"/>
+                <Button Content="代理" Classes="tab" CommandParameter="1" Click="SwitchSettingsTab"/>
+                <Button Content="监控" Classes="tab" CommandParameter="2" Click="SwitchSettingsTab"/>
+                <Button Content="扫描器" Classes="tab" CommandParameter="3" Click="SwitchSettingsTab"/>
+                <Button Content="上下文" Classes="tab" CommandParameter="4" Click="SwitchSettingsTab"/>
+                <Button Content="货币" Classes="tab" CommandParameter="5" Click="SwitchSettingsTab"/>
+              </StackPanel>
+            </Border>
+            <ScrollViewer Grid.Row="2" Padding="16">
+              <StackPanel>
+                <StackPanel IsVisible="{Binding IsTab0Visible}" Spacing="12">
+                  <Grid ColumnDefinitions="*,2*">
+                    <StackPanel Spacing="8">
+                      <ListBox ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}" Height="200"/>
+                      <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Button Content="+ 新增" Command="{Binding AddProviderCommand}" Classes="accent" FontSize="12"/>
+                        <Button Content="删除" Command="{Binding RemoveProviderCommand}" Classes="danger" FontSize="12"/>
+                      </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="8" Margin="16,0,0,0">
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="API 密钥:" Foreground="#aaa" FontSize="13"/>
+                        <TextBox Text="{Binding ProviderApiKey}" PasswordChar="*" Classes="dark"/>
+                      </StackPanel>
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="基础 URL:" Foreground="#aaa" FontSize="13"/>
+                        <TextBox Text="{Binding ProviderBaseUrl}" Classes="dark"/>
+                      </StackPanel>
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="模型列表 (每行一个):" Foreground="#aaa" FontSize="13"/>
+                        <TextBox Text="{Binding ProviderModels}" AcceptsReturn="True" Height="120" Classes="dark"/>
+                      </StackPanel>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsTab1Visible}" Spacing="12">
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="主机地址:" Foreground="#aaa" FontSize="13"/>
+                    <TextBox Text="{Binding ProxyHost}" Classes="dark"/>
+                  </StackPanel>
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="端口:" Foreground="#aaa" FontSize="13"/>
+                    <TextBox Text="{Binding ProxyPortSetting}" Classes="dark"/>
+                  </StackPanel>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsTab2Visible}" Spacing="12">
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="预算限制 (美元):" Foreground="#aaa" FontSize="13"/>
+                    <TextBox Text="{Binding BudgetLimit}" Classes="dark"/>
+                  </StackPanel>
+                </StackPanel>
+
+                <TextBlock IsVisible="{Binding IsTab3Visible}" Text="扫描器配置将在下个版本完善" Foreground="#888"/>
+                <TextBlock IsVisible="{Binding IsTab4Visible}" Text="上下文配置将在下个版本完善" Foreground="#888"/>
+                <TextBlock IsVisible="{Binding IsTab5Visible}" Text="货币配置将在下个版本完善" Foreground="#888"/>
+              </StackPanel>
+            </ScrollViewer>
+            <Border Grid.Row="3" Padding="16,12" BorderBrush="#333" BorderThickness="0,1,0,0">
+              <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                <Button Content="保存" Command="{Binding SaveSettingsCommand}" Classes="accent"/>
+                <Button Content="取消" Command="{Binding CloseSettingsCommand}" Classes="ghost"/>
+              </StackPanel>
+            </Border>
+          </Grid>
+        </Border>
+      </Border>
+
+    </Grid>
+  </Panel>
+</Window>

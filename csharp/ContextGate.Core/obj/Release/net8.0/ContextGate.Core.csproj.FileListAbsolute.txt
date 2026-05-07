@@ -1,0 +1,13 @@
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\bin\Release\net8.0\ContextGate.Core.deps.json
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\bin\Release\net8.0\ContextGate.Core.dll
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\bin\Release\net8.0\ContextGate.Core.pdb
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\ContextGate.Core.csproj.AssemblyReference.cache
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\ContextGate.Core.GeneratedMSBuildEditorConfig.editorconfig
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\ContextGate.Core.AssemblyInfoInputs.cache
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\ContextGate.Core.AssemblyInfo.cs
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\ContextGate.Core.csproj.CoreCompileInputs.cache
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\ContextGate.Core.sourcelink.json
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\ContextGate.Core.dll
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\refint\ContextGate.Core.dll
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\ContextGate.Core.pdb
+c:\Users\Administrator\ContextGate\csharp\ContextGate.Core\obj\Release\net8.0\ref\ContextGate.Core.dll

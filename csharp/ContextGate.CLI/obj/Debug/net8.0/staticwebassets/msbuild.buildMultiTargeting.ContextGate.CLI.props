@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\ContextGate.CLI.props" />
+</Project>

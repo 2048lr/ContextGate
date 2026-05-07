@@ -5,9 +5,10 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.0.7--beta-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-5.0.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/.NET-8.0-blue" alt=".NET">
   <img src="https://img.shields.io/badge/Electron-28-blue" alt="Electron">
-  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows-green" alt="Platform">
+  <img src="https://img.shields.io/badge/platform-Windows-green" alt="Platform">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="License">
 </p>
 
@@ -33,11 +34,11 @@ ContextGate is a desktop application that serves as an intelligent API proxy and
 | Feature | Description |
 |---------|-------------|
 | **Smart Code Scanner** | Scans your project, respects `.gitignore`, extracts relevant code blocks |
-| **API Proxy Server** | High-performance Express proxy with request/response caching |
+| **API Proxy Server** | High-performance proxy with request/response caching |
 | **Token Monitor** | Real-time tracking of token usage and cost estimation |
 | **Multi-Provider** | Supports OpenAI, Zhipu AI, DeepSeek, and custom providers |
-| **Modern GUI** | GNOME-style dark theme with system tray integration |
-| **Cross-Platform** | Available for Linux (deb/rpm/AppImage) and Windows |
+| **Modern GUI** | Avalonia-based dark theme with Fluent design |
+| **Cross-Platform** | Windows (native), Linux/macOS (via Electron) |
 
 ### Quick Start
 
@@ -45,22 +46,24 @@ ContextGate is a desktop application that serves as an intelligent API proxy and
 
 Download the latest release from [GitHub Releases](https://github.com/2048lr/ContextGate/releases):
 
-**Linux:**
-```bash
-# Debian/Ubuntu
-sudo dpkg -i contextgate_*.deb
+**Windows:** Download and run `ContextGate-5.0.0-win-x64-setup.exe`
 
-# Fedora/RHEL
-sudo dnf install contextgate-*.rpm
-
-# AppImage
-chmod +x ContextGate-*.AppImage && ./ContextGate-*.AppImage
-```
-
-**Windows:** Download and run `ContextGate-Setup-*.exe`
+The installer includes:
+- **ContextGate Desktop** - GUI application
+- **ContextGate CLI** - Command-line tool
+- **ContextGate Proxy** - Standalone proxy service
 
 #### From Source
 
+**C#/.NET Version (Recommended for Windows):**
+```bash
+git clone https://github.com/2048lr/ContextGate.git
+cd ContextGate/csharp
+dotnet build
+dotnet run --project ContextGate.Desktop
+```
+
+**JavaScript/Electron Version (For Linux/macOS):**
 ```bash
 git clone https://github.com/2048lr/ContextGate.git
 cd ContextGate/app/gui-js
@@ -81,18 +84,21 @@ Launch the application and use the visual interface to:
 
 ```bash
 # Build context file for a project
-node cli.js build /path/to/project
+contextgate build /path/to/project
 
 # Start proxy server
-node cli.js serve /path/to/project --port 12306
+contextgate serve /path/to/project --port 12306
 
 # View usage statistics
-node cli.js stats
+contextgate stats
+
+# Scan project files
+contextgate scan /path/to/project
 ```
 
 ### Configuration
 
-Create `~/.config/contextgate/config.yaml`:
+Create `~/.contextgate/config.yaml`:
 
 ```yaml
 providers:
@@ -135,11 +141,11 @@ ContextGate 是一款桌面应用程序，为 AI 助手提供智能 API 代理�
 ### 核心功能
 
 - **智能代码扫描** - 自动扫描项目，支持 `.gitignore` 规则
-- **API 代理服务器** - 高性能 Express 代理，智能请求缓存
+- **API 代理服务器** - 高性能代理，智能请求缓存
 - **Token 监控** - 实时追踪 token 使用量和费用估算
 - **多提供商支持** - 支持 OpenAI、智谱 AI、DeepSeek 等
-- **现代化界面** - GNOME 风格深色主题，系统托盘集成
-- **跨平台** - 支持 Linux 和 Windows
+- **现代化界面** - Avalonia 框架 Fluent 风格深色主题
+- **跨平台** - Windows 原生支持，Linux/macOS 通过 Electron
 
 ### 快速开始
 
@@ -147,19 +153,24 @@ ContextGate 是一款桌面应用程序，为 AI 助手提供智能 API 代理�
 
 从 [GitHub Releases](https://github.com/2048lr/ContextGate/releases) 下载最新版本：
 
-**Linux:**
-```bash
-# Debian/Ubuntu
-sudo dpkg -i contextgate_*.deb
+**Windows:** 下载并运行 `ContextGate-5.0.0-win-x64-setup.exe`
 
-# Fedora/RHEL
-sudo dnf install contextgate-*.rpm
-```
-
-**Windows:** 下载并运行 `ContextGate-Setup-*.exe`
+安装包包含：
+- **ContextGate Desktop** - GUI 图形界面
+- **ContextGate CLI** - 命令行工具
+- **ContextGate Proxy** - 独立代理服务
 
 #### 从源码安装
 
+**C#/.NET 版本 (Windows 推荐):**
+```bash
+git clone https://github.com/2048lr/ContextGate.git
+cd ContextGate/csharp
+dotnet build
+dotnet run --project ContextGate.Desktop
+```
+
+**JavaScript/Electron 版本 (Linux/macOS):**
 ```bash
 git clone https://github.com/2048lr/ContextGate.git
 cd ContextGate/app/gui-js
@@ -180,18 +191,21 @@ npm start
 
 ```bash
 # 构建上下文文件
-node cli.js build /项目路径
+contextgate build /项目路径
 
 # 启动代理服务器
-node cli.js serve /项目路径 --port 12306
+contextgate serve /项目路径 --port 12306
 
 # 查看使用统计
-node cli.js stats
+contextgate stats
+
+# 扫描项目文件
+contextgate scan /项目路径
 ```
 
 ### 配置
 
-编辑 `~/.config/contextgate/config.yaml`：
+编辑 `~/.contextgate/config.yaml`：
 
 ```yaml
 providers:
@@ -208,20 +222,31 @@ providers:
 
 ---
 
-## Screenshots
-
-<p align="center">
-  <i>GUI Interface with GNOME-style design</i>
-</p>
-
 ## Changelog
 
-### v4.0.6-beta
-- 修复 Electron 在某些 Linux 环境下的崩溃问题
-- 改进代码扫描器的正则表达式匹配
-- 优化错误处理机制
+### v5.0.0
+
+**重大更新 - C#/.NET 8.0 原生版本发布**
+
+- 🚀 **全新 C#/.NET 8.0 实现** - 高性能原生 Windows 应用
+- 📦 **单文件安装包** - 包含 GUI、CLI、Proxy 三大组件
+- 🎨 **Avalonia UI** - 现代化 Fluent 设计风格
+- ⚡ **性能优化** - 更快的启动速度和更低的内存占用
+- 🔧 **完整功能迁移** - 所有 JS 版本功能已完整迁移
+
+**重要公告**
+
+> ⚠️ **Linux/macOS 版本开发暂缓**
+>
+> 由于资源限制，我们决定暂时放缓 Linux 和 macOS 原生版本的开发。
+>
+> - **Windows 用户**: 推荐使用新的 C#/.NET 原生版本
+> - **Linux/macOS 用户**: 可继续使用 Electron 版本 (app/gui-js)
+>
+> Electron 版本将继续维护，确保跨平台用户的使用体验。
 
 ### v4.0.0
+
 - 完全重写，从 Python/PySide6 迁移到 JavaScript/Electron
 - 新增 GNOME 风格用户界面
 - 支持多架构 (x64, ARM64)

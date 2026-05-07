@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   runScript: (scriptPath, action) => ipcRenderer.invoke('run-script', scriptPath, action),
   getStats: () => ipcRenderer.invoke('get-stats'),
   getMemoryUsage: () => ipcRenderer.invoke('get-memory-usage'),
+  fetchModels: (providerName) => ipcRenderer.invoke('fetch-models', providerName),
   onProxyLog: (callback) => ipcRenderer.on('proxy-log', (event, data) => callback(data)),
   onProxyError: (callback) => ipcRenderer.on('proxy-error', (event, data) => callback(data)),
   onProxyStopped: (callback) => ipcRenderer.on('proxy-stopped', () => callback()),

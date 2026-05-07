@@ -29,10 +29,8 @@ function isCLIMode() {
 function getBackgroundPath() {
   const isDev = !app.isPackaged
   if (isDev) {
-    // 在开发模式下，resources目录位于项目根目录
     return path.join(__dirname, '..', '..', 'resources', 'background.jpg')
   }
-  // 在打包模式下，resources位于process.resourcesPath
   return path.join(process.resourcesPath, 'resources', 'background.jpg')
 }
 
@@ -411,5 +409,59 @@ ipcMain.handle('get-memory-usage', () => {
     heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
     heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
     rss: Math.round(memUsage.rss / 1024 / 1024)
+  }
+})
+
+ipcMain.handle('fetch-models', async (event, providerName) => {
+  const axios = require('axios')
+  const configManager = new ConfigManager(path.join(getDataDir(), 'config.yaml'))
+  const provider = configManager.getProvider(providerName)
+
+  if (!provider) {
+    return { success: false, error: `提供商 "${providerName}" 不存在` }
+  }
+  if (!provider.api_key || provider.api_key.startsWith('your-')) {
+    return { success: false, error: '请先配置有效的 API 密钥' }
+  }
+  if (!provider.base_url) {
+    return { success: false, error: '请先配置基础 URL' }
+  }
+
+  try {
+    const baseUrl = provider.base_url.replace(/\/+$/, '')
+    const response = await axios.get(`${baseUrl}/models`, {
+      headers: {
+        'Authorization': `Bearer ${provider.api_key}`
+      },
+      timeout: 15000
+    })
+
+    const data = response.data
+    let models = []
+
+    // 兼容 OpenAI 格式: { data: [{ id: "model-name" }, ...] }
+    if (data && Array.isArray(data.data)) {
+      models = data.data
+        .map(m => m.id || m.model)
+        .filter(Boolean)
+        .sort()
+    }
+    // 兼容部分提供商的直接数组格式
+    else if (Array.isArray(data)) {
+      models = data
+        .map(m => (typeof m === 'string' ? m : m.id || m.model))
+        .filter(Boolean)
+        .sort()
+    }
+
+    if (models.length === 0) {
+      return { success: false, error: '未获取到任何模型，请检查 API 密钥和 URL 是否正确' }
+    }
+
+    return { success: true, models }
+  } catch (error) {
+    const status = error.response?.status
+    const detail = error.response?.data?.error?.message || error.response?.data?.error || error.message
+    return { success: false, error: `请求失败${status ? ` (HTTP ${status})` : ''}: ${detail}` }
   }
 })

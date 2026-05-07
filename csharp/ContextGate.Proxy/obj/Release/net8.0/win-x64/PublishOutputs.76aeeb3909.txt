@@ -1,0 +1,7 @@
+c:\Users\Administrator\ContextGate\csharp\publish\Proxy\appsettings.Development.json
+c:\Users\Administrator\ContextGate\csharp\publish\Proxy\appsettings.json
+c:\Users\Administrator\ContextGate\csharp\publish\Proxy\ContextGate.Proxy.pdb
+c:\Users\Administrator\ContextGate\csharp\publish\Proxy\aspnetcorev2_inprocess.dll
+c:\Users\Administrator\ContextGate\csharp\publish\Proxy\e_sqlite3.dll
+c:\Users\Administrator\ContextGate\csharp\publish\Proxy\ContextGate.Core.pdb
+c:\Users\Administrator\ContextGate\csharp\publish\Proxy\ContextGate.Proxy.exe

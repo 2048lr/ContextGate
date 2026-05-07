@@ -1,0 +1,13 @@
+;!@Install@!UTF-8!
+Title="ContextGate v4.0.7 安装程序"
+BeginPrompt="是否安装 ContextGate v4.0.7?"
+ExtractTitle="正在解压..."
+ExtractDialogText="请选择安装目录"
+ExtractPathText="安装目录"
+Progress="yes"
+GUIFlags="8+32+64+256+4096"
+GUIMode="1"
+OverwriteMode="2"
+InstallPath="%USERPROFILE%\ContextGate"
+RunProgram="hidcon:cmd /c copy \"%%T\\install.bat\" \"%%T\\..\\install.bat\" >nul"
+;!@InstallEnd@!

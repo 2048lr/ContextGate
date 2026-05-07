@@ -1,0 +1,6 @@
+@ContextGate.Proxy_HostAddress = http://localhost:5130
+
+GET {{ContextGate.Proxy_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

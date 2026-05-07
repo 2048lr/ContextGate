@@ -213,6 +213,13 @@ html, body {
   color: #00d4aa;
 }
 
+.stat-percent {
+  font-size: 11px;
+  color: #4caf50;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
 .quick-actions {
   padding: 0 16px;
   display: flex;
@@ -829,6 +836,29 @@ html, body {
 .provider-editor {
   flex: 1;
 }
+
+.model-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.model-list-header label {
+  margin-bottom: 0;
+}
+
+.model-list-header .small-btn {
+  flex: none;
+  padding: 4px 12px;
+  font-size: 11px;
+}
+
+.model-list-header .small-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 
 .small-btn {
   flex: 1;

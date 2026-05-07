@@ -230,6 +230,33 @@ class TokenMonitor {
 
       const providerStats = this.db.exec('SELECT provider, COUNT(*) as count, SUM(total_tokens) as tokens, SUM(cost) as cost FROM requests GROUP BY provider')
 
+      // Auto-calculate savings percentage: cached token ratio
+      let savingsPercent = 0
+      let todayCachedTokens = 0
+      try {
+        const cachedResult = this.db.exec(
+          "SELECT COALESCE(SUM(total_tokens), 0) FROM requests WHERE cached = 1 AND date(timestamp) = date('now')"
+        )
+        todayCachedTokens = (cachedResult.length > 0 && cachedResult[0].values[0][0]) || 0
+        const todayAllTokens = todayData.tokens + todayCachedTokens
+        if (todayAllTokens > 0) {
+          savingsPercent = Math.round((todayCachedTokens / todayAllTokens) * 100)
+        }
+      } catch (e) {}
+
+      // Monthly savings percentage
+      let monthSavingsPercent = 0
+      try {
+        const monthCachedResult = this.db.exec(
+          "SELECT COALESCE(SUM(total_tokens), 0) FROM requests WHERE cached = 1 AND strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')"
+        )
+        const monthCachedTokens = (monthCachedResult.length > 0 && monthCachedResult[0].values[0][0]) || 0
+        const monthAllTokens = monthData.tokens + monthCachedTokens
+        if (monthAllTokens > 0) {
+          monthSavingsPercent = Math.round((monthCachedTokens / monthAllTokens) * 100)
+        }
+      } catch (e) {}
+
       return {
         total: {
           requestCount,
@@ -246,6 +273,8 @@ class TokenMonitor {
           tokens: row[2],
           cost: row[3]
         })) : [],
+        savingsPercent,
+        monthSavingsPercent,
         uptime: process.uptime()
       }
     } catch (e) {
@@ -260,6 +289,8 @@ class TokenMonitor {
         today: { requests: 0, tokens: 0, cost: 0, cacheHits: 0 },
         month: { requests: 0, tokens: 0, cost: 0 },
         byProvider: [],
+        savingsPercent: 0,
+        monthSavingsPercent: 0,
         uptime: process.uptime()
       }
     }

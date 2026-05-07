@@ -1,0 +1,120 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ContextGate.Desktop.App"
+             xmlns:local="using:ContextGate.Desktop"
+             RequestedThemeVariant="Dark">
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <Style Selector="Window">
+            <Setter Property="Background" Value="#19191e"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+        </Style>
+
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#25252b"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+        <Style Selector="Border.sidebar">
+            <Setter Property="Background" Value="#1e1e24"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+
+        <Style Selector="TextBlock.card-title">
+            <Setter Property="Foreground" Value="#a0a0b0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <Style Selector="TextBlock.stat-value">
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style Selector="TextBlock.stat-label">
+            <Setter Property="Foreground" Value="#808090"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+
+        <Style Selector="Button.accent">
+            <Setter Property="Background" Value="#4a6cf7"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Button.accent:pointerover">
+            <Setter Property="Background" Value="#5b7bf8"/>
+        </Style>
+
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#e74c3c"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="16,8"/>
+        </Style>
+        <Style Selector="Button.danger:pointerover">
+            <Setter Property="Background" Value="#c0392b"/>
+        </Style>
+
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#a0a0b0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,8"/>
+        </Style>
+        <Style Selector="Button.ghost:pointerover">
+            <Setter Property="Background" Value="#33333a"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+        </Style>
+
+        <Style Selector="Border.stat-card">
+            <Setter Property="Background" Value="#2a2a32"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12"/>
+        </Style>
+
+        <Style Selector="Border.status-running">
+            <Setter Property="Background" Value="#27ae60"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+        </Style>
+
+        <Style Selector="Border.status-stopped">
+            <Setter Property="Background" Value="#e74c3c"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+        </Style>
+
+        <Style Selector="TextBox.dark">
+            <Setter Property="Background" Value="#2a2a32"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+            <Setter Property="BorderBrush" Value="#3a3a44"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+
+        <Style Selector="Button.tab">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#a0a0b0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.tab:pointerover">
+            <Setter Property="Background" Value="#33333a"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+        </Style>
+    </Application.Styles>
+</Application>

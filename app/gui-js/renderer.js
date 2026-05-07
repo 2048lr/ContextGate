@@ -6,7 +6,9 @@ let stats = {
   todayRequests: 0,
   todayTokens: 0,
   todaySavings: 0,
-  cacheHits: 0
+  cacheHits: 0,
+  savingsPercent: 0,
+  monthSavingsPercent: 0
 }
 let currentCurrency = 'USD'
 
@@ -87,7 +89,9 @@ async function loadStats() {
         todayRequests: summary.today?.requests || 0,
         todayTokens: summary.today?.tokens || 0,
         todaySavings: summary.today?.cost || 0,
-        cacheHits: summary.total?.cacheHits || 0
+        cacheHits: summary.total?.cacheHits || 0,
+        savingsPercent: summary.savingsPercent || 0,
+        monthSavingsPercent: summary.monthSavingsPercent || 0
       }
       updateStatsUI()
       updateContextHash()
@@ -139,6 +143,7 @@ function updateStatsUI() {
   const totalReq = stats.todayRequests + stats.cacheHits
   const hitRate = totalReq > 0 ? Math.round((stats.cacheHits / totalReq) * 100) : 0
   document.getElementById('stat-cache-hit').textContent = hitRate + '%'
+  document.getElementById('stat-savings-percent').textContent = stats.savingsPercent + '%'
 }
 
 function updateContextHash() {
@@ -182,6 +187,7 @@ function setupEventListeners() {
 
   document.getElementById('btn-add-provider').addEventListener('click', addProvider)
   document.getElementById('btn-remove-provider').addEventListener('click', removeProvider)
+  document.getElementById('btn-fetch-models').addEventListener('click', fetchModels)
   document.getElementById('provider-select').addEventListener('change', selectProvider)
 
   document.getElementById('btn-minimize').addEventListener('click', () => window.electronAPI.minimizeWindow())
@@ -448,6 +454,36 @@ function removeProvider() {
 function saveConfigProviders() {
   saveCurrentProvider()
   if (!config.providers) config.providers = {}
+}
+
+async function fetchModels() {
+  const select = document.getElementById('provider-select')
+  const providerName = select.value
+  if (!providerName) {
+    alert('请先选择一个提供商')
+    return
+  }
+
+  const btn = document.getElementById('btn-fetch-models')
+  const origText = btn.textContent
+  btn.textContent = '拉取中...'
+  btn.disabled = true
+
+  try {
+    const result = await window.electronAPI.fetchModels(providerName)
+    if (result.success) {
+      document.getElementById('provider-models').value = result.models.join('
+')
+      showToast('成功获取 ' + result.models.length + ' 个模型')
+    } else {
+      alert('获取模型失败: ' + result.error)
+    }
+  } catch (e) {
+    alert('获取模型失败: ' + e.message)
+  } finally {
+    btn.textContent = origText
+    btn.disabled = false
+  }
 }
 
 function openSettings() {

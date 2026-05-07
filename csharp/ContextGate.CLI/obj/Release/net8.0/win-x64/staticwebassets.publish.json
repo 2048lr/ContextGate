@@ -1,0 +1,23 @@
+{
+  "Version": 1,
+  "Hash": "6mhhtmkZxKs6Nh254+LtPXphOfSMKY1jl941LU6RK8k=",
+  "Source": "ContextGate.CLI",
+  "BasePath": "_content/ContextGate.CLI",
+  "Mode": "Default",
+  "ManifestType": "Publish",
+  "ReferencedProjectsConfiguration": [
+    {
+      "Identity": "c:\\Users\\Administrator\\ContextGate\\csharp\\ContextGate.Proxy\\ContextGate.Proxy.csproj",
+      "Version": 2,
+      "Source": "ContextGate.Proxy",
+      "GetPublishAssetsTargets": "ComputeReferencedStaticWebAssetsPublishManifest;GetCurrentProjectPublishStaticWebAssetItems",
+      "AdditionalPublishProperties": "",
+      "AdditionalPublishPropertiesToRemove": "WebPublishProfileFile;TargetFramework",
+      "GetBuildAssetsTargets": "GetCurrentProjectBuildStaticWebAssetItems",
+      "AdditionalBuildProperties": "",
+      "AdditionalBuildPropertiesToRemove": "WebPublishProfileFile;TargetFramework"
+    }
+  ],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
