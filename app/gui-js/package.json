@@ -1,6 +1,6 @@
 {
   "name": "contextgate",
-  "version": "4.0.7",
+  "version": "4.10.0-beta",
   "description": "AI Context Management & Proxy System",
   "main": "main.js",
   "scripts": {
@@ -139,7 +139,7 @@
       "compression": "bzip2",
       "afterInstall": "build/after-install.sh",
       "afterRemove": "build/after-remove.sh",
-      "requires": [
+      "depends": [
         "gtk3",
         "libnotify",
         "nss",
