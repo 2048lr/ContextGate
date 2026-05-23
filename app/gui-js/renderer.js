@@ -163,10 +163,6 @@ function setupEventListeners() {
 
   document.getElementById('btn-add-provider').addEventListener('click', addProvider)
   document.getElementById('btn-remove-provider').addEventListener('click', removeProvider)
-  document.getElementById('provider-select').addEventListener('change', () => {
-    if (_suppressSelectChange) return
-    selectProvider()
-  })
   document.getElementById('btn-fetch-models').addEventListener('click', fetchModels)
   document.getElementById('btn-select-all').addEventListener('click', () => {
     document.querySelectorAll('#provider-models-checkboxes input[type=checkbox]').forEach(cb => { cb.checked = true; cb.dispatchEvent(new Event('change')) })
@@ -327,7 +323,7 @@ async function checkProxyStatus() {
 function populateProviderSelect() {
   const select = document.getElementById('provider-select')
   if (!select) return
-  _suppressSelectChange = true
+  select.onchange = null
   const currentValue = select.value
   select.innerHTML = ''
   const providers = config.providers || {}
@@ -347,10 +343,12 @@ function populateProviderSelect() {
     document.getElementById('provider-api-key').value = ''
     document.getElementById('provider-base-url').value = ''
     _renderModelCheckboxes([])
+    _currentProviderName = null
   }
-  _suppressSelectChange = false
   _populateDefaultProviderSelect()
-  if (select.options.length > 0) selectProvider()
+  select.onchange = () => {
+    selectProvider()
+  }
 }
 
 function _populateDefaultProviderSelect() {
@@ -508,21 +506,19 @@ function _groupModels(models) {
   return result
 }
 
-let _selectedProviderBeforeSwitch = null
+let _currentProviderName = null
 let _fetchedModelsMap = {}
-let _suppressSelectChange = false
 let _currentModelFilterFn = null
 
 function selectProvider() {
+  if (_currentProviderName) {
+    _saveProviderFieldsToConfig(_currentProviderName)
+  }
   const select = document.getElementById('provider-select')
+  if (!select) return
   const name = select.value
   if (!name) return
-
-  if (_selectedProviderBeforeSwitch && _selectedProviderBeforeSwitch !== name) {
-    _saveProviderFieldsToConfig(_selectedProviderBeforeSwitch)
-  }
-  _selectedProviderBeforeSwitch = name
-
+  _currentProviderName = name
   const providers = config.providers || {}
   const provider = providers[name]
   if (!provider) return
@@ -616,10 +612,7 @@ async function fetchModels() {
 }
 
 function saveCurrentProvider() {
-  const select = document.getElementById('provider-select')
-  const name = select.value
-  if (!name) return
-  _saveProviderFieldsToConfig(name)
+  if (_currentProviderName) _saveProviderFieldsToConfig(_currentProviderName)
 }
 
 function addProvider() {
@@ -630,9 +623,7 @@ function addProvider() {
   if (!config.providers) config.providers = {}
   config.providers[trimmed] = config.providers[trimmed] || { api_key: '', base_url: '', models: [] }
   populateProviderSelect()
-  _suppressSelectChange = true
   document.getElementById('provider-select').value = trimmed
-  _suppressSelectChange = false
   selectProvider()
 }
 
@@ -643,7 +634,10 @@ function removeProvider() {
   if (!confirm(`确认删除提供商 "${name}"?`)) return
   if (!config.providers) return
   delete config.providers[name]
+  delete _fetchedModelsMap[name]
+  _currentProviderName = null
   populateProviderSelect()
+  if (select.options.length > 0) selectProvider()
 }
 
 function saveConfigProviders() {
@@ -652,7 +646,6 @@ function saveConfigProviders() {
 }
 
 function openSettings() {
-  _selectedProviderBeforeSwitch = null
   loadConfigToSettings()
   document.getElementById('settings-modal').classList.remove('hidden')
 }
@@ -662,12 +655,15 @@ function closeSettings() {
 }
 
 function loadConfigToSettings() {
+  _currentProviderName = null
   const proxyConfig = config.proxy || {}
   document.getElementById('proxy-host').value = proxyConfig.host || '127.0.0.1'
   document.getElementById('proxy-port').value = proxyConfig.port || 12306
   document.getElementById('proxy-sanitize').checked = proxyConfig.sanitize_requests !== false
 
   populateProviderSelect()
+  const providerSelect = document.getElementById('provider-select')
+  if (providerSelect && providerSelect.options.length > 0) selectProvider()
 
   const monitorConfig = config.monitor || {}
   document.getElementById('budget-limit').value = monitorConfig.budget_limit || 10
