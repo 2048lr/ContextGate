@@ -243,7 +243,9 @@ class AIProxy {
         status: 'ok',
         service: 'ContextGate Proxy',
         base_url: '/v1',
-        routes: ['GET /v1', 'GET /v1/models', 'POST /v1/chat/completions', 'POST /proxy/chat']
+        routes: ['ALL /v1/*', 'GET /v1', 'GET /v1/models', 'POST /proxy/chat'],
+        cacheMode: 'smart',
+        streamCaching: true
       })
     })
 
@@ -272,12 +274,14 @@ class AIProxy {
       }
     })
 
-    this.app.post('/v1/*', async (req, res) => {
+    this.app.all('/v1/*', async (req, res) => {
       const reqStart = Date.now()
-      const reqSize = JSON.stringify(req.body || {}).length
-      const model = (req.body && req.body.model) || ''
-      const messages = (req.body && req.body.messages) || []
-      const isStream = !!(req.body && req.body.stream)
+      const body = req.body || (req.query || {})
+      const reqSize = JSON.stringify(body).length
+      const model = body.model || req.query.model || ''
+      const messages = body.messages || []
+      const isStream = !!(body.stream)
+      const reqMethod = req.method
 
       try {
         this._invalidateCacheIfNeeded()
@@ -288,7 +292,7 @@ class AIProxy {
 
         if (!providerConfig) {
           this._emitLog({
-            type: 'error', method: 'POST', path: req.path,
+            type: 'error', method: reqMethod, path: req.path,
             provider, model, requestSize: reqSize, messagePreview: this._extractMsgPreview(messages),
             error: 'Unknown provider: ' + provider, status: 400, responseTime: Date.now() - reqStart
           })
@@ -298,38 +302,49 @@ class AIProxy {
         const backendUrl = (providerConfig.base_url || '').replace(/\/+$/, '') + '/' + backendPath.replace(/^\/+/, '')
         const msgPreview = this._extractMsgPreview(messages)
 
-        if (isStream) {
-          this._emitLog({
-            type: 'stream', method: 'POST', path: req.path,
-            provider, model, backendUrl, requestSize: reqSize,
-            messagePreview: msgPreview, status: 200, responseTime: Date.now() - reqStart
-          })
-          return this._streamChatRequest(
-            providerConfig, provider, model, messages, req.body, req, res
-          )
-        }
-
         const cacheKey = this._getCacheKey(req)
         if (this.cache.has(cacheKey)) {
           console.log(`[Cache HIT] ${cacheKey}`)
           const cachedData = this.cache.get(cacheKey)
-          const cachedUsage = cachedData && cachedData.usage
-          this._recordRequest(provider, model, cachedData, true, 0)
+          const cachedUsage = cachedData._usage || (cachedData.usage) || {}
+          this._recordRequest(provider, model, { usage: cachedUsage }, true, 0)
           this._emitLog({
-            type: 'response', method: 'POST', path: req.path,
+            type: 'response', method: reqMethod, path: req.path,
             provider, model, backendUrl, requestSize: reqSize,
             messagePreview: msgPreview,
-            tokens: { prompt: (cachedUsage && cachedUsage.prompt_tokens) || 0, completion: (cachedUsage && cachedUsage.completion_tokens) || 0, total: (cachedUsage && cachedUsage.total_tokens) || 0 },
+            tokens: { prompt: cachedUsage.prompt_tokens || 0, completion: cachedUsage.completion_tokens || 0, total: cachedUsage.total_tokens || 0 },
             cached: true, status: 200, responseTime: Date.now() - reqStart
           })
+
+          if (cachedData._streamChunks) {
+            res.writeHead(200, {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+              'X-Accel-Buffering': 'no',
+              'X-Cache': 'HIT'
+            })
+            for (const chunk of cachedData._streamChunks) {
+              res.write(chunk)
+            }
+            return res.end()
+          }
+
+          res.setHeader('X-Cache', 'HIT')
           return res.json(cachedData)
         }
 
-        const response = await this._forwardRequest(providerConfig, backendPath, req.body)
+        if (isStream) {
+          return this._streamChatRequestCached(
+            providerConfig, provider, model, messages, body, req, res, cacheKey, reqStart
+          )
+        }
+
+        const response = await this._forwardRequest(providerConfig, backendPath, body)
         const responseTime = Date.now() - reqStart
         const respUsage = response.data && response.data.usage
 
-        if (response.data && this._shouldCache(req.method)) {
+        if (response.data && this._shouldCache(reqMethod)) {
           this.cache.set(cacheKey, response.data)
           console.log(`[Cache SET] ${cacheKey}`)
         }
@@ -337,7 +352,7 @@ class AIProxy {
         this.requestCount++
         this._recordRequest(provider, model, response.data, false, responseTime)
         this._emitLog({
-          type: 'response', method: 'POST', path: req.path,
+          type: 'response', method: reqMethod, path: req.path,
           provider, model, backendUrl, requestSize: reqSize,
           messagePreview: msgPreview,
           tokens: { prompt: (respUsage && respUsage.prompt_tokens) || 0, completion: (respUsage && respUsage.completion_tokens) || 0, total: (respUsage && respUsage.total_tokens) || 0 },
@@ -348,7 +363,7 @@ class AIProxy {
         const responseTime = Date.now() - reqStart
         console.error('Proxy error:', error.message)
         this._emitLog({
-          type: 'error', method: 'POST', path: req.path,
+          type: 'error', method: reqMethod, path: req.path,
           provider: '', model, requestSize: reqSize,
           messagePreview: this._extractMsgPreview(messages),
           error: error.message, status: error.response ? error.response.status : 500, responseTime
@@ -458,8 +473,20 @@ class AIProxy {
 
   _getCacheKey(req) {
     const contextHash = this._getContextHash()
-    const bodyHash = crypto.createHash('md5').update(JSON.stringify(req.body)).digest('hex').substring(0, 12)
-    return `${req.method}:${req.path}:${contextHash.substring(0, 8)}:${bodyHash}`
+    const body = req.body || {}
+    let msgFingerprint = ''
+    if (body.messages && Array.isArray(body.messages)) {
+      const lastUser = [...body.messages].reverse().find(m => m.role === 'user')
+      if (lastUser && lastUser.content) {
+        const text = typeof lastUser.content === 'string' ? lastUser.content : JSON.stringify(lastUser.content)
+        msgFingerprint = crypto.createHash('md5').update(text).digest('hex').substring(0, 12)
+      }
+    }
+    const modelKey = body.model || 'unknown'
+    if (!msgFingerprint) {
+      msgFingerprint = crypto.createHash('md5').update(JSON.stringify(body)).digest('hex').substring(0, 12)
+    }
+    return `${req.method}:${req.path}:${modelKey}:${msgFingerprint}`
   }
 
   _shouldCache(method) {
@@ -514,9 +541,18 @@ class AIProxy {
     }
   }
 
-  _streamChatRequest(providerConfig, provider, model, messages, options, req, res) {
+  _streamChatRequestCached(providerConfig, provider, model, messages, options, req, res, cacheKey, reqStart) {
     const url = `${providerConfig.base_url}/chat/completions`
-    const requestStart = Date.now()
+    const streamChunks = []
+    let lastChunkData = ''
+    const backendUrl = url
+
+    const msgPreview = this._extractMsgPreview(messages)
+    this._emitLog({
+      type: 'stream', method: 'POST', path: req.path,
+      provider, model, backendUrl, requestSize: JSON.stringify(options || {}).length,
+      messagePreview: msgPreview, status: 200, responseTime: Date.now() - reqStart
+    })
 
     const axiosReq = axios({
       method: 'POST',
@@ -535,11 +571,12 @@ class AIProxy {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'X-Accel-Buffering': 'no'
+        'X-Accel-Buffering': 'no',
+        'X-Cache': 'MISS'
       })
 
-      let lastChunkData = ''
       response.data.on('data', (chunk) => {
+        streamChunks.push(chunk)
         res.write(chunk)
         const text = chunk.toString()
         const lines = text.split('\n')
@@ -552,14 +589,19 @@ class AIProxy {
 
       response.data.on('end', () => {
         try {
+          let usage = {}
           if (lastChunkData) {
             const parsed = JSON.parse(lastChunkData)
-            const responseTime = Date.now() - requestStart
+            usage = parsed.usage || parsed
+            const responseTime = Date.now() - reqStart
             this._recordRequest(provider, model, parsed, false, responseTime)
           }
+          this.cache.set(cacheKey, { _streamChunks: streamChunks, _usage: usage })
+          console.log(`[Cache SET stream] ${cacheKey}`)
         } catch (e) {
           console.error('Failed to parse stream usage:', e)
         }
+        this.requestCount++
         res.end()
       })
 
@@ -569,6 +611,13 @@ class AIProxy {
       })
     }).catch(error => {
       console.error('Stream request error:', error.message)
+      const responseTime = Date.now() - reqStart
+      this._emitLog({
+        type: 'error', method: 'POST', path: req.path,
+        provider, model, requestSize: 0,
+        messagePreview: msgPreview,
+        error: error.message, status: error.response ? error.response.status : 500, responseTime
+      })
       res.status(500).json({ error: error.message })
     })
   }
