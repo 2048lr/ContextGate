@@ -1,5 +1,7 @@
 const express = require('express')
 const axios = require('axios')
+const https = require('https')
+const http = require('http')
 const fs = require('fs')
 const path = require('path')
 const yaml = require('js-yaml')
@@ -7,6 +9,54 @@ const crypto = require('crypto')
 const { CodeScanner, ContextExtractor } = require('./scanner')
 
 const CONTEXT_HASH_FILE = '.context_hash'
+
+const sharedHttpsAgent = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 30000,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+  timeout: 30000,
+  rejectUnauthorized: false,
+  minVersion: 'TLSv1.2',
+  ciphers: 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA@STRENGTH'
+})
+
+const sharedHttpAgent = new http.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 30000,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+  timeout: 30000
+})
+
+const axiosInstance = axios.create({
+  httpAgent: sharedHttpAgent,
+  httpsAgent: sharedHttpsAgent,
+  maxRedirects: 5,
+  decompress: true,
+  transitional: { silentJSONParsing: true, forcedJSONParsing: true, clarifyTimeoutError: true }
+})
+
+async function axiosRetry(config, retries) {
+  retries = retries || 2
+  let lastErr = null
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await axiosInstance(config)
+    } catch (err) {
+      lastErr = err
+      const code = err.code || ''
+      if (['ECONNRESET', 'ETIMEDOUT', 'EPIPE', 'ECONNABORTED', 'ERR_TLS_CERT_ALTNAME_INVALID'].includes(code) && i < retries) {
+        const delay = Math.min(500 * Math.pow(2, i), 3000)
+        console.log(`[Retry ${i + 1}/${retries}] ${code} - waiting ${delay}ms`)
+        await new Promise(r => setTimeout(r, delay))
+        continue
+      }
+      throw err
+    }
+  }
+  throw lastErr
+}
 
 function computeFileHash(filePath) {
   try {
@@ -256,7 +306,7 @@ class AIProxy {
         if (!providerConfig) {
           return res.status(400).json({ error: `Unknown provider: ${provider}` })
         }
-        const response = await axios({
+        const response = await axiosRetry({
           method: 'GET',
           url: `${providerConfig.base_url}/models`,
           headers: {
@@ -504,7 +554,7 @@ class AIProxy {
   async _forwardRequest(providerConfig, backendPath, data) {
     const url = `${providerConfig.base_url}${backendPath}`
     try {
-      const response = await axios({
+      const response = await axiosRetry({
         method: 'POST',
         url,
         data,
@@ -516,7 +566,6 @@ class AIProxy {
       })
       return response
     } catch (error) {
-      // 重新抛出错误以便上层处理
       throw error
     }
   }
@@ -524,7 +573,7 @@ class AIProxy {
   async _forwardChatRequest(providerConfig, model, messages, options) {
     const url = `${providerConfig.base_url}/chat/completions`
     try {
-      const response = await axios({
+      const response = await axiosRetry({
         method: 'POST',
         url,
         data: { model, messages, ...options },
@@ -536,7 +585,6 @@ class AIProxy {
       })
       return response
     } catch (error) {
-      // 重新抛出错误以便上层处理
       throw error
     }
   }
@@ -554,7 +602,7 @@ class AIProxy {
       messagePreview: msgPreview, status: 200, responseTime: Date.now() - reqStart
     })
 
-    const axiosReq = axios({
+    const axiosReq = axiosInstance({
       method: 'POST',
       url,
       data: { model, messages, stream: true, ...options },
