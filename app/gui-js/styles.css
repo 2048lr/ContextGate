@@ -651,19 +651,163 @@ html, body {
   overflow-y: auto;
   font-family: 'Consolas', 'Cascadia Code', 'Monaco', monospace;
   font-size: 11px;
-  line-height: 1.7;
-  max-height: 320px;
+  max-height: 420px;
 }
 
-.log-entry {
-  padding: 5px 10px;
-  border-radius: 6px;
-  margin-bottom: 1px;
+.log-row {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
   transition: background 0.15s;
+  cursor: default;
 }
 
-.log-entry:hover {
-  background: rgba(40, 40, 50, 0.4);
+.log-row:hover {
+  background: rgba(0, 212, 170, 0.03);
+}
+
+.log-row-cache {
+  opacity: 0.7;
+}
+
+.log-row-error {
+  background: rgba(241, 76, 76, 0.04);
+}
+
+.log-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.log-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  min-width: 38px;
+  flex-shrink: 0;
+}
+
+.log-tag-ok {
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+}
+
+.log-tag-cache {
+  background: rgba(78, 201, 176, 0.12);
+  color: #4ec9b0;
+}
+
+.log-tag-stream {
+  background: rgba(86, 156, 214, 0.15);
+  color: #569cd6;
+}
+
+.log-tag-err {
+  background: rgba(241, 76, 76, 0.18);
+  color: #f14c4c;
+}
+
+.log-row-model {
+  color: #ce9178;
+  font-weight: 500;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.log-row-tokens {
+  color: #909090;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.log-row-time {
+  color: #606060;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.log-row-provider {
+  color: #808080;
+  font-size: 10px;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.log-row-cost {
+  color: #00d4aa;
+  font-weight: 600;
+  font-size: 10px;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.log-row-detail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.log-row-path {
+  color: #a0a0a0;
+  font-size: 10px;
+}
+
+.log-row-url {
+  color: #505050;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.log-row-size {
+  color: #606060;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.log-row-status {
+  color: #909090;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.log-row-preview {
+  color: #707070;
+  font-size: 10px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  border-left: 2px solid rgba(255, 255, 255, 0.06);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.log-row-errmsg {
+  color: #f14c4c;
+  font-size: 10px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: rgba(241, 76, 76, 0.06);
+  border-radius: 4px;
+  border-left: 2px solid rgba(241, 76, 76, 0.3);
 }
 
 .log-time {
@@ -683,14 +827,6 @@ html, body {
 .log-cost {
   color: #00d4aa;
   font-weight: 500;
-}
-
-.log-hit {
-  background: rgba(0, 212, 170, 0.04);
-}
-
-.log-miss {
-  background: transparent;
 }
 
 #bottom-bar {
@@ -1327,52 +1463,4 @@ html, body {
 
 .toast-info {
   border-left: 3px solid #569cd6;
-}
-
-.log-model-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 8px;
-  border-radius: 4px;
-  background: rgba(206, 145, 120, 0.15);
-  color: #ce9178;
-  font-size: 10px;
-  font-weight: 500;
-  margin: 0 4px;
-}
-
-.log-tokens-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 8px;
-  border-radius: 4px;
-  background: rgba(220, 220, 170, 0.12);
-  color: #dcdcaa;
-  font-size: 10px;
-  font-weight: 500;
-  margin: 0 4px;
-}
-
-.log-hit-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 8px;
-  border-radius: 4px;
-  background: rgba(78, 201, 176, 0.15);
-  color: #4ec9b0;
-  font-size: 10px;
-  font-weight: 600;
-  margin: 0 4px;
-}
-
-.log-miss-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 8px;
-  border-radius: 4px;
-  background: rgba(241, 76, 76, 0.12);
-  color: #f14c4c;
-  font-size: 10px;
-  font-weight: 600;
-  margin: 0 4px;
 }

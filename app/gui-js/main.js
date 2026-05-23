@@ -109,7 +109,12 @@ async function startProxy(port = 12306) {
     contextFile,
     configPath: path.join(getDataDir(), 'config.yaml'),
     projectRoot: workspace,
-    onRequestComplete: (data) => tokenMonitor && tokenMonitor.recordRequest(data)
+    onRequestComplete: (data) => tokenMonitor && tokenMonitor.recordRequest(data),
+    onRequestLog: (data) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('proxy-log', data)
+      }
+    }
   })
 
   try {

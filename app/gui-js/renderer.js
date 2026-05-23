@@ -163,7 +163,10 @@ function setupEventListeners() {
 
   document.getElementById('btn-add-provider').addEventListener('click', addProvider)
   document.getElementById('btn-remove-provider').addEventListener('click', removeProvider)
-  document.getElementById('provider-select').addEventListener('change', selectProvider)
+  document.getElementById('provider-select').addEventListener('change', () => {
+    if (_suppressSelectChange) return
+    selectProvider()
+  })
   document.getElementById('btn-fetch-models').addEventListener('click', fetchModels)
   document.getElementById('btn-select-all').addEventListener('click', () => {
     document.querySelectorAll('#provider-models-checkboxes input[type=checkbox]').forEach(cb => { cb.checked = true; cb.dispatchEvent(new Event('change')) })
@@ -194,14 +197,16 @@ function filterLogs(filter) {
     btn.classList.toggle('active', btn.dataset.filter === filter)
   })
 
-  const entries = document.querySelectorAll('#log-content .log-entry')
-  entries.forEach(entry => {
+  const rows = document.querySelectorAll('#log-content .log-row')
+  rows.forEach(row => {
     if (filter === 'all') {
-      entry.style.display = ''
+      row.style.display = ''
     } else if (filter === 'cache') {
-      entry.style.display = entry.classList.contains('log-hit') ? '' : 'none'
+      row.style.display = row.classList.contains('log-row-cache') ? '' : 'none'
     } else if (filter === 'miss') {
-      entry.style.display = entry.classList.contains('log-miss') ? '' : 'none'
+      row.style.display = row.classList.contains('log-row-cache') ? 'none' : ''
+    } else if (filter === 'error') {
+      row.style.display = row.classList.contains('log-row-error') ? '' : 'none'
     }
   })
 }
@@ -228,7 +233,7 @@ async function buildContext() {
       document.getElementById('file-count').textContent = `${result.fileCount} 文件`
       document.getElementById('char-count').textContent = `${(result.totalChars / 1000).toFixed(1)}k 字符`
       document.getElementById('token-estimate').textContent = `~${(result.estimatedTokens / 1000).toFixed(1)}k Token`
-      addLogEntry({ method: 'POST', path: '/build', model: '-', tokens: 0, cost: 0, cacheHit: true })
+      addLogEntry({ type: 'response', method: 'BUILD', path: '/build', model: '-', provider: 'local', tokens: {}, cached: false, status: 200, responseTime: 0, messagePreview: '上下文构建完成: ' + result.fileCount + ' 文件' })
       updateContextHash()
     } else {
       toast('构建失败: ' + result.error, 'error')
@@ -272,7 +277,7 @@ async function stopProxy() {
 async function clearCache() {
   try {
     await fetch(`http://127.0.0.1:${proxyPort}/cache`, { method: 'DELETE' })
-    addLogEntry({ method: 'DELETE', path: '/cache', model: '-', tokens: 0, cost: 0, cacheHit: true })
+    addLogEntry({ type: 'response', method: 'DELETE', path: '/cache', model: '-', provider: 'local', tokens: {}, cached: true, status: 200, responseTime: 0, messagePreview: '缓存已清空' })
     toast('缓存已清空', 'success')
   } catch (e) {
     toast('清空失败: ' + e.message, 'error')
@@ -322,6 +327,7 @@ async function checkProxyStatus() {
 function populateProviderSelect() {
   const select = document.getElementById('provider-select')
   if (!select) return
+  _suppressSelectChange = true
   const currentValue = select.value
   select.innerHTML = ''
   const providers = config.providers || {}
@@ -337,13 +343,14 @@ function populateProviderSelect() {
     } else {
       select.selectedIndex = 0
     }
-    selectProvider()
   } else {
     document.getElementById('provider-api-key').value = ''
     document.getElementById('provider-base-url').value = ''
     _renderModelCheckboxes([])
   }
+  _suppressSelectChange = false
   _populateDefaultProviderSelect()
+  if (select.options.length > 0) selectProvider()
 }
 
 function _populateDefaultProviderSelect() {
@@ -441,8 +448,6 @@ function _renderModelCheckboxes(models) {
   }
 }
 
-let _currentModelFilterFn = null
-
 function _groupModels(models) {
   const patterns = {
     'GPT': /^(gpt-|o1|o3|o4)/i,
@@ -505,6 +510,8 @@ function _groupModels(models) {
 
 let _selectedProviderBeforeSwitch = null
 let _fetchedModelsMap = {}
+let _suppressSelectChange = false
+let _currentModelFilterFn = null
 
 function selectProvider() {
   const select = document.getElementById('provider-select')
@@ -623,7 +630,9 @@ function addProvider() {
   if (!config.providers) config.providers = {}
   config.providers[trimmed] = config.providers[trimmed] || { api_key: '', base_url: '', models: [] }
   populateProviderSelect()
+  _suppressSelectChange = true
   document.getElementById('provider-select').value = trimmed
+  _suppressSelectChange = false
   selectProvider()
 }
 
@@ -744,22 +753,19 @@ function switchTab(tabId) {
 
 function setupProxyListeners() {
   window.electronAPI.onProxyLog((data) => {
-    console.log('Proxy log:', data)
-    addLogEntry({
-      method: 'POST',
-      path: '/v1/chat',
-      model: data.model || 'gpt-4',
-      tokens: data.tokens || 0,
-      cost: data.cost || 0,
-      cacheHit: data.cacheHit || false
-    })
-    stats.todayRequests++
-    stats.todayTokens += data.tokens || 0
-    if (data.cacheHit) {
-      stats.todaySavings += data.cost || 0
-      stats.cacheHits++
+    if (data && data.type) {
+      addLogEntry(data)
+      if (data.type === 'response' || data.type === 'stream') {
+        const tokens = data.tokens || {}
+        stats.todayRequests++
+        stats.todayTokens += tokens.total || 0
+        if (data.cached) {
+          stats.todaySavings += 0.002 * (tokens.total || 0)
+          stats.cacheHits++
+        }
+        updateStatsUI()
+      }
     }
-    updateStatsUI()
   })
 
   window.electronAPI.onProxyStopped(() => {
@@ -771,21 +777,40 @@ function setupProxyListeners() {
 function addLogEntry(data) {
   const logContent = document.getElementById('log-content')
   if (!logContent) return
+
   const time = new Date().toLocaleTimeString()
+  const isError = data.type === 'error'
+  const isStream = data.type === 'stream'
+  const isCache = data.cached === true
+  const t = data.tokens || {}
+  const currency = currencySymbols[currentCurrency]
+  const cost = data.cost != null ? data.cost : (t.total ? (t.total * 0.000002).toFixed(6) : 0)
 
-  const entry = document.createElement('div')
-  entry.className = 'log-entry' + (data.cacheHit ? ' log-hit' : ' log-miss')
+  const row = document.createElement('div')
+  row.className = 'log-row' + (isError ? ' log-row-error' : '') + (isCache ? ' log-row-cache' : '') + (isStream ? ' log-row-stream' : '')
 
-  entry.innerHTML =
-    '<span class="log-time">' + time + '</span>' +
-    '<span class="log-method">' + data.method + '</span>' +
-    '<span class="log-path">' + data.path + '</span>' +
-    '<span class="log-model-pill">' + data.model + '</span>' +
-    '<span class="log-tokens-pill">' + data.tokens + '</span>' +
-    '<span class="log-cost">' + (currencySymbols[currentCurrency]) + data.cost.toFixed(4) + '</span>' +
-    '<span class="' + (data.cacheHit ? 'log-hit-pill' : 'log-miss-pill') + '">' + (data.cacheHit ? 'HIT' : 'MISS') + '</span>'
+  const modelShort = (data.model || '').length > 26 ? (data.model || '').substring(0, 24) + '…' : (data.model || '-')
+  const previewText = data.messagePreview || ''
 
-  logContent.appendChild(entry)
+  row.innerHTML =
+    '<div class="log-row-main">' +
+      '<span class="log-tag ' + (isError ? 'log-tag-err' : isCache ? 'log-tag-cache' : isStream ? 'log-tag-stream' : 'log-tag-ok') + '">' + (isError ? 'ERR' : isCache ? 'CACHE' : isStream ? 'STREAM' : 'OK') + '</span>' +
+      '<span class="log-row-model" title="' + (data.model || '') + '">' + modelShort + '</span>' +
+      '<span class="log-row-tokens">' + (t.prompt || 0) + '↑ ' + (t.completion || 0) + '↓ ' + (t.total || 0) + '∑</span>' +
+      '<span class="log-row-time">' + (data.responseTime || 0) + 'ms</span>' +
+      '<span class="log-row-provider">' + (data.provider || '') + '</span>' +
+      '<span class="log-row-cost">' + currency + cost + '</span>' +
+    '</div>' +
+    '<div class="log-row-detail">' +
+      '<span class="log-row-path">' + (data.method || '') + ' ' + (data.path || '') + '</span>' +
+      '<span class="log-row-url">→ ' + (data.backendUrl || '') + '</span>' +
+      '<span class="log-row-size">' + (data.requestSize ? (data.requestSize / 1024).toFixed(1) + 'KB' : '') + '</span>' +
+      '<span class="log-row-status">' + (data.status || '') + '</span>' +
+    '</div>' +
+    (previewText ? '<div class="log-row-preview" title="' + previewText + '">' + previewText + '</div>' : '') +
+    (isError ? '<div class="log-row-errmsg">' + (data.error || '') + '</div>' : '')
+
+  logContent.appendChild(row)
   logContent.scrollTop = logContent.scrollHeight
 }
 

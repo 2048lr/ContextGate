@@ -161,6 +161,7 @@ class AIProxy {
     this.configManager = new ConfigManager(this.configPath)
     this.dynamicContext = options.dynamicContext || false
     this.onRequestComplete = options.onRequestComplete || null
+    this.onRequestLog = options.onRequestLog || null
     this.app = express()
     this.server = null
     this.cache = new Map()
@@ -186,6 +187,23 @@ class AIProxy {
     } catch (e) {
       console.error('Failed to record request:', e)
     }
+  }
+
+  _emitLog(data) {
+    if (!this.onRequestLog) return
+    try {
+      this.onRequestLog(data)
+    } catch (e) {
+      console.error('Failed to emit log:', e)
+    }
+  }
+
+  _extractMsgPreview(messages) {
+    if (!Array.isArray(messages) || messages.length === 0) return ''
+    const last = messages[messages.length - 1]
+    if (!last || !last.content) return ''
+    const text = typeof last.content === 'string' ? last.content : JSON.stringify(last.content)
+    return text.length > 80 ? text.substring(0, 80) + '…' : text
   }
 
   _loadContextSignature() {
@@ -255,6 +273,12 @@ class AIProxy {
     })
 
     this.app.post('/v1/*', async (req, res) => {
+      const reqStart = Date.now()
+      const reqSize = JSON.stringify(req.body || {}).length
+      const model = (req.body && req.body.model) || ''
+      const messages = (req.body && req.body.messages) || []
+      const isStream = !!(req.body && req.body.stream)
+
       try {
         this._invalidateCacheIfNeeded()
 
@@ -263,18 +287,25 @@ class AIProxy {
         const providerConfig = this.configManager.getProvider(provider)
 
         if (!providerConfig) {
+          this._emitLog({
+            type: 'error', method: 'POST', path: req.path,
+            provider, model, requestSize: reqSize, messagePreview: this._extractMsgPreview(messages),
+            error: 'Unknown provider: ' + provider, status: 400, responseTime: Date.now() - reqStart
+          })
           return res.status(400).json({ error: `Unknown provider: ${provider}` })
         }
 
-        if (req.body.stream) {
+        const backendUrl = (providerConfig.base_url || '').replace(/\/+$/, '') + '/' + backendPath.replace(/^\/+/, '')
+        const msgPreview = this._extractMsgPreview(messages)
+
+        if (isStream) {
+          this._emitLog({
+            type: 'stream', method: 'POST', path: req.path,
+            provider, model, backendUrl, requestSize: reqSize,
+            messagePreview: msgPreview, status: 200, responseTime: Date.now() - reqStart
+          })
           return this._streamChatRequest(
-            providerConfig,
-            provider,
-            req.body.model,
-            req.body.messages,
-            req.body,
-            req,
-            res
+            providerConfig, provider, model, messages, req.body, req, res
           )
         }
 
@@ -282,13 +313,21 @@ class AIProxy {
         if (this.cache.has(cacheKey)) {
           console.log(`[Cache HIT] ${cacheKey}`)
           const cachedData = this.cache.get(cacheKey)
-          this._recordRequest(provider, req.body.model, cachedData, true, 0)
+          const cachedUsage = cachedData && cachedData.usage
+          this._recordRequest(provider, model, cachedData, true, 0)
+          this._emitLog({
+            type: 'response', method: 'POST', path: req.path,
+            provider, model, backendUrl, requestSize: reqSize,
+            messagePreview: msgPreview,
+            tokens: { prompt: (cachedUsage && cachedUsage.prompt_tokens) || 0, completion: (cachedUsage && cachedUsage.completion_tokens) || 0, total: (cachedUsage && cachedUsage.total_tokens) || 0 },
+            cached: true, status: 200, responseTime: Date.now() - reqStart
+          })
           return res.json(cachedData)
         }
 
-        const requestStart = Date.now()
         const response = await this._forwardRequest(providerConfig, backendPath, req.body)
-        const responseTime = Date.now() - requestStart
+        const responseTime = Date.now() - reqStart
+        const respUsage = response.data && response.data.usage
 
         if (response.data && this._shouldCache(req.method)) {
           this.cache.set(cacheKey, response.data)
@@ -296,43 +335,88 @@ class AIProxy {
         }
 
         this.requestCount++
-        this._recordRequest(provider, req.body.model, response.data, false, responseTime)
+        this._recordRequest(provider, model, response.data, false, responseTime)
+        this._emitLog({
+          type: 'response', method: 'POST', path: req.path,
+          provider, model, backendUrl, requestSize: reqSize,
+          messagePreview: msgPreview,
+          tokens: { prompt: (respUsage && respUsage.prompt_tokens) || 0, completion: (respUsage && respUsage.completion_tokens) || 0, total: (respUsage && respUsage.total_tokens) || 0 },
+          cached: false, status: response.status, responseTime
+        })
         res.json(response.data)
       } catch (error) {
+        const responseTime = Date.now() - reqStart
         console.error('Proxy error:', error.message)
-        res.status(error.response?.status || 500).json({
+        this._emitLog({
+          type: 'error', method: 'POST', path: req.path,
+          provider: '', model, requestSize: reqSize,
+          messagePreview: this._extractMsgPreview(messages),
+          error: error.message, status: error.response ? error.response.status : 500, responseTime
+        })
+        res.status(error.response ? error.response.status : 500).json({
           error: error.message,
-          details: error.response?.data
+          details: error.response && error.response.data
         })
       }
     })
 
     this.app.post('/proxy/chat', async (req, res) => {
-      this._invalidateCacheIfNeeded()
-
+      const reqStart = Date.now()
+      const reqSize = JSON.stringify(req.body || {}).length
       const { provider = 'openai', model, messages, ...options } = req.body
+      const msgPreview = this._extractMsgPreview(messages)
+
+      this._invalidateCacheIfNeeded()
 
       const providerConfig = this.configManager.getProvider(provider)
       if (!providerConfig) {
+        this._emitLog({
+          type: 'error', method: 'POST', path: '/proxy/chat',
+          provider, model, requestSize: reqSize, messagePreview: msgPreview,
+          error: 'Unknown provider: ' + provider, status: 400, responseTime: Date.now() - reqStart
+        })
         return res.status(400).json({ error: `Unknown provider: ${provider}` })
       }
+
+      const backendUrl = (providerConfig.base_url || '').replace(/\/+$/, '') + '/chat/completions'
 
       const cacheKey = this._getCacheKey(req)
       if (this.cache.has(cacheKey)) {
         const cachedData = this.cache.get(cacheKey)
+        const cachedUsage = cachedData && cachedData.usage
         this._recordRequest(provider, model, cachedData, true, 0)
+        this._emitLog({
+          type: 'response', method: 'POST', path: '/proxy/chat',
+          provider, model, backendUrl, requestSize: reqSize,
+          messagePreview: msgPreview,
+          tokens: { prompt: (cachedUsage && cachedUsage.prompt_tokens) || 0, completion: (cachedUsage && cachedUsage.completion_tokens) || 0, total: (cachedUsage && cachedUsage.total_tokens) || 0 },
+          cached: true, status: 200, responseTime: Date.now() - reqStart
+        })
         return res.json(cachedData)
       }
 
       try {
-        const requestStart = Date.now()
         const response = await this._forwardChatRequest(providerConfig, model, messages, options)
-        const responseTime = Date.now() - requestStart
+        const responseTime = Date.now() - reqStart
+        const respUsage = response.data && response.data.usage
         this.cache.set(cacheKey, response.data)
         this.requestCount++
         this._recordRequest(provider, model, response.data, false, responseTime)
+        this._emitLog({
+          type: 'response', method: 'POST', path: '/proxy/chat',
+          provider, model, backendUrl, requestSize: reqSize,
+          messagePreview: msgPreview,
+          tokens: { prompt: (respUsage && respUsage.prompt_tokens) || 0, completion: (respUsage && respUsage.completion_tokens) || 0, total: (respUsage && respUsage.total_tokens) || 0 },
+          cached: false, status: response.status, responseTime
+        })
         res.json(response.data)
       } catch (error) {
+        const responseTime = Date.now() - reqStart
+        this._emitLog({
+          type: 'error', method: 'POST', path: '/proxy/chat',
+          provider, model, requestSize: reqSize, messagePreview: msgPreview,
+          error: error.message, status: error.response ? error.response.status : 500, responseTime
+        })
         res.status(500).json({ error: error.message })
       }
     })
