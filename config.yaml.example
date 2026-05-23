@@ -66,6 +66,7 @@ monitor:
 # 上下文配置
 context:
   output_file: "full_context.txt"
+  max_tokens: 8000
   watch_enabled: true
   debounce_seconds: 1.0
   dynamic_enabled: false

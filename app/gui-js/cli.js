@@ -136,7 +136,7 @@ program
   .command('serve [path]')
   .description('启动代理服务器')
   .option('--host <host>', '监听地址', '127.0.0.1')
-  .option('--port <port>', '监听端口', parseInt, 12306)
+  .option('--port <port>', '监听端口', (v) => parseInt(v, 10), 12306)
   .option('--base-url <url>', '目标 API Base URL')
   .option('--api-key <key>', 'API Key')
   .option('--context <path>', '上下文文件路径')

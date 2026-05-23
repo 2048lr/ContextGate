@@ -119,7 +119,6 @@
       "description": "ContextGate is an AI context management and proxy system that helps manage code context for AI assistants."
     },
     "deb": {
-      "section": "devel",
       "priority": "optional",
       "compression": "xz",
       "packageCategory": "devel",

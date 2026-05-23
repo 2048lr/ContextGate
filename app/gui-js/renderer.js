@@ -12,40 +12,6 @@ let currentCurrency = 'USD'
 
 const currencySymbols = { USD: '$', CNY: '￥', EUR: '€' }
 
-const toolConfigs = {
-  cursor: {
-    name: 'Cursor',
-    config: {
-      "apiKey": "{YOUR_API_KEY}",
-      "baseUrl": "http://127.0.0.1:12306/v1",
-      "model": "gpt-4"
-    }
-  },
-  cline: {
-    name: 'cline',
-    config: {
-      "openaiApiKey": "{YOUR_API_KEY}",
-      "openaiBaseUrl": "http://127.0.0.1:12306/v1"
-    }
-  },
-  continue: {
-    name: 'Continue',
-    config: {
-      "apiKey": "{YOUR_API_KEY}",
-      "baseUrl": "http://127.0.0.1:12306/v1",
-      "model": "gpt-4"
-    }
-  },
-  windsurf: {
-    name: 'Windsurf',
-    config: {
-      "apiKey": "{YOUR_API_KEY}",
-      "baseUrl": "http://127.0.0.1:12306/v1",
-      "model": "gpt-4"
-    }
-  }
-}
-
 async function init() {
   await loadBackground()
   await loadConfig()
@@ -183,24 +149,11 @@ function setupEventListeners() {
   document.getElementById('btn-add-provider').addEventListener('click', addProvider)
   document.getElementById('btn-remove-provider').addEventListener('click', removeProvider)
   document.getElementById('provider-select').addEventListener('change', selectProvider)
+  document.getElementById('btn-fetch-models').addEventListener('click', fetchModels)
 
   document.getElementById('btn-minimize').addEventListener('click', () => window.electronAPI.minimizeWindow())
   document.getElementById('btn-maximize').addEventListener('click', () => window.electronAPI.maximizeWindow())
   document.getElementById('btn-close').addEventListener('click', () => window.electronAPI.closeWindow())
-
-  document.getElementById('btn-enable-transparent').addEventListener('click', async () => {
-    try {
-      const scriptPath = '../resources/transparent_proxy.sh'
-      const result = await window.electronAPI.runScript(scriptPath, 'install')
-      showToast(result.success ? '透明代理已启用' : result.error || '启用失败')
-    } catch (e) {
-      showToast('请手动运行: sudo ./resources/transparent_proxy.sh install')
-    }
-  })
-
-  document.querySelectorAll('[data-config]').forEach(btn => {
-    btn.addEventListener('click', (e) => copyToolConfig(e.target.dataset.config))
-  })
 
   document.querySelectorAll('#card-log .filter-btn').forEach(btn => {
     btn.addEventListener('click', () => filterLogs(btn.dataset.filter))
@@ -279,7 +232,6 @@ async function startProxy() {
   if (result.success) {
     proxyRunning = true
     proxyPort = result.port
-    updateToolConfigs(result.port)
     updateProxyUI()
     document.getElementById('connection-status').textContent = `运行中 :${result.port}`
   } else {
@@ -339,39 +291,11 @@ async function checkProxyStatus() {
     const status = await window.electronAPI.proxyStatus()
     proxyRunning = status.running
     proxyPort = status.port || 12306
-    updateToolConfigs(status.port || 12306)
     updateProxyUI()
   } catch (e) {
     proxyRunning = false
     updateProxyUI()
   }
-}
-
-function updateToolConfigs(port) {
-  const baseUrl = `http://127.0.0.1:${port}/v1`
-  for (const tool of ['cursor', 'cline', 'continue', 'windsurf']) {
-    if (toolConfigs[tool]) {
-      toolConfigs[tool].config.baseUrl = baseUrl
-    }
-  }
-}
-
-function copyToolConfig(tool) {
-  const toolData = toolConfigs[tool]
-  if (!toolData) return
-
-  const configStr = JSON.stringify(toolData.config, null, 2)
-  navigator.clipboard.writeText(configStr).then(() => {
-    showToast(`${toolData.name} 配置已复制到剪贴板`)
-  })
-}
-
-function showToast(message) {
-  const toast = document.createElement('div')
-  toast.className = 'toast'
-  toast.textContent = message
-  document.body.appendChild(toast)
-  setTimeout(() => toast.remove(), 3000)
 }
 
 function populateProviderSelect() {
@@ -396,32 +320,167 @@ function populateProviderSelect() {
   } else {
     document.getElementById('provider-api-key').value = ''
     document.getElementById('provider-base-url').value = ''
-    document.getElementById('provider-models').value = ''
+    _renderModelCheckboxes([])
+  }
+  _populateDefaultProviderSelect()
+}
+
+function _populateDefaultProviderSelect() {
+  const sel = document.getElementById('default-provider')
+  if (!sel) return
+  const currentVal = sel.value || config.default_provider || ''
+  sel.innerHTML = ''
+  const providers = config.providers || {}
+  for (const name of Object.keys(providers)) {
+    const opt = document.createElement('option')
+    opt.value = name
+    opt.textContent = name
+    sel.appendChild(opt)
+  }
+  if (Array.from(sel.options).some(o => o.value === currentVal)) {
+    sel.value = currentVal
+  } else if (sel.options.length > 0) {
+    sel.selectedIndex = 0
   }
 }
+
+function _renderModelCheckboxes(models) {
+  const container = document.getElementById('provider-models-checkboxes')
+  if (!container) return
+  const currentProvider = config.providers && config.providers[document.getElementById('provider-select').value]
+  const selectedModels = currentProvider ? (currentProvider.models || []) : []
+
+  container.innerHTML = ''
+  if (models.length === 0) {
+    container.innerHTML = '<div style="color:#808080;padding:4px;">点击"获取模型列表"获取</div>'
+    return
+  }
+  for (const modelId of models) {
+    const label = document.createElement('label')
+    label.style.cssText = 'display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;font-size:12px;'
+    const cb = document.createElement('input')
+    cb.type = 'checkbox'
+    cb.value = modelId
+    cb.checked = selectedModels.includes(modelId)
+    cb.addEventListener('change', () => {
+      _saveProviderFieldsToConfig(document.getElementById('provider-select').value)
+    })
+    label.appendChild(cb)
+    label.appendChild(document.createTextNode(modelId))
+    container.appendChild(label)
+  }
+}
+
+let _selectedProviderBeforeSwitch = null
+let _fetchedModelsMap = {}
 
 function selectProvider() {
   const select = document.getElementById('provider-select')
   const name = select.value
   if (!name) return
+
+  if (_selectedProviderBeforeSwitch && _selectedProviderBeforeSwitch !== name) {
+    _saveProviderFieldsToConfig(_selectedProviderBeforeSwitch)
+  }
+  _selectedProviderBeforeSwitch = name
+
   const providers = config.providers || {}
   const provider = providers[name]
   if (!provider) return
   document.getElementById('provider-api-key').value = provider.api_key || ''
   document.getElementById('provider-base-url').value = provider.base_url || ''
-  document.getElementById('provider-models').value = (provider.models || []).join('\n')
+  _renderModelCheckboxes(_fetchedModelsMap[name] || [])
+}
+
+function _saveProviderFieldsToConfig(providerName) {
+  if (!config.providers) config.providers = {}
+  const existing = config.providers[providerName] || {}
+  const checkedModels = []
+  const container = document.getElementById('provider-models-checkboxes')
+  if (container) {
+    const cbs = container.querySelectorAll('input[type=checkbox]:checked')
+    for (const cb of cbs) { checkedModels.push(cb.value) }
+  }
+  config.providers[providerName] = {
+    ...existing,
+    api_key: document.getElementById('provider-api-key').value,
+    base_url: document.getElementById('provider-base-url').value,
+    models: checkedModels
+  }
+}
+
+async function fetchModels() {
+  const baseUrl = document.getElementById('provider-base-url').value.trim()
+  const apiKey = document.getElementById('provider-api-key').value.trim()
+  const btn = document.getElementById('btn-fetch-models')
+  const providerName = document.getElementById('provider-select').value
+
+  if (!baseUrl) {
+    alert('请先填写基础 URL')
+    return
+  }
+  if (!apiKey) {
+    alert('请先填写 API 密钥')
+    return
+  }
+
+  btn.disabled = true
+  btn.textContent = '⏳ 获取中...'
+
+  try {
+    const url = baseUrl.replace(/\/+$/, '') + '/models'
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    })
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '')
+      throw new Error(`HTTP ${res.status}: ${errText.substring(0, 200)}`)
+    }
+    const json = await res.json()
+    const modelsRaw = (json.data || [])
+    const models = modelsRaw
+      .map(m => m.id || m.model || m.name)
+      .filter(id => id && typeof id === 'string')
+    const modelDetails = modelsRaw
+      .map(m => ({
+        id: m.id || m.model || m.name,
+        contextWindow: m.context_window || m.maxTokens || m.max_input_tokens || m.max_tokens || 0
+      }))
+      .filter(m => m.id)
+
+    if (models.length === 0) {
+      alert('该提供商未返回模型列表')
+      btn.disabled = false
+      btn.textContent = '⬇ 获取模型列表'
+      return
+    }
+
+    _fetchedModelsMap[providerName] = models
+    _saveProviderFieldsToConfig(providerName)
+    _renderModelCheckboxes(models)
+
+    const maxContextWindow = Math.max(...modelDetails.map(m => m.contextWindow), 0)
+    if (maxContextWindow > 0) {
+      const ctInput = document.getElementById('context-max-tokens')
+      if (ctInput) {
+        ctInput.value = Math.min(maxContextWindow, 200000)
+      }
+    }
+
+    btn.textContent = `✓ 已获取 ${models.length} 个模型`
+    setTimeout(() => { btn.textContent = '⬇ 获取模型列表'; btn.disabled = false }, 2000)
+  } catch (e) {
+    btn.disabled = false
+    btn.textContent = '⬇ 获取模型列表'
+    alert('获取模型列表失败: ' + e.message)
+  }
 }
 
 function saveCurrentProvider() {
   const select = document.getElementById('provider-select')
   const name = select.value
   if (!name) return
-  if (!config.providers) config.providers = {}
-  config.providers[name] = {
-    api_key: document.getElementById('provider-api-key').value,
-    base_url: document.getElementById('provider-base-url').value,
-    models: document.getElementById('provider-models').value.split('\n').filter(m => m.trim())
-  }
+  _saveProviderFieldsToConfig(name)
 }
 
 function addProvider() {
@@ -441,7 +500,8 @@ function removeProvider() {
   const name = select.value
   if (!name) return
   if (!confirm(`确认删除提供商 "${name}"?`)) return
-  delete (config.providers || {})[name]
+  if (!config.providers) return
+  delete config.providers[name]
   populateProviderSelect()
 }
 
@@ -451,6 +511,7 @@ function saveConfigProviders() {
 }
 
 function openSettings() {
+  _selectedProviderBeforeSwitch = null
   loadConfigToSettings()
   document.getElementById('settings-modal').classList.remove('hidden')
 }
@@ -464,7 +525,6 @@ function loadConfigToSettings() {
   document.getElementById('proxy-host').value = proxyConfig.host || '127.0.0.1'
   document.getElementById('proxy-port').value = proxyConfig.port || 12306
   document.getElementById('proxy-sanitize').checked = proxyConfig.sanitize_requests !== false
-  document.getElementById('default-provider').value = config.default_provider || 'openai'
 
   populateProviderSelect()
 
@@ -480,6 +540,7 @@ function loadConfigToSettings() {
 
   const contextConfig = config.context || {}
   document.getElementById('output-file').value = contextConfig.output_file || 'full_context.txt'
+  document.getElementById('context-max-tokens').value = contextConfig.max_tokens || 8000
   document.getElementById('watch-enabled').checked = contextConfig.watch_enabled !== false
   document.getElementById('debounce-seconds').value = contextConfig.debounce_seconds || 1
 
@@ -513,6 +574,7 @@ async function saveSettings() {
 
   config.context = {
     output_file: document.getElementById('output-file').value,
+    max_tokens: parseInt(document.getElementById('context-max-tokens').value) || 8000,
     watch_enabled: document.getElementById('watch-enabled').checked,
     debounce_seconds: parseFloat(document.getElementById('debounce-seconds').value)
   }

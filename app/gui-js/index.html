@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https: http:">
   <title>ContextGate</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -132,42 +132,6 @@
             </div>
           </div>
           
-          <div class="card" id="card-tools">
-            <div class="card-header">
-              <div class="card-icon">🛠</div>
-              <div class="card-title">IDE 集成</div>
-              <div class="card-badge">推荐</div>
-            </div>
-            <div class="card-body">
-              <p class="card-desc">一键配置主流 AI 编程工具</p>
-              <div class="tools-list">
-                <div class="tool-item" data-tool="cursor">
-                  <span class="tool-icon">🔵</span>
-                  <span class="tool-name">Cursor</span>
-                  <button class="copy-btn" data-config="cursor">复制</button>
-                </div>
-                <div class="tool-item" data-tool="cline">
-                  <span class="tool-icon">⚡</span>
-                  <span class="tool-name">cline</span>
-                  <button class="copy-btn" data-config="cline">复制</button>
-                </div>
-                <div class="tool-item" data-tool="continue">
-                  <span class="tool-icon">▶</span>
-                  <span class="tool-name">Continue</span>
-                  <button class="copy-btn" data-config="continue">复制</button>
-                </div>
-                <div class="tool-item" data-tool="windsurf">
-                  <span class="tool-icon">🌀</span>
-                  <span class="tool-name">Windsurf</span>
-                  <button class="copy-btn" data-config="windsurf">复制</button>
-                </div>
-              </div>
-            </div>
-            <div class="card-footer">
-              <button id="btn-enable-transparent" class="card-btn">启用透明代理</button>
-            </div>
-          </div>
-          
           <div class="card wide" id="card-log">
             <div class="card-header">
               <div class="card-icon">📋</div>
@@ -229,8 +193,9 @@
                 <input type="text" id="provider-base-url" placeholder="https://api.example.com/v1">
               </div>
               <div class="form-group">
-                <label>模型列表 (每行一个):</label>
-                <textarea id="provider-models" rows="6" placeholder="gpt-4&#10;gpt-3.5-turbo"></textarea>
+                <label>模型列表:</label>
+                <button id="btn-fetch-models" class="small-btn" style="margin-bottom:6px">⬇ 获取模型列表</button>
+                <div id="provider-models-checkboxes" class="models-checkbox-list" style="max-height:200px;overflow-y:auto;border:1px solid #333;border-radius:4px;padding:6px;"></div>
               </div>
             </div>
           </div>
@@ -253,7 +218,7 @@
           </div>
           <div class="form-group">
             <label>默认提供商:</label>
-            <input type="text" id="default-provider" value="openai">
+            <select id="default-provider"></select>
           </div>
         </div>
         
@@ -296,6 +261,11 @@
           <div class="form-group">
             <label>输出文件名:</label>
             <input type="text" id="output-file" value="full_context.txt">
+          </div>
+          <div class="form-group">
+            <label>智能上下文最大 Token:</label>
+            <input type="number" id="context-max-tokens" value="8000" min="512" max="200000" step="512">
+            <small style="color:#808080">获取模型列表后自动填写</small>
           </div>
           <div class="form-group">
             <label class="checkbox-label">

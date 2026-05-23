@@ -216,16 +216,41 @@ class AIProxy {
       res.json({ status: 'ok', provider: 'ContextGate', version: '3.1.0' })
     })
 
-    this.app.get('/context', (req, res) => {
-      if (this.contextFile && fs.existsSync(this.contextFile)) {
-        const content = fs.readFileSync(this.contextFile, 'utf8')
-        res.type('text/plain').send(content)
-      } else {
-        res.status(404).json({ error: 'Context file not found' })
+    this.app.get('/v1', (req, res) => {
+      res.json({
+        status: 'ok',
+        service: 'ContextGate Proxy',
+        base_url: '/v1',
+        routes: ['GET /v1', 'GET /v1/models', 'POST /v1/chat/completions', 'POST /proxy/chat']
+      })
+    })
+
+    this.app.get('/v1/models', async (req, res) => {
+      try {
+        const provider = req.query.provider || this.configManager.getDefaultProvider() || 'openai'
+        const providerConfig = this.configManager.getProvider(provider)
+        if (!providerConfig) {
+          return res.status(400).json({ error: `Unknown provider: ${provider}` })
+        }
+        const response = await axios({
+          method: 'GET',
+          url: `${providerConfig.base_url}/models`,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${providerConfig.api_key}`
+          },
+          timeout: providerConfig.timeout || 60000
+        })
+        res.json(response.data)
+      } catch (error) {
+        res.status(error.response?.status || 500).json({
+          error: error.message,
+          details: error.response?.data
+        })
       }
     })
 
-this.app.post('/v1/*', async (req, res) => {
+    this.app.post('/v1/*', async (req, res) => {
       try {
         this._invalidateCacheIfNeeded()
 
