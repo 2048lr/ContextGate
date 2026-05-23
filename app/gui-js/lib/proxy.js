@@ -132,6 +132,10 @@ class ConfigManager {
     return providers[providerName] || null
   }
 
+  getDefaultProvider() {
+    return this.config.default_provider || null
+  }
+
   getAllProviders() {
     return this.config.providers || {}
   }
