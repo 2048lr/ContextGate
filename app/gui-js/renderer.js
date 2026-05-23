@@ -12,6 +12,21 @@ let currentCurrency = 'USD'
 
 const currencySymbols = { USD: '$', CNY: '￥', EUR: '€' }
 
+function toast(msg, type) {
+  type = type || 'info'
+  const container = document.getElementById('toast-container')
+  if (!container) return
+  const el = document.createElement('div')
+  el.className = 'toast toast-' + type
+  el.textContent = msg
+  container.appendChild(el)
+  requestAnimationFrame(() => el.classList.add('show'))
+  setTimeout(() => {
+    el.classList.remove('show')
+    el.addEventListener('transitionend', () => el.remove())
+  }, 3000)
+}
+
 async function init() {
   await loadBackground()
   await loadConfig()
@@ -150,6 +165,12 @@ function setupEventListeners() {
   document.getElementById('btn-remove-provider').addEventListener('click', removeProvider)
   document.getElementById('provider-select').addEventListener('change', selectProvider)
   document.getElementById('btn-fetch-models').addEventListener('click', fetchModels)
+  document.getElementById('btn-select-all').addEventListener('click', () => {
+    document.querySelectorAll('#provider-models-checkboxes input[type=checkbox]').forEach(cb => { cb.checked = true; cb.dispatchEvent(new Event('change')) })
+  })
+  document.getElementById('btn-deselect-all').addEventListener('click', () => {
+    document.querySelectorAll('#provider-models-checkboxes input[type=checkbox]').forEach(cb => { cb.checked = false; cb.dispatchEvent(new Event('change')) })
+  })
 
   document.getElementById('btn-minimize').addEventListener('click', () => window.electronAPI.minimizeWindow())
   document.getElementById('btn-maximize').addEventListener('click', () => window.electronAPI.maximizeWindow())
@@ -197,7 +218,7 @@ async function selectProject() {
 
 async function buildContext() {
   if (!currentProject) {
-    alert('请先选择项目')
+    toast('请先选择项目', 'warn')
     return
   }
 
@@ -210,10 +231,10 @@ async function buildContext() {
       addLogEntry({ method: 'POST', path: '/build', model: '-', tokens: 0, cost: 0, cacheHit: true })
       updateContextHash()
     } else {
-      alert('构建失败: ' + result.error)
+      toast('构建失败: ' + result.error, 'error')
     }
   } catch (e) {
-    alert('构建失败: ' + e.message)
+    toast('构建失败: ' + e.message, 'error')
   }
 }
 
@@ -235,7 +256,7 @@ async function startProxy() {
     updateProxyUI()
     document.getElementById('connection-status').textContent = `运行中 :${result.port}`
   } else {
-    alert('启动失败: ' + result.error)
+    toast('启动失败: ' + result.error, 'error')
   }
 }
 
@@ -252,9 +273,9 @@ async function clearCache() {
   try {
     await fetch(`http://127.0.0.1:${proxyPort}/cache`, { method: 'DELETE' })
     addLogEntry({ method: 'DELETE', path: '/cache', model: '-', tokens: 0, cost: 0, cacheHit: true })
-    alert('缓存已清空')
+    toast('缓存已清空', 'success')
   } catch (e) {
-    alert('清空失败: ' + e.message)
+    toast('清空失败: ' + e.message, 'error')
   }
 }
 
@@ -352,23 +373,134 @@ function _renderModelCheckboxes(models) {
 
   container.innerHTML = ''
   if (models.length === 0) {
-    container.innerHTML = '<div style="color:#808080;padding:4px;">点击"获取模型列表"获取</div>'
+    container.innerHTML = '<div class="models-empty-hint">点击"获取模型列表"获取</div>'
     return
   }
-  for (const modelId of models) {
-    const label = document.createElement('label')
-    label.style.cssText = 'display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;font-size:12px;'
-    const cb = document.createElement('input')
-    cb.type = 'checkbox'
-    cb.value = modelId
-    cb.checked = selectedModels.includes(modelId)
-    cb.addEventListener('change', () => {
-      _saveProviderFieldsToConfig(document.getElementById('provider-select').value)
-    })
-    label.appendChild(cb)
-    label.appendChild(document.createTextNode(modelId))
-    container.appendChild(label)
+
+  const groups = _groupModels(models)
+  const searchInput = document.getElementById('models-search-input')
+  const countEl = document.getElementById('models-count')
+  if (countEl) countEl.textContent = `共 ${models.length} 个模型`
+
+  const renderFiltered = (filterText) => {
+    const f = (filterText || '').toLowerCase()
+    container.innerHTML = ''
+    let visibleCount = 0
+
+    for (const { group, items } of groups) {
+      const filtered = f ? items.filter(m => m.toLowerCase().includes(f)) : items
+      if (filtered.length === 0) continue
+      visibleCount += filtered.length
+
+      const groupHeader = document.createElement('div')
+      groupHeader.className = 'model-group-header'
+      const badge = document.createElement('span')
+      badge.className = 'model-group-badge'
+      badge.textContent = group
+      groupHeader.appendChild(badge)
+      groupHeader.appendChild(document.createTextNode(` (${filtered.length})`))
+      container.appendChild(groupHeader)
+
+      const grid = document.createElement('div')
+      grid.className = 'model-grid'
+
+      for (const modelId of filtered) {
+        const isSelected = selectedModels.includes(modelId)
+        const chip = document.createElement('label')
+        chip.className = 'model-chip' + (isSelected ? ' selected' : '')
+        chip.title = modelId
+
+        const cb = document.createElement('input')
+        cb.type = 'checkbox'
+        cb.value = modelId
+        cb.checked = isSelected
+        cb.addEventListener('change', () => {
+          chip.classList.toggle('selected', cb.checked)
+          _saveProviderFieldsToConfig(document.getElementById('provider-select').value)
+        })
+        chip.appendChild(cb)
+
+        const nameSpan = document.createElement('span')
+        nameSpan.className = 'model-chip-name'
+        nameSpan.textContent = modelId
+        chip.appendChild(nameSpan)
+
+        grid.appendChild(chip)
+      }
+      container.appendChild(grid)
+    }
+
+    if (countEl) countEl.textContent = `共 ${models.length} 个模型` + (f ? ` · 匹配 ${visibleCount}` : '')
   }
+
+  renderFiltered('')
+  _currentModelFilterFn = renderFiltered
+  if (searchInput) {
+    searchInput.oninput = () => renderFiltered(searchInput.value)
+    searchInput.value = ''
+  }
+}
+
+let _currentModelFilterFn = null
+
+function _groupModels(models) {
+  const patterns = {
+    'GPT': /^(gpt-|o1|o3|o4)/i,
+    'Claude': /^claude/i,
+    'Gemini': /^gemini/i,
+    'Grok': /^grok/i,
+    'Qwen': /^qwen/i,
+    'DeepSeek': /^deepseek/i,
+    'GLM': /^glm/i,
+    'Llama': /^llama/i,
+    'Gemma': /^gemma/i,
+    'Mistral': /^mistral/i,
+    'Kimi': /^kimi/i,
+    'ERNIE': /^ERNIE/i,
+    'SparkDesk': /^SparkDesk/i,
+    'Minimax': /^minimax/i,
+    'DALL-E': /^dall-e/i,
+    'Whisper': /^whisper/i,
+    'Embedding': /^(text-embedding|Embedding|babbage|davinci)/i,
+    'TTS': /^(tts|speech)/i,
+    'Flux': /^flux/i,
+    'Kling': /^kling/i,
+    'Wan': /^wan/i,
+    'Veo': /^veo/i,
+    'Sora': /^sora/i,
+    'HappyHorse': /^happyhorse/i,
+    'Mimo': /^mimo/i,
+    'Vidu': /^vidu/i,
+    'Doubao': /^doubao/i,
+    'MJ': /^mj_/i,
+    'Audio': /^(audio|gpt-audio)/i,
+    'Pro/Rerank': /^Pro\//i
+  }
+
+  const grouped = {}
+  const unmatched = []
+
+  for (const m of models) {
+    let matched = false
+    for (const [label, re] of Object.entries(patterns)) {
+      if (re.test(m)) {
+        if (!grouped[label]) grouped[label] = []
+        grouped[label].push(m)
+        matched = true
+        break
+      }
+    }
+    if (!matched) unmatched.push(m)
+  }
+
+  const result = []
+  for (const [label, items] of Object.entries(grouped)) {
+    result.push({ group: label, items })
+  }
+  if (unmatched.length > 0) {
+    result.push({ group: '其他', items: unmatched })
+  }
+  return result
 }
 
 let _selectedProviderBeforeSwitch = null
@@ -416,11 +548,11 @@ async function fetchModels() {
   const providerName = document.getElementById('provider-select').value
 
   if (!baseUrl) {
-    alert('请先填写基础 URL')
+    toast('请先填写基础 URL', 'warn')
     return
   }
   if (!apiKey) {
-    alert('请先填写 API 密钥')
+    toast('请先填写 API 密钥', 'warn')
     return
   }
 
@@ -449,7 +581,7 @@ async function fetchModels() {
       .filter(m => m.id)
 
     if (models.length === 0) {
-      alert('该提供商未返回模型列表')
+      toast('该提供商未返回模型列表', 'warn')
       btn.disabled = false
       btn.textContent = '⬇ 获取模型列表'
       return
@@ -472,7 +604,7 @@ async function fetchModels() {
   } catch (e) {
     btn.disabled = false
     btn.textContent = '⬇ 获取模型列表'
-    alert('获取模型列表失败: ' + e.message)
+    toast('获取模型列表失败: ' + e.message, 'error')
   }
 }
 
@@ -595,9 +727,9 @@ async function saveSettings() {
   const success = await window.electronAPI.saveConfig(config)
   if (success) {
     closeSettings()
-    alert('设置已保存')
+    toast('设置已保存', 'success')
   } else {
-    alert('保存失败')
+    toast('保存失败', 'error')
   }
 }
 
@@ -638,20 +770,20 @@ function setupProxyListeners() {
 
 function addLogEntry(data) {
   const logContent = document.getElementById('log-content')
+  if (!logContent) return
   const time = new Date().toLocaleTimeString()
 
   const entry = document.createElement('div')
-  entry.className = `log-entry ${data.cacheHit ? 'log-hit' : 'log-miss'}`
+  entry.className = 'log-entry' + (data.cacheHit ? ' log-hit' : ' log-miss')
 
-  entry.innerHTML = `
-    <span class="log-time">${time}</span>
-    <span class="log-method">${data.method}</span>
-    <span class="log-path">${data.path}</span>
-    <span class="log-model">${data.model}</span>
-    <span class="log-tokens">${data.tokens}</span>
-    <span class="log-cost">${currencySymbols[currentCurrency]}${data.cost.toFixed(4)}</span>
-    <span class="${data.cacheHit ? 'log-hit' : 'log-miss'}">[${data.cacheHit ? 'HIT' : 'MISS'}]</span>
-  `
+  entry.innerHTML =
+    '<span class="log-time">' + time + '</span>' +
+    '<span class="log-method">' + data.method + '</span>' +
+    '<span class="log-path">' + data.path + '</span>' +
+    '<span class="log-model-pill">' + data.model + '</span>' +
+    '<span class="log-tokens-pill">' + data.tokens + '</span>' +
+    '<span class="log-cost">' + (currencySymbols[currentCurrency]) + data.cost.toFixed(4) + '</span>' +
+    '<span class="' + (data.cacheHit ? 'log-hit-pill' : 'log-miss-pill') + '">' + (data.cacheHit ? 'HIT' : 'MISS') + '</span>'
 
   logContent.appendChild(entry)
   logContent.scrollTop = logContent.scrollHeight

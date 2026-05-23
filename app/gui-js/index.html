@@ -9,13 +9,13 @@
 </head>
 <body>
   <div id="background-container"></div>
+  <div id="toast-container"></div>
   
   <div id="app">
     <div id="title-bar">
       <div class="title-left">
         <span class="app-icon">⬡</span>
         <span class="app-title">ContextGate</span>
-        <span class="version-tag">v4.0.5</span>
       </div>
       <div class="title-right">
         <button id="btn-settings" class="title-btn" title="设置">⚙</button>
@@ -194,8 +194,16 @@
               </div>
               <div class="form-group">
                 <label>模型列表:</label>
-                <button id="btn-fetch-models" class="small-btn" style="margin-bottom:6px">⬇ 获取模型列表</button>
-                <div id="provider-models-checkboxes" class="models-checkbox-list" style="max-height:200px;overflow-y:auto;border:1px solid #333;border-radius:4px;padding:6px;"></div>
+                <div class="models-toolbar">
+                  <button id="btn-fetch-models" class="small-btn">⬇ 获取模型列表</button>
+                  <span id="models-count" class="models-count"></span>
+                  <div class="models-search">
+                    <input type="text" id="models-search-input" placeholder="🔍 搜索模型..." class="search-input">
+                    <button id="btn-select-all" class="tiny-btn" title="全选">☑</button>
+                    <button id="btn-deselect-all" class="tiny-btn" title="取消全选">☐</button>
+                  </div>
+                </div>
+                <div id="provider-models-checkboxes" class="models-checkbox-list"></div>
               </div>
             </div>
           </div>
@@ -265,7 +273,7 @@
           <div class="form-group">
             <label>智能上下文最大 Token:</label>
             <input type="number" id="context-max-tokens" value="8000" min="512" max="200000" step="512">
-            <small style="color:#808080">获取模型列表后自动填写</small>
+            <small class="form-hint">获取模型列表后自动填写</small>
           </div>
           <div class="form-group">
             <label class="checkbox-label">
