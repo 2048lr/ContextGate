@@ -1,3 +1,2 @@
-const VERSION = '4.0.7'
-
+const { version: VERSION } = require('../package.json')
 module.exports = { VERSION }

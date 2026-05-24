@@ -78,7 +78,7 @@ program
   .description('构建完整上下文文件')
   .option('-o, --output <path>', '输出文件路径')
   .option('-c, --config <path>', '配置文件路径', 'config.yaml')
-  .action((projectPath, options) => {
+  .action(async (projectPath, options) => {
     const configManager = new ConfigManager(options.config)
 
     let targetPath
@@ -106,11 +106,11 @@ program
 
     const spinner = ora('正在扫描文件...').start()
     const scanner = new CodeScanner(targetPath)
-    const files = scanner.scan()
+    const files = await scanner.scan()
     spinner.succeed(`发现 ${files.length} 个文件`)
 
     const buildSpinner = ora('正在构建上下文...').start()
-    const { fileCount, totalChars, estimatedTokens, outputPath: actualOutput } = scanner.buildContext(outputPath)
+    const { fileCount, totalChars, estimatedTokens, outputPath: actualOutput } = await scanner.buildContext(outputPath)
     buildSpinner.succeed('构建完成')
 
     const outputSize = fs.statSync(actualOutput).size
@@ -176,7 +176,7 @@ program
     console.log()
 
     const scanner = new CodeScanner(targetPath)
-    scanner.buildContext(contextFile)
+    await scanner.buildContext(contextFile)
 
     const proxy = new AIProxy({
       baseUrl: options.baseUrl,
@@ -231,11 +231,11 @@ program
   .command('scan <path>')
   .description('扫描项目代码')
   .option('-o, --output <path>', '输出文件路径')
-  .action((targetPath, options) => {
+  .action(async (targetPath, options) => {
     console.log(chalk.cyan(`正在扫描项目: ${targetPath}`))
 
     const scanner = new CodeScanner(targetPath)
-    const files = scanner.scan()
+    const files = await scanner.scan()
 
     console.log(`\n${chalk.green(`扫描完成，找到 ${files.length} 个文件:`)}`)
     for (let i = 0; i < Math.min(files.length, 30); i++) {

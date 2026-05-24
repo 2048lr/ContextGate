@@ -58,6 +58,9 @@ Thumbs.db
 config.yaml
 !config.yaml.example
 
+# Database
+contextgate.db
+
 # Build artifacts
 build/
 !app/gui-js/build/

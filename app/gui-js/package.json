@@ -1,11 +1,16 @@
 {
   "name": "contextgate",
-  "version": "5.2.4",
+  "version": "5.2.5",
   "description": "AI Context Management & Proxy System",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "cli": "node cli.js",
+    "lint": "eslint lib/ cli.js main.js preload.js",
+    "lint:fix": "eslint lib/ cli.js main.js preload.js --fix",
+    "test": "node --test test/*.test.js",
+    "test:monitor": "node --test test/monitor.test.js",
+    "test:proxy": "node --test test/proxy.test.js",
     "build": "electron-builder",
     "build:linux": "electron-builder --linux",
     "build:linux:x64": "electron-builder --linux --x64",
@@ -32,7 +37,8 @@
   "license": "MIT",
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.0.0"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
@@ -165,8 +171,10 @@
         }
       ],
       "icon": "build/icon.png",
-      "sign": null,
-      "signingHashAlgorithms": []
+      "signAndEditExecutable": true,
+      "signingHashAlgorithms": ["sha256"],
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
+      "timeStampServer": "http://timestamp.digicert.com"
     },
     "nsis": {
       "oneClick": false,

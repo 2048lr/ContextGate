@@ -37,10 +37,6 @@ function getBackgroundPath() {
 }
 
 function getDataDir() {
-  const isDev = !app.isPackaged
-  if (isDev) {
-    return path.join(__dirname, '..', '..')
-  }
   const userDataPath = app.getPath('userData')
   if (!fs.existsSync(userDataPath)) {
     fs.mkdirSync(userDataPath, { recursive: true })
@@ -100,7 +96,7 @@ async function startProxy(port = 12306) {
 
   if (workspace) {
     const scanner = new CodeScanner(workspace)
-    scanner.buildContext(contextFile)
+    await scanner.buildContext(contextFile)
   }
 
   tokenMonitor = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') })
@@ -165,7 +161,7 @@ function checkProxyStatus() {
 async function buildContext(projectPath) {
   try {
     const scanner = new CodeScanner(projectPath)
-    const { fileCount, totalChars, estimatedTokens, outputPath } = scanner.buildContext()
+    const { fileCount, totalChars, estimatedTokens, outputPath } = await scanner.buildContext()
 
     const configManager = new ConfigManager(path.join(getDataDir(), 'config.yaml'))
     configManager.setWorkspace(projectPath)
@@ -192,11 +188,18 @@ function createWindow() {
     ? path.join(__dirname, '..', '..', 'resources', 'icon.png')
     : path.join(process.resourcesPath, 'resources', 'icon.png')
 
+  const winWidth = Math.min(1280, Math.round(width * 0.8))
+  const winHeight = Math.min(800, Math.round(height * 0.8))
+  const winX = Math.round((width - winWidth) / 2) + primaryDisplay.workArea.x
+  const winY = Math.round((height - winHeight) / 2) + primaryDisplay.workArea.y
+
   mainWindow = new BrowserWindow({
-    width: width,
-    height: height,
-    x: 0,
-    y: 0,
+    width: winWidth,
+    height: winHeight,
+    x: winX,
+    y: winY,
+    minWidth: 800,
+    minHeight: 600,
     frame: false,
     transparent: false,
     backgroundColor: '#19191e',
@@ -212,7 +215,6 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'index.html'))
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow.maximize()
     mainWindow.show()
   })
 
@@ -383,12 +385,37 @@ ipcMain.handle('build-context', async (event, projectPath) => {
   return await buildContext(projectPath)
 })
 
+const ALLOWED_SCRIPTS = new Set([
+  'scripts/build.sh',
+  'scripts/serve.sh',
+  'scripts/scan.sh',
+  'scripts/stats.sh'
+])
+
+const ALLOWED_ACTIONS = /^[a-zA-Z0-9_-]+$/
+
 ipcMain.handle('run-script', async (event, scriptPath, action) => {
+  if (!ALLOWED_SCRIPTS.has(scriptPath)) {
+    return { success: false, error: 'Script not allowed' }
+  }
+  if (!action || !ALLOWED_ACTIONS.test(action)) {
+    return { success: false, error: 'Invalid action' }
+  }
+
   const { exec } = require('child_process')
   const isDev = !app.isPackaged
   const scriptFullPath = isDev
     ? path.join(__dirname, '..', '..', scriptPath)
     : path.join(process.resourcesPath, scriptPath)
+
+  const resolved = path.resolve(scriptFullPath)
+  const allowedBase = isDev
+    ? path.resolve(path.join(__dirname, '..', '..'))
+    : path.resolve(process.resourcesPath)
+  if (!resolved.startsWith(allowedBase)) {
+    return { success: false, error: 'Path traversal detected' }
+  }
+
   if (!fs.existsSync(scriptFullPath)) {
     return { success: false, error: 'Script not found' }
   }
