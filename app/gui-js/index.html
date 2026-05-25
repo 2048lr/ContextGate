@@ -34,7 +34,7 @@
             <span class="status-dot"></span>
             <span class="status-text">未启动</span>
           </div>
-          <div class="port-display">端口: <span id="sidebar-port">12306</span></div>
+          <div class="port-display">端口: <span id="sidebar-port">--</span></div>
         </div>
         
         <div class="stats-grid">
@@ -114,7 +114,7 @@
               <div class="proxy-info">
                 <div class="info-row">
                   <span class="info-label">地址:</span>
-                  <span class="info-value">http://127.0.0.1:12306</span>
+                  <span class="info-value" id="proxy-address">http://127.0.0.1:--</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">转发:</span>
@@ -217,7 +217,7 @@
           </div>
           <div class="form-group">
             <label>端口:</label>
-            <input type="number" id="proxy-port" value="12306" min="1" max="65535">
+            <input type="number" id="proxy-port" value="" min="1" max="65535">
           </div>
           <div class="form-group">
             <label class="checkbox-label">

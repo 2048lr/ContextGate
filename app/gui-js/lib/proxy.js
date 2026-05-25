@@ -1,288 +1,15 @@
 const express = require('express')
-const axios = require('axios')
-const https = require('https')
-const http = require('http')
 const fs = require('fs')
-const path = require('path')
-const yaml = require('js-yaml')
-const crypto = require('crypto')
 const { CodeScanner, ContextExtractor } = require('./scanner')
-const { VERSION } = require('./config')
-
-const CONTEXT_HASH_FILE = '.context_hash'
-
-const sharedHttpsAgent = new https.Agent({
-  keepAlive: true,
-  keepAliveMsecs: 30000,
-  maxSockets: 50,
-  maxFreeSockets: 10,
-  timeout: 30000,
-  rejectUnauthorized: true,
-  minVersion: 'TLSv1.2',
-  ciphers: 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA@STRENGTH'
-})
-
-const insecureHttpsAgent = new https.Agent({
-  keepAlive: true,
-  keepAliveMsecs: 30000,
-  maxSockets: 50,
-  maxFreeSockets: 10,
-  timeout: 30000,
-  rejectUnauthorized: false,
-  minVersion: 'TLSv1.2'
-})
-
-const sharedHttpAgent = new http.Agent({
-  keepAlive: true,
-  keepAliveMsecs: 30000,
-  maxSockets: 50,
-  maxFreeSockets: 10,
-  timeout: 30000
-})
-
-const axiosInstance = axios.create({
-  httpAgent: sharedHttpAgent,
-  httpsAgent: sharedHttpsAgent,
-  maxRedirects: 5,
-  decompress: true,
-  transitional: { silentJSONParsing: true, forcedJSONParsing: true, clarifyTimeoutError: true }
-})
-
-async function axiosRetry(config, retries) {
-  retries = retries || 2
-  let lastErr = null
-  for (let i = 0; i <= retries; i++) {
-    try {
-      return await axiosInstance(config)
-    } catch (err) {
-      lastErr = err
-      const code = err.code || ''
-      if (['ECONNRESET', 'ETIMEDOUT', 'EPIPE', 'ECONNABORTED', 'ERR_TLS_CERT_ALTNAME_INVALID'].includes(code) && i < retries) {
-        const delay = Math.min(500 * Math.pow(2, i), 3000)
-        console.log(`[Retry ${i + 1}/${retries}] ${code} - waiting ${delay}ms`)
-        await new Promise(r => setTimeout(r, delay))
-        continue
-      }
-      throw err
-    }
-  }
-  throw lastErr
-}
-
-function computeFileHash(filePath) {
-  try {
-    if (!fs.existsSync(filePath)) return null
-    const content = fs.readFileSync(filePath)
-    return crypto.createHash('sha1').update(content).digest('hex')
-  } catch (e) {
-    return null
-  }
-}
-
-function loadSavedContextHash(contextDir) {
-  const hashFile = path.join(contextDir, CONTEXT_HASH_FILE)
-  try {
-    if (fs.existsSync(hashFile)) {
-      return fs.readFileSync(hashFile, 'utf8').trim()
-    }
-  } catch (e) {}
-  return null
-}
-
-function saveContextHash(contextDir, hash) {
-  const hashFile = path.join(contextDir, CONTEXT_HASH_FILE)
-  try {
-    fs.writeFileSync(hashFile, hash, 'utf8')
-  } catch (e) {}
-}
-
-function getContextFilesList(contextFile) {
-  if (!contextFile || !fs.existsSync(contextFile)) return []
-  try {
-    const dir = path.dirname(contextFile)
-    const lines = fs.readFileSync(contextFile, 'utf8').split('\n')
-    const files = []
-    let currentFile = null
-    for (const line of lines) {
-      const fileMatch = line.match(/^# File: (.+)$/)
-      if (fileMatch) {
-        currentFile = fileMatch[1]
-        files.push({ path: currentFile, hash: null })
-      }
-    }
-    return files
-  } catch (e) {
-    return []
-  }
-}
-
-function computeContextSignature(contextFile, projectRoot) {
-  try {
-    if (!fs.existsSync(contextFile)) return null
-    const dir = path.dirname(contextFile)
-    const content = fs.readFileSync(contextFile, 'utf8')
-    const mainHash = crypto.createHash('sha1').update(content).digest('hex')
-    const files = []
-    let currentFile = null
-    for (const line of content.split('\n')) {
-      const fileMatch = line.match(/^# File: (.+)$/)
-      if (fileMatch) {
-        currentFile = fileMatch[1]
-        files.push(currentFile)
-      }
-    }
-    const fileHashes = {}
-    for (const fileRelPath of files) {
-      if (!projectRoot) continue
-      const absPath = path.join(projectRoot, fileRelPath)
-      const hash = computeFileHash(absPath)
-      if (hash) {
-        fileHashes[fileRelPath] = hash
-      }
-    }
-    const combinedHash = crypto
-      .createHash('sha1')
-      .update(JSON.stringify(fileHashes))
-      .digest('hex')
-    return { mainHash, combinedHash, fileHashes, fileCount: files.length, files, file: contextFile }
-  } catch (e) {
-    return null
-  }
-}
-
-class ConfigManager {
-  constructor(configPath) {
-    this.configPath = configPath
-    this.config = this._load()
-  }
-
-  _load() {
-    try {
-      if (fs.existsSync(this.configPath)) {
-        const content = fs.readFileSync(this.configPath, 'utf8')
-        return yaml.load(content) || {}
-      }
-    } catch (e) {
-      console.error('Failed to load config:', e)
-    }
-    return {}
-  }
-
-  save() {
-    try {
-      const yamlStr = yaml.dump(this.config, { lineWidth: -1 })
-      fs.writeFileSync(this.configPath, yamlStr, 'utf8')
-      return true
-    } catch (e) {
-      console.error('Failed to save config:', e)
-      return false
-    }
-  }
-
-  getWorkspace() {
-    return this.config.workspace || null
-  }
-
-  setWorkspace(workspacePath) {
-    this.config.workspace = workspacePath
-    return this.save()
-  }
-
-  getProvider(providerName) {
-    const providers = this.config.providers || {}
-    return providers[providerName] || null
-  }
-
-  getDefaultProvider() {
-    return this.config.default_provider || null
-  }
-
-  getAllProviders() {
-    return this.config.providers || {}
-  }
-
-  getProxyConfig() {
-    return this.config.proxy || { host: '127.0.0.1', port: 12306 }
-  }
-
-  getMonitorConfig() {
-    return this.config.monitor || { enabled: true, monthly_limit: 100 }
-  }
-
-  getCurrencyConfig() {
-    return this.config.currency || { currency: 'USD', exchange_rates: {} }
-  }
-}
-
-class LRUCache {
-  constructor(maxSize = 200, maxMemoryMB = 100) {
-    this.maxSize = maxSize
-    this.maxMemory = maxMemoryMB * 1024 * 1024
-    this.cache = new Map()
-    this.currentMemory = 0
-  }
-
-  get(key) {
-    if (!this.cache.has(key)) return undefined
-    const entry = this.cache.get(key)
-    this.cache.delete(key)
-    this.cache.set(key, entry)
-    return entry.value
-  }
-
-  set(key, value) {
-    if (this.cache.has(key)) {
-      const oldEntry = this.cache.get(key)
-      this.currentMemory -= oldEntry.size
-      this.cache.delete(key)
-    }
-    const size = this._estimateSize(value)
-    while ((this.cache.size >= this.maxSize || this.currentMemory + size > this.maxMemory) && this.cache.size > 0) {
-      const oldestKey = this.cache.keys().next().value
-      const oldestEntry = this.cache.get(oldestKey)
-      this.currentMemory -= oldestEntry.size
-      this.cache.delete(oldestKey)
-    }
-    this.cache.set(key, { value, size })
-    this.currentMemory += size
-  }
-
-  has(key) {
-    return this.cache.has(key)
-  }
-
-  clear() {
-    this.cache.clear()
-    this.currentMemory = 0
-  }
-
-  get size() {
-    return this.cache.size
-  }
-
-  _estimateSize(value) {
-    if (!value) return 0
-    if (value._sseEvents) {
-      try {
-        return Buffer.byteLength(JSON.stringify(value._sseEvents), 'utf8') + 1024
-      } catch (e) {
-        return value._sseEvents.length * 512 + 1024
-      }
-    }
-    if (value._streamChunks) {
-      let chunksSize = 0
-      for (const chunk of value._streamChunks) {
-        chunksSize += chunk.length || chunk.byteLength || 0
-      }
-      return chunksSize + 1024
-    }
-    try {
-      return Buffer.byteLength(JSON.stringify(value), 'utf8')
-    } catch (e) {
-      return 10240
-    }
-  }
-}
+const { VERSION, DEFAULT_PROXY_HOST, DEFAULT_PROXY_PORT } = require('./config')
+const { LRUCache } = require('./lru-cache')
+const { ConfigManager } = require('./proxy/config-manager')
+const { computeContextSignature, checkContextChanged, getContextHash } = require('./proxy/context-signature')
+const {
+  axiosRetry, buildAxiosConfig, forwardRequest, forwardChatRequest,
+  parseSSEChunks, serializeSSEEvents, extractMsgPreview, axiosInstance
+} = require('./proxy/forwarder')
+const { ALLOWED_V1_PATHS, detectProvider, getCacheKey, shouldCache } = require('./proxy/routes')
 
 class AIProxy {
   constructor(options) {
@@ -332,14 +59,6 @@ class AIProxy {
     }
   }
 
-  _extractMsgPreview(messages) {
-    if (!Array.isArray(messages) || messages.length === 0) return ''
-    const last = messages[messages.length - 1]
-    if (!last || !last.content) return ''
-    const text = typeof last.content === 'string' ? last.content : JSON.stringify(last.content)
-    return text.length > 80 ? text.substring(0, 80) + '…' : text
-  }
-
   _loadContextSignature() {
     if (this.contextFile && fs.existsSync(this.contextFile)) {
       this.contextSignature = computeContextSignature(this.contextFile, this.projectRoot)
@@ -348,16 +67,19 @@ class AIProxy {
 
   _getContextHash() {
     this._loadContextSignature()
-    if (!this.contextSignature) return 'none'
-    return this.contextSignature.combinedHash || this.contextSignature.mainHash
+    return getContextHash(this.contextSignature)
   }
 
   _checkContextChanged() {
-    const newSignature = computeContextSignature(this.contextFile, this.projectRoot)
-    if (!newSignature) return false
-    if (!this.contextSignature) return true
-    return newSignature.combinedHash !== this.contextSignature.combinedHash ||
-           newSignature.mainHash !== this.contextSignature.mainHash
+    return checkContextChanged(this.contextSignature, this.contextFile, this.projectRoot)
+  }
+
+  _invalidateCacheIfNeeded() {
+    if (this._checkContextChanged()) {
+      console.log('[Cache INVALIDATED] Source file changed')
+      this.cache.clear()
+      this._loadContextSignature()
+    }
   }
 
   _setupRoutes() {
@@ -390,7 +112,7 @@ class AIProxy {
         if (!providerConfig) {
           return res.status(400).json({ error: `Unknown provider: ${provider}` })
         }
-        const response = await axiosRetry(this._buildAxiosConfig(providerConfig, {
+        const response = await axiosRetry(buildAxiosConfig(providerConfig, {
           method: 'GET',
           url: `${providerConfig.base_url}/models`,
           headers: {
@@ -406,18 +128,6 @@ class AIProxy {
         })
       }
     })
-
-    const ALLOWED_V1_PATHS = [
-      '/v1/chat/completions',
-      '/v1/completions',
-      '/v1/embeddings',
-      '/v1/models',
-      '/v1/images/generations',
-      '/v1/audio/transcriptions',
-      '/v1/audio/translations',
-      '/v1/audio/speech',
-      '/v1/moderations'
-    ]
 
     this.app.all('/v1/*', async (req, res) => {
       if (!ALLOWED_V1_PATHS.includes(req.path)) {
@@ -440,22 +150,22 @@ class AIProxy {
         this._invalidateCacheIfNeeded()
 
         const backendPath = req.path.replace('/v1/', '/')
-        const provider = this._detectProvider(backendPath)
+        const provider = detectProvider(backendPath, this.configManager)
         const providerConfig = this.configManager.getProvider(provider)
 
         if (!providerConfig) {
           this._emitLog({
             type: 'error', method: reqMethod, path: req.path,
-            provider, model, requestSize: reqSize, messagePreview: this._extractMsgPreview(messages),
+            provider, model, requestSize: reqSize, messagePreview: extractMsgPreview(messages),
             error: 'Unknown provider: ' + provider, status: 400, responseTime: Date.now() - reqStart
           })
           return res.status(400).json({ error: `Unknown provider: ${provider}` })
         }
 
         const backendUrl = (providerConfig.base_url || '').replace(/\/+$/, '') + '/' + backendPath.replace(/^\/+/, '')
-        const msgPreview = this._extractMsgPreview(messages)
+        const msgPreview = extractMsgPreview(messages)
 
-        const cacheKey = this._getCacheKey(req)
+        const cacheKey = getCacheKey(req, this._getContextHash())
         if (this.cache.has(cacheKey)) {
           console.log(`[Cache HIT] ${cacheKey}`)
           const cachedData = this.cache.get(cacheKey)
@@ -477,7 +187,7 @@ class AIProxy {
               'X-Accel-Buffering': 'no',
               'X-Cache': 'HIT'
             })
-            const serialized = this._serializeSSEEvents(cachedData._sseEvents)
+            const serialized = serializeSSEEvents(cachedData._sseEvents)
             res.write(serialized)
             return res.end()
           }
@@ -506,11 +216,11 @@ class AIProxy {
           )
         }
 
-        const response = await this._forwardRequest(providerConfig, backendPath, body)
+        const response = await forwardRequest(providerConfig, backendPath, body)
         const responseTime = Date.now() - reqStart
         const respUsage = response.data && response.data.usage
 
-        if (response.data && this._shouldCache(reqMethod)) {
+        if (response.data && shouldCache(reqMethod)) {
           this.cache.set(cacheKey, response.data)
           console.log(`[Cache SET] ${cacheKey}`)
         }
@@ -531,7 +241,7 @@ class AIProxy {
         this._emitLog({
           type: 'error', method: reqMethod, path: req.path,
           provider: '', model, requestSize: reqSize,
-          messagePreview: this._extractMsgPreview(messages),
+          messagePreview: extractMsgPreview(messages),
           error: error.message, status: error.response ? error.response.status : 500, responseTime
         })
         res.status(error.response ? error.response.status : 500).json({
@@ -545,7 +255,7 @@ class AIProxy {
       const reqStart = Date.now()
       const reqSize = JSON.stringify(req.body || {}).length
       const { provider = 'openai', model, messages, ...options } = req.body
-      const msgPreview = this._extractMsgPreview(messages)
+      const msgPreview = extractMsgPreview(messages)
 
       this._invalidateCacheIfNeeded()
 
@@ -561,7 +271,7 @@ class AIProxy {
 
       const backendUrl = (providerConfig.base_url || '').replace(/\/+$/, '') + '/chat/completions'
 
-      const cacheKey = this._getCacheKey(req)
+      const cacheKey = getCacheKey(req, this._getContextHash())
       if (this.cache.has(cacheKey)) {
         const cachedData = this.cache.get(cacheKey)
         const cachedUsage = cachedData && cachedData.usage
@@ -577,7 +287,7 @@ class AIProxy {
       }
 
       try {
-        const response = await this._forwardChatRequest(providerConfig, model, messages, options)
+        const response = await forwardChatRequest(providerConfig, model, messages, options)
         const responseTime = Date.now() - reqStart
         const respUsage = response.data && response.data.usage
         this.cache.set(cacheKey, response.data)
@@ -629,159 +339,13 @@ class AIProxy {
     })
   }
 
-  _detectProvider(backendPath) {
-    const lowerPath = backendPath.toLowerCase()
-    if (lowerPath.includes('zhipu')) return 'zhipu'
-    if (lowerPath.includes('deepseek')) return 'deepseek'
-    if (lowerPath.includes('openai')) return 'openai'
-    const defaultProvider = this.configManager.getDefaultProvider()
-    if (defaultProvider) return defaultProvider
-    const allProviders = this.configManager.getAllProviders()
-    const providerNames = Object.keys(allProviders)
-    if (providerNames.length === 1) return providerNames[0]
-    for (const [name, config] of Object.entries(allProviders)) {
-      if (config.base_url && lowerPath.includes(name.toLowerCase())) return name
-    }
-    return 'openai'
-  }
-
-  _getAgent(providerConfig) {
-    const baseUrl = (providerConfig.base_url || '').toLowerCase()
-    const isInsecure = providerConfig.tls && providerConfig.tls.reject_unauthorized === false
-    if (baseUrl.startsWith('https://')) {
-      return isInsecure ? insecureHttpsAgent : sharedHttpsAgent
-    }
-    return sharedHttpAgent
-  }
-
-  _buildAxiosConfig(providerConfig, extra = {}) {
-    const config = {
-      ...extra,
-      httpAgent: this._getAgent(providerConfig),
-      httpsAgent: this._getAgent(providerConfig),
-      timeout: providerConfig.timeout || 60000
-    }
-    return config
-  }
-
-  _getCacheKey(req) {
-    const contextHash = this._getContextHash()
-    const body = req.body || {}
-    let msgFingerprint = ''
-    if (body.messages && Array.isArray(body.messages)) {
-      const lastUser = [...body.messages].reverse().find(m => m.role === 'user')
-      if (lastUser && lastUser.content) {
-        const text = typeof lastUser.content === 'string' ? lastUser.content : JSON.stringify(lastUser.content)
-        msgFingerprint = crypto.createHash('md5').update(text).digest('hex').substring(0, 12)
-      }
-    }
-    const modelKey = body.model || 'unknown'
-    if (!msgFingerprint) {
-      msgFingerprint = crypto.createHash('md5').update(JSON.stringify(body)).digest('hex').substring(0, 12)
-    }
-    return `${req.method}:${req.path}:${modelKey}:${msgFingerprint}`
-  }
-
-  _shouldCache(method) {
-    return ['GET', 'POST'].includes(method)
-  }
-
-  _invalidateCacheIfNeeded() {
-    if (this._checkContextChanged()) {
-      console.log('[Cache INVALIDATED] Source file changed')
-      this.cache.clear()
-      this._loadContextSignature()
-    }
-  }
-
-  async _forwardRequest(providerConfig, backendPath, data) {
-    const url = `${providerConfig.base_url}${backendPath}`
-    try {
-      const response = await axiosRetry(this._buildAxiosConfig(providerConfig, {
-        method: 'POST',
-        url,
-        data,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${providerConfig.api_key}`
-        }
-      }))
-      return response
-    } catch (error) {
-      throw error
-    }
-  }
-
-  async _forwardChatRequest(providerConfig, model, messages, options) {
-    const url = `${providerConfig.base_url}/chat/completions`
-    try {
-      const response = await axiosRetry(this._buildAxiosConfig(providerConfig, {
-        method: 'POST',
-        url,
-        data: { model, messages, ...options },
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${providerConfig.api_key}`
-        }
-      }))
-      return response
-    } catch (error) {
-      throw error
-    }
-  }
-
-  _parseSSEChunks(rawChunks) {
-    const events = []
-    let buffer = ''
-    for (const chunk of rawChunks) {
-      buffer += chunk.toString()
-    }
-    const lines = buffer.split('\n')
-    let currentEvent = { event: '', data: '', id: '', retry: '' }
-
-    for (const line of lines) {
-      if (line === '') {
-        if (currentEvent.data || currentEvent.event) {
-          events.push({ ...currentEvent })
-        }
-        currentEvent = { event: '', data: '', id: '', retry: '' }
-        continue
-      }
-      if (line.startsWith('event:')) {
-        currentEvent.event = line.substring(6).trim()
-      } else if (line.startsWith('data:')) {
-        currentEvent.data = line.substring(5).trim()
-      } else if (line.startsWith('id:')) {
-        currentEvent.id = line.substring(3).trim()
-      } else if (line.startsWith('retry:')) {
-        currentEvent.retry = line.substring(6).trim()
-      }
-    }
-    if (currentEvent.data || currentEvent.event) {
-      events.push({ ...currentEvent })
-    }
-    return events
-  }
-
-  _serializeSSEEvents(events) {
-    let output = ''
-    for (const evt of events) {
-      if (evt.id) output += `id: ${evt.id}\n`
-      if (evt.event) output += `event: ${evt.event}\n`
-      if (evt.retry) output += `retry: ${evt.retry}\n`
-      output += `data: ${evt.data}\n`
-      output += '\n'
-    }
-    return output
-  }
-
   _streamChatRequestCached(providerConfig, provider, model, messages, options, req, res, cacheKey, reqStart) {
     const url = `${providerConfig.base_url}/chat/completions`
     const rawChunks = []
     let lastChunkData = ''
     const backendUrl = url
 
-    const msgPreview = this._extractMsgPreview(messages)
+    const msgPreview = extractMsgPreview(messages)
     this._emitLog({
       type: 'stream', method: 'POST', path: req.path,
       provider, model, backendUrl, requestSize: JSON.stringify(options || {}).length,
@@ -789,7 +353,7 @@ class AIProxy {
     })
 
     const axiosReq = axiosInstance({
-      ...this._buildAxiosConfig(providerConfig, {
+      ...buildAxiosConfig(providerConfig, {
         method: 'POST',
         url,
         data: { model, messages, stream: true, ...options },
@@ -831,7 +395,7 @@ class AIProxy {
             const responseTime = Date.now() - reqStart
             this._recordRequest(provider, model, parsed, false, responseTime)
           }
-          const sseEvents = this._parseSSEChunks(rawChunks)
+          const sseEvents = parseSSEChunks(rawChunks)
           this.cache.set(cacheKey, { _sseEvents: sseEvents, _usage: usage })
           console.log(`[Cache SET stream] ${cacheKey} (${sseEvents.length} events)`)
         } catch (e) {
@@ -858,7 +422,7 @@ class AIProxy {
     })
   }
 
-  async run(host = '127.0.0.1', port = 12306) {
+  async run(host = DEFAULT_PROXY_HOST, port = DEFAULT_PROXY_PORT) {
     return new Promise((resolve, reject) => {
       this.server = this.app.listen(port, host, () => {
         resolve({ port, host })

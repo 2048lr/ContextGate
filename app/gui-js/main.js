@@ -8,16 +8,18 @@ app.commandLine.appendSwitch('no-sandbox')
 app.commandLine.appendSwitch('disable-gpu-sandbox')
 app.commandLine.appendSwitch('disable-software-rasterizer')
 app.commandLine.appendSwitch('disable-gpu-compositing')
+app.commandLine.appendSwitch('disable-dev-shm-usage')
 
 const { CodeScanner } = require('./lib/scanner')
 const { AIProxy, ConfigManager } = require('./lib/proxy')
 const { TokenMonitor } = require('./lib/monitor')
+const { DEFAULT_PROXY_PORT } = require('./lib/config')
 
 let mainWindow = null
 let tray = null
 let config = {}
 let proxyServer = null
-let proxyPort = 12306
+let proxyPort = DEFAULT_PROXY_PORT
 let isProxyRunning = false
 let tokenMonitor = null
 
@@ -84,7 +86,7 @@ function saveConfig(newConfig) {
   }
 }
 
-async function startProxy(port = 12306) {
+async function startProxy(port = DEFAULT_PROXY_PORT) {
   if (proxyServer) {
     return { success: false, error: 'Proxy already running' }
   }
@@ -370,7 +372,7 @@ ipcMain.handle('quit-app', () => {
 })
 
 ipcMain.handle('start-proxy', async (event, port) => {
-  return await startProxy(port || 12306)
+  return await startProxy(port || DEFAULT_PROXY_PORT)
 })
 
 ipcMain.handle('stop-proxy', () => {

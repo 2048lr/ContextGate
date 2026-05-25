@@ -1,6 +1,7 @@
 const initSqlJs = require('sql.js')
 const fs = require('fs')
 const path = require('path')
+const { LRUCache } = require('./lru-cache')
 
 const MODEL_PRICING = {
   'gpt-4o-mini': { input: 0.15 / 1000000, output: 0.6 / 1000000 },
@@ -40,38 +41,6 @@ function calculateCost(model, inputTokens, outputTokens) {
     }
   }
   return 0
-}
-
-class LRUCache {
-  constructor(maxSize = 1000) {
-    this.maxSize = maxSize
-    this.cache = new Map()
-  }
-
-  get(key) {
-    if (!this.cache.has(key)) return null
-    const entry = this.cache.get(key)
-    this.cache.delete(key)
-    entry.lastAccess = Date.now()
-    this.cache.set(key, entry)
-    return entry.value
-  }
-
-  set(key, value) {
-    if (this.cache.size >= this.maxSize) {
-      const oldest = this.cache.keys().next().value
-      this.cache.delete(oldest)
-    }
-    this.cache.set(key, { value, lastAccess: Date.now() })
-  }
-
-  clear() {
-    this.cache.clear()
-  }
-
-  get size() {
-    return this.cache.size
-  }
 }
 
 class TokenMonitor {
@@ -374,4 +343,4 @@ class TokenMonitor {
   }
 }
 
-module.exports = { TokenMonitor, LRUCache, calculateCost, MODEL_PRICING }
+module.exports = { TokenMonitor, calculateCost, MODEL_PRICING }

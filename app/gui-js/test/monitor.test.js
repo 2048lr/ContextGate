@@ -1,6 +1,7 @@
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
-const { LRUCache, calculateCost, MODEL_PRICING } = require('../lib/monitor')
+const { LRUCache } = require('../lib/lru-cache')
+const { calculateCost, MODEL_PRICING } = require('../lib/monitor')
 
 describe('LRUCache', () => {
   it('should set and get values', () => {
@@ -11,32 +12,32 @@ describe('LRUCache', () => {
     assert.deepEqual(cache.get('b'), { x: 2 })
   })
 
-  it('should return null for missing keys', () => {
+  it('should return undefined for missing keys', () => {
     const cache = new LRUCache(5)
-    assert.equal(cache.get('missing'), null)
+    assert.equal(cache.get('missing'), undefined)
   })
 
   it('should evict oldest entry when full', () => {
-    const cache = new LRUCache(3)
+    const cache = new LRUCache(3, 1)
     cache.set('a', 1)
     cache.set('b', 2)
     cache.set('c', 3)
     assert.equal(cache.size, 3)
     cache.set('d', 4)
     assert.equal(cache.size, 3)
-    assert.equal(cache.get('a'), null)
+    assert.equal(cache.get('a'), undefined)
     assert.equal(cache.get('d'), 4)
   })
 
   it('should promote accessed entries (LRU)', () => {
-    const cache = new LRUCache(3)
+    const cache = new LRUCache(3, 1)
     cache.set('a', 1)
     cache.set('b', 2)
     cache.set('c', 3)
     cache.get('a')
     cache.set('d', 4)
     assert.equal(cache.get('a'), 1)
-    assert.equal(cache.get('b'), null)
+    assert.equal(cache.get('b'), undefined)
   })
 
   it('should clear all entries', () => {
@@ -45,7 +46,22 @@ describe('LRUCache', () => {
     cache.set('b', 2)
     cache.clear()
     assert.equal(cache.size, 0)
-    assert.equal(cache.get('a'), null)
+    assert.equal(cache.get('a'), undefined)
+  })
+
+  it('should respect memory limits', () => {
+    const cache = new LRUCache(100, 0.001)
+    const largeValue = 'x'.repeat(600)
+    cache.set('a', largeValue)
+    cache.set('b', largeValue)
+    assert.ok(cache.size <= 2)
+  })
+
+  it('should has() return correct boolean', () => {
+    const cache = new LRUCache(5)
+    cache.set('a', 1)
+    assert.equal(cache.has('a'), true)
+    assert.equal(cache.has('b'), false)
   })
 })
 

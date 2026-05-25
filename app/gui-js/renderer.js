@@ -1,7 +1,9 @@
+const DEFAULT_PROXY_PORT = 12306
+
 let config = {}
 let currentProject = null
 let proxyRunning = false
-let proxyPort = 12306
+let proxyPort = DEFAULT_PROXY_PORT
 let stats = {
   todayRequests: 0,
   todayTokens: 0,
@@ -123,7 +125,7 @@ function updateStatsUI() {
 }
 
 function updateContextHash() {
-  fetch('http://127.0.0.1:12306/context/hash')
+  fetch(`http://127.0.0.1:${proxyPort}/context/hash`)
     .then(r => r.json())
     .then(data => {
       const hashDisplay = document.querySelector('.hash-value')
@@ -133,7 +135,8 @@ function updateContextHash() {
         hashDisplay.textContent = '未设置'
       }
     })
-    .catch(() => {
+    .catch((err) => {
+      console.error('Failed to update context hash:', err)
       document.querySelector('.hash-value').textContent = '未设置'
     })
 }
@@ -248,7 +251,7 @@ async function toggleProxy() {
 }
 
 async function startProxy() {
-  const port = config.proxy?.port || 12306
+  const port = config.proxy?.port || DEFAULT_PROXY_PORT
   const result = await window.electronAPI.startProxy(port)
 
   if (result.success) {
@@ -306,15 +309,21 @@ function updateProxyUI() {
     toggleBtn.querySelector('.action-text').textContent = '启动代理'
     toggleBtn.querySelector('.action-icon').textContent = '▶'
   }
+
+  const sidebarPort = document.getElementById('sidebar-port')
+  if (sidebarPort) sidebarPort.textContent = proxyPort || DEFAULT_PROXY_PORT
+  const proxyAddress = document.getElementById('proxy-address')
+  if (proxyAddress) proxyAddress.textContent = `http://127.0.0.1:${proxyPort || DEFAULT_PROXY_PORT}`
 }
 
 async function checkProxyStatus() {
   try {
     const status = await window.electronAPI.proxyStatus()
     proxyRunning = status.running
-    proxyPort = status.port || 12306
+    proxyPort = status.port || DEFAULT_PROXY_PORT
     updateProxyUI()
   } catch (e) {
+    console.error('Failed to check proxy status:', e)
     proxyRunning = false
     updateProxyUI()
   }
@@ -568,7 +577,7 @@ async function fetchModels() {
       headers: { 'Authorization': `Bearer ${apiKey}` }
     })
     if (!res.ok) {
-      const errText = await res.text().catch(() => '')
+      const errText = await res.text().catch((e) => { console.error('Failed to read error response text:', e); return '' })
       throw new Error(`HTTP ${res.status}: ${errText.substring(0, 200)}`)
     }
     const json = await res.json()
@@ -658,7 +667,7 @@ function loadConfigToSettings() {
   _currentProviderName = null
   const proxyConfig = config.proxy || {}
   document.getElementById('proxy-host').value = proxyConfig.host || '127.0.0.1'
-  document.getElementById('proxy-port').value = proxyConfig.port || 12306
+  document.getElementById('proxy-port').value = proxyConfig.port || DEFAULT_PROXY_PORT
   document.getElementById('proxy-sanitize').checked = proxyConfig.sanitize_requests !== false
 
   populateProviderSelect()
