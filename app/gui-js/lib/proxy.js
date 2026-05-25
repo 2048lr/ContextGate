@@ -7,7 +7,8 @@ const { ConfigManager } = require('./proxy/config-manager')
 const { computeContextSignature, checkContextChanged, getContextHash } = require('./proxy/context-signature')
 const {
   axiosRetry, buildAxiosConfig, forwardRequest, forwardChatRequest,
-  parseSSEChunks, serializeSSEEvents, extractMsgPreview, axiosInstance
+  parseSSEChunks, serializeSSEEvents, extractMsgPreview, axiosInstance,
+  getAgent
 } = require('./proxy/forwarder')
 const { ALLOWED_V1_PATHS, detectProvider, getCacheKey, shouldCache } = require('./proxy/routes')
 
@@ -63,6 +64,22 @@ class AIProxy {
     if (this.contextFile && fs.existsSync(this.contextFile)) {
       this.contextSignature = computeContextSignature(this.contextFile, this.projectRoot)
     }
+  }
+
+  _parseSSEChunks(rawChunks) {
+    return parseSSEChunks(rawChunks)
+  }
+
+  _serializeSSEEvents(events) {
+    return serializeSSEEvents(events)
+  }
+
+  _detectProvider(backendPath) {
+    return detectProvider(backendPath, this.configManager)
+  }
+
+  _getAgent(providerConfig) {
+    return getAgent(providerConfig)
   }
 
   _getContextHash() {

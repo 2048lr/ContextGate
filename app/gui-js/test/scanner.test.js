@@ -49,7 +49,7 @@ describe('IntentExtractor', () => {
   })
 
   it('should extract negated terms', () => {
-    const extractor = new IntentExtractor('Fix the auth module but skip the test files')
+    const extractor = new IntentExtractor('Fix the auth module but skip login files')
     assert.ok(extractor.negatedTerms.size > 0)
   })
 

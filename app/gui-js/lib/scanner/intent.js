@@ -87,6 +87,7 @@ class IntentExtractor {
           this.intents.push({
             name: intentName,
             keywords: intentConfig.keywords,
+            patterns: intentConfig.patterns,
             filePatterns: intentConfig.filePatterns,
             confidence: 1.0
           })
