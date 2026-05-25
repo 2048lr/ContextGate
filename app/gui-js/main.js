@@ -5,10 +5,21 @@ const yaml = require('js-yaml')
 
 // 修复某些Linux环境下的崩溃问题
 app.commandLine.appendSwitch('no-sandbox')
+app.commandLine.appendSwitch('disable-setuid-sandbox')
 app.commandLine.appendSwitch('disable-gpu-sandbox')
 app.commandLine.appendSwitch('disable-software-rasterizer')
 app.commandLine.appendSwitch('disable-gpu-compositing')
 app.commandLine.appendSwitch('disable-dev-shm-usage')
+
+const userDataPath = app.getPath('userData')
+const tmpDir = path.join(userDataPath, 'tmp')
+if (!fs.existsSync(tmpDir)) {
+  fs.mkdirSync(tmpDir, { recursive: true })
+}
+app.setPath('temp', tmpDir)
+process.env.TMPDIR = tmpDir
+process.env.TMP = tmpDir
+process.env.TEMP = tmpDir
 
 const { CodeScanner } = require('./lib/scanner')
 const { AIProxy, ConfigManager } = require('./lib/proxy')
