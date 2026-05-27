@@ -1,6 +1,0 @@
-(MIT OR Apache-2.0) AND Unicode-3.0: unicode-ident v1.0.24
-: mesa v26.0.6
-Apache-2.0 OR MIT: rustc-hash v2.1.2
-MIT OR Apache-2.0: proc-macro2 v1.0.106
-MIT OR Apache-2.0: quote v1.0.45
-MIT OR Apache-2.0: syn v2.0.117
