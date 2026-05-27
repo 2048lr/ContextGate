@@ -6,7 +6,7 @@ use crate::scanner::{BuildContextResult, CodeScanner};
 use parking_lot::Mutex;
 use serde_json::json;
 use std::sync::Arc;
-use tauri::State;
+use tauri::{Manager, State};
 
 pub struct AppState {
     pub config_manager: Mutex<ConfigManager>,
@@ -33,10 +33,9 @@ pub fn save_config(
 }
 
 #[tauri::command]
-pub async fn select_folder() -> Result<Option<String>, String> {
+pub async fn select_folder(app: tauri::AppHandle) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
 
-    let app = tauri::AppHandle::current();
     let folder = app
         .dialog()
         .file()

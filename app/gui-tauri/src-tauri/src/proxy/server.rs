@@ -375,22 +375,31 @@ async fn handle_stream_response(
     let mut full_body = String::new();
     let mut usage_data: Option<(u64, u64)> = None;
 
-    while let Some(chunk) = response.chunk().await.map_err(|e| format!("Stream error: {}", e)).map_err(|e| error_response(502, &e))? {
-        let chunk_str = String::from_utf8_lossy(&chunk).to_string();
-        full_body.push_str(&chunk_str);
+    loop {
+        match response.chunk().await {
+            Ok(Some(chunk)) => {
+                let chunk_str = String::from_utf8_lossy(&chunk).to_string();
+                full_body.push_str(&chunk_str);
 
-        for line in chunk_str.lines() {
-            if let Some(data) = line.strip_prefix("data: ") {
-                if data == "[DONE]" {
-                    continue;
-                }
-                if let Ok(json) = serde_json::from_str::<serde_json::Value>(data) {
-                    if let Some(usage) = json.get("usage") {
-                        let input_tokens = usage.get("prompt_tokens").and_then(|t| t.as_u64()).unwrap_or(0);
-                        let output_tokens = usage.get("completion_tokens").and_then(|t| t.as_u64()).unwrap_or(0);
-                        usage_data = Some((input_tokens, output_tokens));
+                for line in chunk_str.lines() {
+                    if let Some(data) = line.strip_prefix("data: ") {
+                        if data == "[DONE]" {
+                            continue;
+                        }
+                        if let Ok(json) = serde_json::from_str::<serde_json::Value>(data) {
+                            if let Some(usage) = json.get("usage") {
+                                let input_tokens = usage.get("prompt_tokens").and_then(|t| t.as_u64()).unwrap_or(0);
+                                let output_tokens = usage.get("completion_tokens").and_then(|t| t.as_u64()).unwrap_or(0);
+                                usage_data = Some((input_tokens, output_tokens));
+                            }
+                        }
                     }
                 }
+            }
+            Ok(None) => break,
+            Err(e) => {
+                eprintln!("Stream error: {}", e);
+                break;
             }
         }
     }
