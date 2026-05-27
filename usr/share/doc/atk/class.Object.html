@@ -1,0 +1,1760 @@
+<!--
+SPDX-FileCopyrightText: ATK Development Team
+
+SPDX-License-Identifier: LGPL-2.1-or-later
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Atk.Object</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta charset="utf-8" />
+
+  
+  <meta property="og:type" content="website"/>
+
+  
+  <meta property="og:image:width" content="256"/>
+  <meta property="og:image:height" content="256"/>
+  <meta property="og:image:secure_url" content="logo.png"/>
+  <meta property="og:image:alt" content="Atk-1.0"/>
+  
+
+  
+  <meta property="og:title" content="Atk.Object"/>
+  <meta property="og:description" content="Reference for Atk.Object"/>
+  <meta name="twitter:title" content="Atk.Object"/>
+  <meta name="twitter:description" content="Reference for Atk.Object"/>
+
+
+  
+  <meta name="twitter:card" content="summary"/>
+
+  
+  
+  
+  <link rel="search" type="application/opensearchdescription+xml" title="Atk" href="opensearch.xml">
+  
+  
+
+  <link rel="stylesheet" href="style.css" type="text/css" />
+
+  
+
+  
+  <script src="urlmap.js"></script>
+  
+  
+  <script src="fzy.js"></script>
+  <script src="search.js"></script>
+  
+  <script src="main.js"></script>
+
+  
+</head>
+
+<body>
+  <div id="body-wrapper" tabindex="-1">
+
+    <nav class="sidebar devhelp-hidden">
+      
+      <div class="section">
+        <a href="index.html"><img src="logo.png" class="logo"/></a>
+      </div>
+      
+      
+      <div class="search section">
+        <form id="search-form" autocomplete="off">
+          <input id="search-input" type="text" name="do-not-autocomplete" placeholder="Click, or press 's' to search" autocomplete="off"/>
+        </form>
+      </div>
+      
+      <div class="section namespace">
+        <h3><a href="index.html">Atk</a></h3>
+        <p>API Version: 1.0</p>
+        
+        <p>Library Version: 2.60.3</p>
+        
+      </div>
+      
+<div class="section">
+  <h5>Type</h5>
+  <div class="links">
+    <a class="current" href="class.Object.html#description">Object</a>
+  </div>
+</div>
+
+
+  
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Instance methods</h5>
+  <div class="links">
+  
+    <a class="method" href="method.Object.add_relationship.html">add_relationship</a>
+  
+    <a class="method" href="method.Object.connect_property_change_handler.html">connect_property_change_handler</a>
+  
+    <a class="method" href="method.Object.get_accessible_id.html">get_accessible_id</a>
+  
+    <a class="method" href="method.Object.get_attributes.html">get_attributes</a>
+  
+    <a class="method" href="method.Object.get_description.html">get_description</a>
+  
+    <a class="method" href="method.Object.get_help_text.html">get_help_text</a>
+  
+    <a class="method" href="method.Object.get_index_in_parent.html">get_index_in_parent</a>
+  
+    <a class="method" href="method.Object.get_layer.html">get_layer</a>
+  
+    <a class="method" href="method.Object.get_mdi_zorder.html">get_mdi_zorder</a>
+  
+    <a class="method" href="method.Object.get_n_accessible_children.html">get_n_accessible_children</a>
+  
+    <a class="method" href="method.Object.get_name.html">get_name</a>
+  
+    <a class="method" href="method.Object.get_object_locale.html">get_object_locale</a>
+  
+    <a class="method" href="method.Object.get_parent.html">get_parent</a>
+  
+    <a class="method" href="method.Object.get_role.html">get_role</a>
+  
+    <a class="method" href="method.Object.initialize.html">initialize</a>
+  
+    <a class="method" href="method.Object.notify_state_change.html">notify_state_change</a>
+  
+    <a class="method" href="method.Object.peek_parent.html">peek_parent</a>
+  
+    <a class="method" href="method.Object.ref_accessible_child.html">ref_accessible_child</a>
+  
+    <a class="method" href="method.Object.ref_relation_set.html">ref_relation_set</a>
+  
+    <a class="method" href="method.Object.ref_state_set.html">ref_state_set</a>
+  
+    <a class="method" href="method.Object.remove_property_change_handler.html">remove_property_change_handler</a>
+  
+    <a class="method" href="method.Object.remove_relationship.html">remove_relationship</a>
+  
+    <a class="method" href="method.Object.set_accessible_id.html">set_accessible_id</a>
+  
+    <a class="method" href="method.Object.set_description.html">set_description</a>
+  
+    <a class="method" href="method.Object.set_help_text.html">set_help_text</a>
+  
+    <a class="method" href="method.Object.set_name.html">set_name</a>
+  
+    <a class="method" href="method.Object.set_parent.html">set_parent</a>
+  
+    <a class="method" href="method.Object.set_role.html">set_role</a>
+  
+  </div>
+</div>
+
+
+
+  
+<div class="section">
+  <h5>Properties</h5>
+  <div class="links">
+  
+    <a class="property" href="property.Object.accessible-component-layer.html">accessible-component-layer</a>
+  
+    <a class="property" href="property.Object.accessible-component-mdi-zorder.html">accessible-component-mdi-zorder</a>
+  
+    <a class="property" href="property.Object.accessible-description.html">accessible-description</a>
+  
+    <a class="property" href="property.Object.accessible-help-text.html">accessible-help-text</a>
+  
+    <a class="property" href="property.Object.accessible-hypertext-nlinks.html">accessible-hypertext-nlinks</a>
+  
+    <a class="property" href="property.Object.accessible-id.html">accessible-id</a>
+  
+    <a class="property" href="property.Object.accessible-name.html">accessible-name</a>
+  
+    <a class="property" href="property.Object.accessible-parent.html">accessible-parent</a>
+  
+    <a class="property" href="property.Object.accessible-role.html">accessible-role</a>
+  
+    <a class="property" href="property.Object.accessible-table-caption.html">accessible-table-caption</a>
+  
+    <a class="property" href="property.Object.accessible-table-caption-object.html">accessible-table-caption-object</a>
+  
+    <a class="property" href="property.Object.accessible-table-column-description.html">accessible-table-column-description</a>
+  
+    <a class="property" href="property.Object.accessible-table-column-header.html">accessible-table-column-header</a>
+  
+    <a class="property" href="property.Object.accessible-table-row-description.html">accessible-table-row-description</a>
+  
+    <a class="property" href="property.Object.accessible-table-row-header.html">accessible-table-row-header</a>
+  
+    <a class="property" href="property.Object.accessible-table-summary.html">accessible-table-summary</a>
+  
+    <a class="property" href="property.Object.accessible-value.html">accessible-value</a>
+  
+  </div>
+</div>
+
+
+
+  
+<div class="section">
+  <h5>Signals</h5>
+  <div class="links">
+  
+    <a class="signal" href="signal.Object.active-descendant-changed.html">active-descendant-changed</a>
+  
+    <a class="signal" href="signal.Object.announcement.html">announcement</a>
+  
+    <a class="signal" href="signal.Object.attribute-changed.html">attribute-changed</a>
+  
+    <a class="signal" href="signal.Object.children-changed.html">children-changed</a>
+  
+    <a class="signal" href="signal.Object.focus-event.html">focus-event</a>
+  
+    <a class="signal" href="signal.Object.notification.html">notification</a>
+  
+    <a class="signal" href="signal.Object.property-change.html">property-change</a>
+  
+    <a class="signal" href="signal.Object.state-change.html">state-change</a>
+  
+    <a class="signal" href="signal.Object.visible-data-changed.html">visible-data-changed</a>
+  
+  </div>
+</div>
+
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Virtual methods</h5>
+  <div class="links">
+  
+    <a class="method" href="vfunc.Object.active_descendant_changed.html">active_descendant_changed</a>
+  
+    <a class="method" href="vfunc.Object.children_changed.html">children_changed</a>
+  
+    <a class="method" href="vfunc.Object.connect_property_change_handler.html">connect_property_change_handler</a>
+  
+    <a class="method" href="vfunc.Object.focus_event.html">focus_event</a>
+  
+    <a class="method" href="vfunc.Object.get_attributes.html">get_attributes</a>
+  
+    <a class="method" href="vfunc.Object.get_description.html">get_description</a>
+  
+    <a class="method" href="vfunc.Object.get_index_in_parent.html">get_index_in_parent</a>
+  
+    <a class="method" href="vfunc.Object.get_layer.html">get_layer</a>
+  
+    <a class="method" href="vfunc.Object.get_mdi_zorder.html">get_mdi_zorder</a>
+  
+    <a class="method" href="vfunc.Object.get_n_children.html">get_n_children</a>
+  
+    <a class="method" href="vfunc.Object.get_name.html">get_name</a>
+  
+    <a class="method" href="vfunc.Object.get_object_locale.html">get_object_locale</a>
+  
+    <a class="method" href="vfunc.Object.get_parent.html">get_parent</a>
+  
+    <a class="method" href="vfunc.Object.get_role.html">get_role</a>
+  
+    <a class="method" href="vfunc.Object.initialize.html">initialize</a>
+  
+    <a class="method" href="vfunc.Object.property_change.html">property_change</a>
+  
+    <a class="method" href="vfunc.Object.ref_child.html">ref_child</a>
+  
+    <a class="method" href="vfunc.Object.ref_relation_set.html">ref_relation_set</a>
+  
+    <a class="method" href="vfunc.Object.ref_state_set.html">ref_state_set</a>
+  
+    <a class="method" href="vfunc.Object.remove_property_change_handler.html">remove_property_change_handler</a>
+  
+    <a class="method" href="vfunc.Object.set_description.html">set_description</a>
+  
+    <a class="method" href="vfunc.Object.set_name.html">set_name</a>
+  
+    <a class="method" href="vfunc.Object.set_parent.html">set_parent</a>
+  
+    <a class="method" href="vfunc.Object.set_role.html">set_role</a>
+  
+    <a class="method" href="vfunc.Object.state_change.html">state_change</a>
+  
+    <a class="method" href="vfunc.Object.visible_data_changed.html">visible_data_changed</a>
+  
+  </div>
+</div>
+
+
+
+
+      <div class="section generator">
+        <p>Generated by <a href="https://gitlab.gnome.org/GNOME/gi-docgen">gi-docgen</a> 2026.1</p>
+      </div>
+    </nav>
+
+    <button id="btn-to-top" class="hidden"><span class="up-arrow"></span></button>
+
+    
+<section id="main" class="content">
+  <header>
+    <h3>Class</h3>
+    <h1 aria-label="Name"><a href="index.html">Atk</a><span class="sep" role="presentation"></span>Object</h1>
+  </header>
+
+  <section>
+    <summary>
+      <div class="docblock">
+        <p></p>
+      </div>
+
+      <div class="toggle-wrapper">
+        <h4 id="description" style="display:flex;">
+          Description
+          <a href="#description" class="anchor"></a>
+          
+          <a class="srclink" title="go to source location" href="https://gitlab.gnome.org/GNOME/at-spi2-core/-/blob/HEAD/atk/atkobject.c#L32">[src]</a>
+          
+        </h4>
+
+        <pre><code>class Atk.Object : GObject.Object
+{
+  gchar* description,
+  gchar* name,
+  AtkObject* accessible_parent,
+  AtkRole role,
+  AtkRelationSet* relation_set,
+  AtkLayer layer
+}</pre></code>
+
+        <div class="docblock">
+          <p>The base object class for the Accessibility Toolkit <span class="caps">API</span>.</p>
+<p>This class is the primary class for accessibility support via the
+Accessibility ToolKit (<span class="caps">ATK</span>).  Objects which are instances of
+<code>AtkObject</code> (or instances of AtkObject-derived types) are queried
+for properties which relate basic (and generic) properties of a <span class="caps">UI</span>
+component such as name and description.  Instances of <code>AtkObject</code>
+may also be queried as to whether they implement other <span class="caps">ATK</span>
+interfaces (e.g. <code>AtkAction</code>, <code>AtkComponent</code>, etc.), as appropriate
+to the role which a given <span class="caps">UI</span> component plays in a user&nbsp;interface.</p>
+<p>All <span class="caps">UI</span> components in an application which provide useful
+information or services to the user must provide corresponding
+<code>AtkObject</code> instances on request (in <span class="caps">GTK</span>+, for instance, usually on
+a call to #gtk_widget_get_accessible ()), either via <span class="caps">ATK</span> support
+built into the toolkit for the widget class or ancestor class, or
+in the case of custom widgets, if the inherited <code>AtkObject</code>
+implementation is insufficient, via instances of a new <code>AtkObject</code>
+subclass.</p>
+<p>See <a href="class.ObjectFactory.html"><code>AtkObjectFactory</code></a>, <a href="class.Registry.html"><code>AtkRegistry</code></a>.  (<span class="caps">GTK</span>+ users see also
+<code>GtkAccessible</code>).</p>
+        </div>
+
+        <div class="docblock">
+          
+          
+          
+        </div>
+
+        
+      </div>
+    </summary>
+
+    
+    <div class="toggle-wrapper hierarchy">
+      <h4 id="hierarchy">
+        Hierarchy
+        <a href="#hierarchy" class="anchor"></a>
+      </h4>
+      <div class="docblock" alt="Hierarchy for Atk.Object">
+        <!-- Generated by graphviz version 14.1.4 (20260321.0153)
+ -->
+<!-- Title: hierarchy Pages: 1 -->
+<svg width="80pt" height="116pt"
+ viewBox="0.00 0.00 80.00 116.00">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>hierarchy</title>
+<!-- this -->
+<g id="node1" class="node">
+<title>this</title>
+<g id="a_node1"><a xlink:title="AtkObject">
+<path fill="none" stroke="black" d="M60.25,-36C60.25,-36 12,-36 12,-36 6,-36 0,-30 0,-24 0,-24 0,-12 0,-12 0,-6 6,0 12,0 12,0 60.25,0 60.25,0 66.25,0 72.25,-6 72.25,-12 72.25,-12 72.25,-24 72.25,-24 72.25,-30 66.25,-36 60.25,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="36.12" y="-11.82" font-family="Times,serif" font-size="14.00">AtkObject</text>
+</a>
+</g>
+</g>
+<!-- ancestor_0 -->
+<g id="node2" class="node">
+<title>ancestor_0</title>
+<g id="a_node2"><a xlink:title="GObject.Object">
+<path fill="none" stroke="black" d="M55,-108C55,-108 17.25,-108 17.25,-108 11.25,-108 5.25,-102 5.25,-96 5.25,-96 5.25,-84 5.25,-84 5.25,-78 11.25,-72 17.25,-72 17.25,-72 55,-72 55,-72 61,-72 67,-78 67,-84 67,-84 67,-96 67,-96 67,-102 61,-108 55,-108"/>
+<text xml:space="preserve" text-anchor="middle" x="36.12" y="-83.83" font-family="Times,serif" font-size="14.00">GObject</text>
+</a>
+</g>
+</g>
+<!-- ancestor_0&#45;&#45;this -->
+<g id="edge1" class="edge">
+<title>ancestor_0&#45;&#45;this</title>
+<path fill="none" stroke="black" d="M36.12,-71.7C36.12,-60.85 36.12,-46.92 36.12,-36.1"/>
+</g>
+</g>
+</svg>
+
+      </div>
+    </div>
+    
+
+    
+    <div class="toggle-wrapper ancestors">
+      <h4 id="ancestors">
+        Ancestors
+        <a href="#ancestors" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+        <ul>
+        
+          
+          <li class="class"><a class="external" href="javascript:void(0)" data-link="class.Object.html" data-namespace="GObject">GObject</a></li>
+          
+        
+        </ul>
+      </div>
+    </div>
+    
+
+    
+    <div class="descendants toggle-wrapper default-hide">
+      <h4 id="descendants">Descendants <a href="#descendants" class="anchor"></a></h4>
+      <div class="docblock">
+        <ul>
+          <li class="class"><a href="class.GObjectAccessible.html" title="GObjectAccessible">AtkGObjectAccessible</a></li>
+        
+          <li class="class"><a href="class.NoOpObject.html" title="NoOpObject">AtkNoOpObject</a></li>
+        
+          <li class="class"><a href="class.Plug.html" title="Plug">AtkPlug</a></li>
+        
+          <li class="class"><a href="class.Socket.html" title="Socket">AtkSocket</a></li>
+        </ul>
+      </div>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+    <div class="toggle-wrapper methods">
+      <h4 id="methods">
+        Instance methods
+        <a href="#methods" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+        <div class="">
+          <h6><a href="method.Object.add_relationship.html">atk_object_add_relationship</a></h6>
+          <div class="docblock">
+            <p>Adds a relationship of the specified type with the specified&nbsp;target.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Object.connect_property_change_handler.html">atk_object_connect_property_change_handler</a></h6>
+          <div class="docblock">
+            <p>Calls <code>handler</code> on property&nbsp;changes.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.12</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_accessible_id.html">atk_object_get_accessible_id</a></h6>
+          <div class="docblock">
+            <p>Gets the accessible id of the&nbsp;accessible.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.34</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_attributes.html">atk_object_get_attributes</a></h6>
+          <div class="docblock">
+            <p>Get a list of properties applied to this object as a whole, as an <code>AtkAttributeSet</code> consisting of
+name-value pairs. As such these attributes may be considered weakly-typed properties or annotations,
+as distinct from strongly-typed object data available via other get/set methods.
+Not all objects have explicit &#8220;name-value pair&#8221; <code>AtkAttributeSet</code> properties.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 1.12</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_description.html">atk_object_get_description</a></h6>
+          <div class="docblock">
+            <p>Gets the accessible description of the&nbsp;accessible.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_help_text.html">atk_object_get_help_text</a></h6>
+          <div class="docblock">
+            <p>Gets the help text associated with the&nbsp;accessible.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.52</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_index_in_parent.html">atk_object_get_index_in_parent</a></h6>
+          <div class="docblock">
+            <p>Gets the 0-based index of this accessible in its parent; returns -1 if the
+accessible does not have an accessible&nbsp;parent.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Object.get_layer.html">atk_object_get_layer</a></h6>
+          <div class="docblock">
+            <p>Gets the layer of the&nbsp;accessible.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Object.get_mdi_zorder.html">atk_object_get_mdi_zorder</a></h6>
+          <div class="docblock">
+            <p>Gets the zorder of the accessible. The value G_MININT will be returned
+if the layer of the accessible is not&nbsp;ATK_LAYER_MDI.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_n_accessible_children.html">atk_object_get_n_accessible_children</a></h6>
+          <div class="docblock">
+            <p>Gets the number of accessible children of the&nbsp;accessible.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_name.html">atk_object_get_name</a></h6>
+          <div class="docblock">
+            <p>Gets the accessible name of the&nbsp;accessible.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_object_locale.html">atk_object_get_object_locale</a></h6>
+          <div class="docblock">
+            <p>Gets a <span class="caps">UTF</span>-8 string indicating the <span class="caps">POSIX</span>-style LC_MESSAGES locale
+of <code>accessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.8</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_parent.html">atk_object_get_parent</a></h6>
+          <div class="docblock">
+            <p>Gets the accessible parent of the accessible. By default this is
+the one assigned with atk_object_set_parent(), but it is assumed
+that <span class="caps">ATK</span> implementors have ways to get the parent of the object
+without the need of assigning it manually with
+atk_object_set_parent(), and will return it with this&nbsp;method.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.get_role.html">atk_object_get_role</a></h6>
+          <div class="docblock">
+            <p>Gets the role of the&nbsp;accessible.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.initialize.html">atk_object_initialize</a></h6>
+          <div class="docblock">
+            <p>This function is called when implementing subclasses of <code>AtkObject</code>.
+It does initialization required for the new object. It is intended
+that this function should called only in the &#8230;_new() functions used
+to create an instance of a subclass of <code>AtkObject</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.notify_state_change.html">atk_object_notify_state_change</a></h6>
+          <div class="docblock">
+            <p>Emits a state-change signal for the specified&nbsp;state.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.peek_parent.html">atk_object_peek_parent</a></h6>
+          <div class="docblock">
+            <p>Gets the accessible parent of the accessible, if it has been
+manually assigned with atk_object_set_parent. Otherwise, this
+function returns <code>NULL</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.ref_accessible_child.html">atk_object_ref_accessible_child</a></h6>
+          <div class="docblock">
+            <p>Gets a reference to the specified accessible child of the object.
+The accessible children are 0-based so the first accessible child is
+at index 0, the second at index 1 and so&nbsp;on.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.ref_relation_set.html">atk_object_ref_relation_set</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtkRelationSet</code> associated with the&nbsp;object.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.ref_state_set.html">atk_object_ref_state_set</a></h6>
+          <div class="docblock">
+            <p>Gets a reference to the state set of the accessible; the caller must
+unreference it when it is no longer&nbsp;needed.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Object.remove_property_change_handler.html">atk_object_remove_property_change_handler</a></h6>
+          <div class="docblock">
+            <p>Removes a property change&nbsp;handler.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.12</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.remove_relationship.html">atk_object_remove_relationship</a></h6>
+          <div class="docblock">
+            <p>Removes a relationship of the specified type with the specified&nbsp;target.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.set_accessible_id.html">atk_object_set_accessible_id</a></h6>
+          <div class="docblock">
+            <p>Sets the accessible <span class="caps">ID</span> of the accessible.  This is not meant to be presented
+to the user, but to be an <span class="caps">ID</span> which is stable over application development.
+Typically, this is the gtkbuilder <span class="caps">ID</span>. Such an <span class="caps">ID</span> will be available for
+instance to identify a given well-known accessible object for tailored screen
+reading, or for automatic regression&nbsp;testing.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.34</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.set_description.html">atk_object_set_description</a></h6>
+          <div class="docblock">
+            <p>Sets the accessible description of the accessible. You can&#8217;t set
+the description to <span class="caps">NULL</span>. This is reserved for the initial value. In
+this aspect <span class="caps">NULL</span> is similar to ATK_ROLE_UNKNOWN. If you want to set
+the name to a empty value you can use&nbsp;&#8220;&#8221;.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.set_help_text.html">atk_object_set_help_text</a></h6>
+          <div class="docblock">
+            <p>Sets the help text associated with the accessible. This can be used to
+expose context-sensitive information to help a user understand how to
+interact with the object. You can&#8217;t set the help text to <span class="caps">NULL</span>.
+This is reserved for the initial value. If you want to set the name to
+an empty value, you can use&nbsp;&#8220;&#8221;.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.52</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.set_name.html">atk_object_set_name</a></h6>
+          <div class="docblock">
+            <p>Sets the accessible name of the accessible. You can&#8217;t set the name
+to <span class="caps">NULL</span>. This is reserved for the initial value. In this aspect
+<span class="caps">NULL</span> is similar to ATK_ROLE_UNKNOWN. If you want to set the name to
+a empty value you can use&nbsp;&#8220;&#8221;.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.set_parent.html">atk_object_set_parent</a></h6>
+          <div class="docblock">
+            <p>Sets the accessible parent of the accessible. <code>parent</code> can be <span class="caps">NULL</span>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Object.set_role.html">atk_object_set_role</a></h6>
+          <div class="docblock">
+            <p>Sets the role of the&nbsp;accessible.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods"><h5 style="display:block;">Methods inherited from <a class="external" href="javascript:void(0)" data-link="class.Object.html" data-namespace="GObject">GObject</a> (43)</h5>
+          <div class="docblock">
+          
+            <div class="docblock">
+              <p>Please see&nbsp;<a class="external" href="javascript:void(0)" data-link="class.Object.html#methods" data-namespace="GObject">GObject</a>&nbsp;for a full list of methods.</em></p>
+            </div>
+          
+          </div>
+        </div>
+        
+      
+
+      
+    </div>
+    
+
+    
+    <div class="toggle-wrapper properties">
+      <h4 id="properties">
+        Properties
+        <a href="#properties" class="anchor"></a>
+      </h4>
+
+      
+      <div class="docblock">
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-component-layer.html">Atk.Object:accessible-component-layer</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-component-mdi-zorder.html">Atk.Object:accessible-component-mdi-zorder</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-description.html">Atk.Object:accessible-description</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-help-text.html">Atk.Object:accessible-help-text</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-hypertext-nlinks.html">Atk.Object:accessible-hypertext-nlinks</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-id.html">Atk.Object:accessible-id</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-name.html">Atk.Object:accessible-name</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-parent.html">Atk.Object:accessible-parent</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-role.html">Atk.Object:accessible-role</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="property.Object.accessible-table-caption.html">Atk.Object:accessible-table-caption</a></h6>
+          <div class="docblock">
+            <p>Table&nbsp;caption.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-table-caption-object.html">Atk.Object:accessible-table-caption-object</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="property.Object.accessible-table-column-description.html">Atk.Object:accessible-table-column-description</a></h6>
+          <div class="docblock">
+            <p>Accessible table column&nbsp;description.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="property.Object.accessible-table-column-header.html">Atk.Object:accessible-table-column-header</a></h6>
+          <div class="docblock">
+            <p>Accessible table column&nbsp;header.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="property.Object.accessible-table-row-description.html">Atk.Object:accessible-table-row-description</a></h6>
+          <div class="docblock">
+            <p>Accessible table row&nbsp;description.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="property.Object.accessible-table-row-header.html">Atk.Object:accessible-table-row-header</a></h6>
+          <div class="docblock">
+            <p>Accessible table row&nbsp;header.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="property.Object.accessible-table-summary.html">Atk.Object:accessible-table-summary</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="property.Object.accessible-value.html">Atk.Object:accessible-value</a></h6>
+          <div class="docblock">
+            <p>Numeric value of this object, in case being and&nbsp;AtkValue.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+      </div>
+      
+
+      
+        
+      
+
+      
+
+    </div>
+    
+
+    
+    <div class="signals toggle-wrapper">
+      <h4 id="signals">
+        Signals
+        <a href="#signals" class="anchor"></a>
+      </h4>
+
+      
+      <div class="docblock">
+      
+        <div class="">
+          <h6><a href="signal.Object.active-descendant-changed.html">Atk.Object::active-descendant-changed</a></h6>
+          <div class="docblock">
+            <p>The &#8220;active-descendant-changed&#8221; signal is emitted by an object
+which has the state ATK_STATE_MANAGES_DESCENDANTS when the focus
+object in the object changes. For instance, a table will emit the
+signal when the cell in the table which has focus&nbsp;changes.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Object.announcement.html">Atk.Object::announcement</a></h6>
+          <div class="docblock">
+            <p>The &#8220;announcement&#8221; signal can be emitted to pass an announcement on to
+be read by a screen&nbsp;reader.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.46</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Object.attribute-changed.html">Atk.Object::attribute-changed</a></h6>
+          <div class="docblock">
+            <p>The &#8220;attribute-changed&#8221; signal should be emitted when one of an object&#8217;s
+attributes&nbsp;changes.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.52</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Object.children-changed.html">Atk.Object::children-changed</a></h6>
+          <div class="docblock">
+            <p>The signal &#8220;children-changed&#8221; is emitted when a child is added or
+removed from an object. It supports two details: &#8220;add&#8221; and&nbsp;&#8220;remove&#8221;.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="signal.Object.focus-event.html">Atk.Object::focus-event</a></h6>
+          <div class="docblock">
+            <p>The signal &#8220;focus-event&#8221; is emitted when an object gained or lost&nbsp;focus.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.4</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Object.notification.html">Atk.Object::notification</a></h6>
+          <div class="docblock">
+            <p>The &#8220;notification&#8221; signal can be emitted to pass an announcement on to
+be read by a screen&nbsp;reader.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.50</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Object.property-change.html">Atk.Object::property-change</a></h6>
+          <div class="docblock">
+            <p>The signal &#8220;property-change&#8221; is emitted when an object&#8217;s property
+value changes. <code>arg1</code> contains an <code>AtkPropertyValues</code> with the name
+and the new value of the property whose value has changed. Note
+that, as with GObject notify, getting this signal does not
+guarantee that the value of the property has actually changed; it
+may also be emitted when the setter of the property is called to
+reinstate the previous&nbsp;value.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Object.state-change.html">Atk.Object::state-change</a></h6>
+          <div class="docblock">
+            <p>The &#8220;state-change&#8221; signal is emitted when an object&#8217;s state
+changes.  The detail value identifies the state type which has&nbsp;changed.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Object.visible-data-changed.html">Atk.Object::visible-data-changed</a></h6>
+          <div class="docblock">
+            <p>The &#8220;visible-data-changed&#8221; signal is emitted when the visual
+appearance of the object&nbsp;changed.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+      
+
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-signals"><h5 style="display:block;">Signals inherited from <a class="external" href="javascript:void(0)" data-link="class.Object.html" data-namespace="GObject">GObject</a> (1)</h5>
+          <div class="docblock">
+          <h6><a class="external" href="javascript:void(0)" data-namespace="GObject" data-link="signal.Object.notify.html">GObject::notify</a></h6>
+            <div class="docblock">
+              <p>The notify signal is emitted on an object when one of its properties has
+its value set through g_object_set_property(), g_object_set(), et&nbsp;al.</p>
+            </div>
+          </div>
+        </div>
+        
+      
+
+      
+
+    </div>
+    
+
+    
+    <div class="class toggle-wrapper default-hide">
+      <h4 id="class-struct">
+        Class structure
+        <a href="#class-struct" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+        <pre><code>struct AtkObjectClass {
+  GObjectClass parent;
+  const gchar* (* get_name) (
+    AtkObject* accessible
+  );
+  const gchar* (* get_description) (
+    AtkObject* accessible
+  );
+  AtkObject* (* get_parent) (
+    AtkObject* accessible
+  );
+  gint (* get_n_children) (
+    AtkObject* accessible
+  );
+  AtkObject* (* ref_child) (
+    AtkObject* accessible,
+    gint i
+  );
+  gint (* get_index_in_parent) (
+    AtkObject* accessible
+  );
+  AtkRelationSet* (* ref_relation_set) (
+    AtkObject* accessible
+  );
+  AtkRole (* get_role) (
+    AtkObject* accessible
+  );
+  AtkLayer (* get_layer) (
+    AtkObject* accessible
+  );
+  gint (* get_mdi_zorder) (
+    AtkObject* accessible
+  );
+  AtkStateSet* (* ref_state_set) (
+    AtkObject* accessible
+  );
+  void (* set_name) (
+    AtkObject* accessible,
+    const gchar* name
+  );
+  void (* set_description) (
+    AtkObject* accessible,
+    const gchar* description
+  );
+  void (* set_parent) (
+    AtkObject* accessible,
+    AtkObject* parent
+  );
+  void (* set_role) (
+    AtkObject* accessible,
+    AtkRole role
+  );
+  guint (* connect_property_change_handler) (
+    AtkObject* accessible,
+    AtkPropertyChangeHandler* handler
+  );
+  void (* remove_property_change_handler) (
+    AtkObject* accessible,
+    guint handler_id
+  );
+  void (* initialize) (
+    AtkObject* accessible,
+    gpointer data
+  );
+  void (* children_changed) (
+    AtkObject* accessible,
+    guint change_index,
+    gpointer changed_child
+  );
+  void (* focus_event) (
+    AtkObject* accessible,
+    gboolean focus_in
+  );
+  void (* property_change) (
+    AtkObject* accessible,
+    AtkPropertyValues* values
+  );
+  void (* state_change) (
+    AtkObject* accessible,
+    const gchar* name,
+    gboolean state_set
+  );
+  void (* visible_data_changed) (
+    AtkObject* accessible
+  );
+  void (* active_descendant_changed) (
+    AtkObject* accessible,
+    gpointer* child
+  );
+  AtkAttributeSet* (* get_attributes) (
+    AtkObject* accessible
+  );
+  const gchar* (* get_object_locale) (
+    AtkObject* accessible
+  );
+  AtkFunction pad1;
+  
+}</code></pre>
+      </div>
+
+      <div class="docblock">
+        <p>No description available.</p>
+      </div>
+
+      
+      <div class="docblock">
+        <h6>Class members</h6>
+
+        <dl class="members">
+        
+          <dt><code>parent: GObjectClass</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_name: const gchar* (* get_name) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_description: const gchar* (* get_description) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_parent: AtkObject* (* get_parent) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_n_children: gint (* get_n_children) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>ref_child: AtkObject* (* ref_child) (
+    AtkObject* accessible,
+    gint i
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_index_in_parent: gint (* get_index_in_parent) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>ref_relation_set: AtkRelationSet* (* ref_relation_set) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_role: AtkRole (* get_role) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_layer: AtkLayer (* get_layer) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_mdi_zorder: gint (* get_mdi_zorder) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>ref_state_set: AtkStateSet* (* ref_state_set) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>set_name: void (* set_name) (
+    AtkObject* accessible,
+    const gchar* name
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>set_description: void (* set_description) (
+    AtkObject* accessible,
+    const gchar* description
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>set_parent: void (* set_parent) (
+    AtkObject* accessible,
+    AtkObject* parent
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>set_role: void (* set_role) (
+    AtkObject* accessible,
+    AtkRole role
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>connect_property_change_handler: guint (* connect_property_change_handler) (
+    AtkObject* accessible,
+    AtkPropertyChangeHandler* handler
+  )</code></dt>
+          <dd><p>Specifies a function to be called
+  when a property changes value. This virtual function is
+  deprecated since 2.12 and it should not be overriden. Connect
+  directly to property-change or notify signal&nbsp;instead.</p></dd>
+        
+          <dt><code>remove_property_change_handler: void (* remove_property_change_handler) (
+    AtkObject* accessible,
+    guint handler_id
+  )</code></dt>
+          <dd><p>Removes a property changed handler
+  as returned by <code>connect_property_change_handler</code>. This virtual
+  function is deprecated sice 2.12 and it should not be&nbsp;overriden.</p></dd>
+        
+          <dt><code>initialize: void (* initialize) (
+    AtkObject* accessible,
+    gpointer data
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>children_changed: void (* children_changed) (
+    AtkObject* accessible,
+    guint change_index,
+    gpointer changed_child
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>focus_event: void (* focus_event) (
+    AtkObject* accessible,
+    gboolean focus_in
+  )</code></dt>
+          <dd><p>The signal handler which is executed when there is a
+  focus event for an object. This virtual function is deprecated
+  since 2.9.4 and it should not be overriden. Use
+  the <code>AtkObject::state-change</code> <span class="dquo">&#8220;</span>focused&#8221; signal&nbsp;instead.</p></dd>
+        
+          <dt><code>property_change: void (* property_change) (
+    AtkObject* accessible,
+    AtkPropertyValues* values
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>state_change: void (* state_change) (
+    AtkObject* accessible,
+    const gchar* name,
+    gboolean state_set
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>visible_data_changed: void (* visible_data_changed) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>active_descendant_changed: void (* active_descendant_changed) (
+    AtkObject* accessible,
+    gpointer* child
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_attributes: AtkAttributeSet* (* get_attributes) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>get_object_locale: const gchar* (* get_object_locale) (
+    AtkObject* accessible
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>pad1: AtkFunction</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+        </dd>
+      </div>
+      
+    </div>
+    
+
+    
+    <div class="toggle-wrapper methods">
+      <h4 id="virtual-methods">
+        Virtual methods
+        <a href="#virtual-methods" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+      <div class="">
+        <h6 id="vfunc-active_descendant_changed"><a href="vfunc.Object.active_descendant_changed.html">Atk.ObjectClass.active_descendant_changed</a></h6>
+        <div class="docblock">
+          No description available.
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-children_changed"><a href="vfunc.Object.children_changed.html">Atk.ObjectClass.children_changed</a></h6>
+        <div class="docblock">
+          No description available.
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="deprecated">
+        <h6 id="vfunc-connect_property_change_handler"><a href="vfunc.Object.connect_property_change_handler.html">Atk.ObjectClass.connect_property_change_handler</a></h6>
+        <div class="docblock">
+          <p>Calls <code>handler</code> on property&nbsp;changes.</p>
+        </div>
+        <div class="docblock">
+          <p><span class="emblem deprecated">deprecated: 2.12</span>&nbsp;</p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-focus_event"><a href="vfunc.Object.focus_event.html">Atk.ObjectClass.focus_event</a></h6>
+        <div class="docblock">
+          <p>The signal handler which is executed when there is a
+  focus event for an object. This virtual function is deprecated
+  since 2.9.4 and it should not be overriden. Use
+  the <code>AtkObject::state-change</code> <span class="dquo">&#8220;</span>focused&#8221; signal&nbsp;instead.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-get_attributes"><a href="vfunc.Object.get_attributes.html">Atk.ObjectClass.get_attributes</a></h6>
+        <div class="docblock">
+          <p>Get a list of properties applied to this object as a whole, as an <code>AtkAttributeSet</code> consisting of
+name-value pairs. As such these attributes may be considered weakly-typed properties or annotations,
+as distinct from strongly-typed object data available via other get/set methods.
+Not all objects have explicit &#8220;name-value pair&#8221; <code>AtkAttributeSet</code> properties.</p>
+        </div>
+        <div class="docblock">
+          <p><span class="emblem available">since: 1.12</span></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-get_description"><a href="vfunc.Object.get_description.html">Atk.ObjectClass.get_description</a></h6>
+        <div class="docblock">
+          <p>Gets the accessible description of the&nbsp;accessible.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-get_index_in_parent"><a href="vfunc.Object.get_index_in_parent.html">Atk.ObjectClass.get_index_in_parent</a></h6>
+        <div class="docblock">
+          <p>Gets the 0-based index of this accessible in its parent; returns -1 if the
+accessible does not have an accessible&nbsp;parent.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="deprecated">
+        <h6 id="vfunc-get_layer"><a href="vfunc.Object.get_layer.html">Atk.ObjectClass.get_layer</a></h6>
+        <div class="docblock">
+          <p>Gets the layer of the&nbsp;accessible.</p>
+        </div>
+        <div class="docblock">
+          <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+        </div>
+      </div>
+      
+      <div class="deprecated">
+        <h6 id="vfunc-get_mdi_zorder"><a href="vfunc.Object.get_mdi_zorder.html">Atk.ObjectClass.get_mdi_zorder</a></h6>
+        <div class="docblock">
+          <p>Gets the zorder of the accessible. The value G_MININT will be returned
+if the layer of the accessible is not&nbsp;ATK_LAYER_MDI.</p>
+        </div>
+        <div class="docblock">
+          <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-get_n_children"><a href="vfunc.Object.get_n_children.html">Atk.ObjectClass.get_n_children</a></h6>
+        <div class="docblock">
+          No description available.
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-get_name"><a href="vfunc.Object.get_name.html">Atk.ObjectClass.get_name</a></h6>
+        <div class="docblock">
+          <p>Gets the accessible name of the&nbsp;accessible.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-get_object_locale"><a href="vfunc.Object.get_object_locale.html">Atk.ObjectClass.get_object_locale</a></h6>
+        <div class="docblock">
+          <p>Gets a <span class="caps">UTF</span>-8 string indicating the <span class="caps">POSIX</span>-style LC_MESSAGES locale
+of <code>accessible</code>.</p>
+        </div>
+        <div class="docblock">
+          <p><span class="emblem available">since: 2.8</span></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-get_parent"><a href="vfunc.Object.get_parent.html">Atk.ObjectClass.get_parent</a></h6>
+        <div class="docblock">
+          <p>Gets the accessible parent of the accessible. By default this is
+the one assigned with atk_object_set_parent(), but it is assumed
+that <span class="caps">ATK</span> implementors have ways to get the parent of the object
+without the need of assigning it manually with
+atk_object_set_parent(), and will return it with this&nbsp;method.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-get_role"><a href="vfunc.Object.get_role.html">Atk.ObjectClass.get_role</a></h6>
+        <div class="docblock">
+          <p>Gets the role of the&nbsp;accessible.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-initialize"><a href="vfunc.Object.initialize.html">Atk.ObjectClass.initialize</a></h6>
+        <div class="docblock">
+          <p>This function is called when implementing subclasses of <code>AtkObject</code>.
+It does initialization required for the new object. It is intended
+that this function should called only in the &#8230;_new() functions used
+to create an instance of a subclass of <code>AtkObject</code>.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-property_change"><a href="vfunc.Object.property_change.html">Atk.ObjectClass.property_change</a></h6>
+        <div class="docblock">
+          No description available.
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-ref_child"><a href="vfunc.Object.ref_child.html">Atk.ObjectClass.ref_child</a></h6>
+        <div class="docblock">
+          No description available.
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-ref_relation_set"><a href="vfunc.Object.ref_relation_set.html">Atk.ObjectClass.ref_relation_set</a></h6>
+        <div class="docblock">
+          <p>Gets the <code>AtkRelationSet</code> associated with the&nbsp;object.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-ref_state_set"><a href="vfunc.Object.ref_state_set.html">Atk.ObjectClass.ref_state_set</a></h6>
+        <div class="docblock">
+          <p>Gets a reference to the state set of the accessible; the caller must
+unreference it when it is no longer&nbsp;needed.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="deprecated">
+        <h6 id="vfunc-remove_property_change_handler"><a href="vfunc.Object.remove_property_change_handler.html">Atk.ObjectClass.remove_property_change_handler</a></h6>
+        <div class="docblock">
+          <p>Removes a property change&nbsp;handler.</p>
+        </div>
+        <div class="docblock">
+          <p><span class="emblem deprecated">deprecated: 2.12</span>&nbsp;</p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-set_description"><a href="vfunc.Object.set_description.html">Atk.ObjectClass.set_description</a></h6>
+        <div class="docblock">
+          <p>Sets the accessible description of the accessible. You can&#8217;t set
+the description to <span class="caps">NULL</span>. This is reserved for the initial value. In
+this aspect <span class="caps">NULL</span> is similar to ATK_ROLE_UNKNOWN. If you want to set
+the name to a empty value you can use&nbsp;&#8220;&#8221;.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-set_name"><a href="vfunc.Object.set_name.html">Atk.ObjectClass.set_name</a></h6>
+        <div class="docblock">
+          <p>Sets the accessible name of the accessible. You can&#8217;t set the name
+to <span class="caps">NULL</span>. This is reserved for the initial value. In this aspect
+<span class="caps">NULL</span> is similar to ATK_ROLE_UNKNOWN. If you want to set the name to
+a empty value you can use&nbsp;&#8220;&#8221;.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-set_parent"><a href="vfunc.Object.set_parent.html">Atk.ObjectClass.set_parent</a></h6>
+        <div class="docblock">
+          <p>Sets the accessible parent of the accessible. <code>parent</code> can be <span class="caps">NULL</span>.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-set_role"><a href="vfunc.Object.set_role.html">Atk.ObjectClass.set_role</a></h6>
+        <div class="docblock">
+          <p>Sets the role of the&nbsp;accessible.</p>
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-state_change"><a href="vfunc.Object.state_change.html">Atk.ObjectClass.state_change</a></h6>
+        <div class="docblock">
+          No description available.
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-visible_data_changed"><a href="vfunc.Object.visible_data_changed.html">Atk.ObjectClass.visible_data_changed</a></h6>
+        <div class="docblock">
+          No description available.
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      </div>
+    </div>
+    
+
+    
+
+  </section>
+</section>
+
+
+    
+<div id="toc" class="toc">
+  <nav aria-labelledby="toc-title">
+    <p id="toc-title">Content</p>
+    <ul class="toc-list">
+      <li class="toc-list-item"><a href="#description"><span class="link-text">Description</span></a></li>
+      
+      
+      <li class="toc-list-item"><a href="#hierarchy"><span class="link-text">Hierarchy</span></a></li>
+      
+      
+      <li class="toc-list-item"><a href="#ancestors"><span class="link-text">Ancestors</span></a></li>
+      
+      
+      
+
+      
+
+      
+<li class="toc-list-item"><a href="#methods"><span class="link-text">Methods</span></a></li>
+
+
+      
+<li class="toc-list-item"><a href="#properties"><span class="link-text">Properties</span></a></li>
+
+
+      
+<li class="toc-list-item"><a href="#signals"><span class="link-text">Signals</span></a></li>
+
+
+      
+
+      
+<li class="toc-list-item"><a href="#virtual-methods"><span class="link-text">Virtual methods</span></a></li>
+
+
+    </ul>
+  </nav>
+</div>
+
+
+    <section id="search" class="content hidden"></section>
+
+    <footer>
+    
+    </footer>
+  </div>
+</body>
+</html>

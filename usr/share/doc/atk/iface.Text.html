@@ -1,0 +1,1533 @@
+<!--
+SPDX-FileCopyrightText: ATK Development Team
+
+SPDX-License-Identifier: LGPL-2.1-or-later
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Atk.Text</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta charset="utf-8" />
+
+  
+  <meta property="og:type" content="website"/>
+
+  
+  <meta property="og:image:width" content="256"/>
+  <meta property="og:image:height" content="256"/>
+  <meta property="og:image:secure_url" content="logo.png"/>
+  <meta property="og:image:alt" content="Atk-1.0"/>
+  
+
+  
+  <meta property="og:title" content="Atk.Text"/>
+  <meta property="og:description" content="Reference for Atk.Text"/>
+  <meta name="twitter:title" content="Atk.Text"/>
+  <meta name="twitter:description" content="Reference for Atk.Text"/>
+
+
+  
+  <meta name="twitter:card" content="summary"/>
+
+  
+  
+  
+  <link rel="search" type="application/opensearchdescription+xml" title="Atk" href="opensearch.xml">
+  
+  
+
+  <link rel="stylesheet" href="style.css" type="text/css" />
+
+  
+
+  
+  <script src="urlmap.js"></script>
+  
+  
+  <script src="fzy.js"></script>
+  <script src="search.js"></script>
+  
+  <script src="main.js"></script>
+
+  
+</head>
+
+<body>
+  <div id="body-wrapper" tabindex="-1">
+
+    <nav class="sidebar devhelp-hidden">
+      
+      <div class="section">
+        <a href="index.html"><img src="logo.png" class="logo"/></a>
+      </div>
+      
+      
+      <div class="search section">
+        <form id="search-form" autocomplete="off">
+          <input id="search-input" type="text" name="do-not-autocomplete" placeholder="Click, or press 's' to search" autocomplete="off"/>
+        </form>
+      </div>
+      
+      <div class="section namespace">
+        <h3><a href="index.html">Atk</a></h3>
+        <p>API Version: 1.0</p>
+        
+        <p>Library Version: 2.60.3</p>
+        
+      </div>
+      
+<div class="section">
+  <h5>Type</h5>
+  <div class="links">
+    <a class="current" href="iface.Text.html#description">Text</a>
+  </div>
+</div>
+
+
+  
+<div class="section">
+  <h5>Functions</h5>
+  <div class="links">
+  
+    <a class="func" href="type_func.Text.free_ranges.html">free_ranges</a>
+  
+  </div>
+</div>
+
+
+
+  
+<div class="section">
+  <h5>Instance methods</h5>
+  <div class="links">
+  
+    <a class="method" href="method.Text.add_selection.html">add_selection</a>
+  
+    <a class="method" href="method.Text.get_bounded_ranges.html">get_bounded_ranges</a>
+  
+    <a class="method" href="method.Text.get_caret_offset.html">get_caret_offset</a>
+  
+    <a class="method" href="method.Text.get_character_at_offset.html">get_character_at_offset</a>
+  
+    <a class="method" href="method.Text.get_character_count.html">get_character_count</a>
+  
+    <a class="method" href="method.Text.get_character_extents.html">get_character_extents</a>
+  
+    <a class="method" href="method.Text.get_default_attributes.html">get_default_attributes</a>
+  
+    <a class="method" href="method.Text.get_n_selections.html">get_n_selections</a>
+  
+    <a class="method" href="method.Text.get_offset_at_point.html">get_offset_at_point</a>
+  
+    <a class="method" href="method.Text.get_range_extents.html">get_range_extents</a>
+  
+    <a class="method" href="method.Text.get_run_attributes.html">get_run_attributes</a>
+  
+    <a class="method" href="method.Text.get_selection.html">get_selection</a>
+  
+    <a class="method" href="method.Text.get_string_at_offset.html">get_string_at_offset</a>
+  
+    <a class="method" href="method.Text.get_text.html">get_text</a>
+  
+    <a class="method" href="method.Text.get_text_after_offset.html">get_text_after_offset</a>
+  
+    <a class="method" href="method.Text.get_text_at_offset.html">get_text_at_offset</a>
+  
+    <a class="method" href="method.Text.get_text_before_offset.html">get_text_before_offset</a>
+  
+    <a class="method" href="method.Text.remove_selection.html">remove_selection</a>
+  
+    <a class="method" href="method.Text.scroll_substring_to.html">scroll_substring_to</a>
+  
+    <a class="method" href="method.Text.scroll_substring_to_point.html">scroll_substring_to_point</a>
+  
+    <a class="method" href="method.Text.set_caret_offset.html">set_caret_offset</a>
+  
+    <a class="method" href="method.Text.set_selection.html">set_selection</a>
+  
+  </div>
+</div>
+
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Signals</h5>
+  <div class="links">
+  
+    <a class="signal" href="signal.Text.text-attributes-changed.html">text-attributes-changed</a>
+  
+    <a class="signal" href="signal.Text.text-caret-moved.html">text-caret-moved</a>
+  
+    <a class="signal" href="signal.Text.text-changed.html">text-changed</a>
+  
+    <a class="signal" href="signal.Text.text-insert.html">text-insert</a>
+  
+    <a class="signal" href="signal.Text.text-remove.html">text-remove</a>
+  
+    <a class="signal" href="signal.Text.text-selection-changed.html">text-selection-changed</a>
+  
+  </div>
+</div>
+
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Virtual methods</h5>
+  <div class="links">
+  
+    <a class="method" href="vfunc.Text.add_selection.html">add_selection</a>
+  
+    <a class="method" href="vfunc.Text.get_bounded_ranges.html">get_bounded_ranges</a>
+  
+    <a class="method" href="vfunc.Text.get_caret_offset.html">get_caret_offset</a>
+  
+    <a class="method" href="vfunc.Text.get_character_at_offset.html">get_character_at_offset</a>
+  
+    <a class="method" href="vfunc.Text.get_character_count.html">get_character_count</a>
+  
+    <a class="method" href="vfunc.Text.get_character_extents.html">get_character_extents</a>
+  
+    <a class="method" href="vfunc.Text.get_default_attributes.html">get_default_attributes</a>
+  
+    <a class="method" href="vfunc.Text.get_n_selections.html">get_n_selections</a>
+  
+    <a class="method" href="vfunc.Text.get_offset_at_point.html">get_offset_at_point</a>
+  
+    <a class="method" href="vfunc.Text.get_range_extents.html">get_range_extents</a>
+  
+    <a class="method" href="vfunc.Text.get_run_attributes.html">get_run_attributes</a>
+  
+    <a class="method" href="vfunc.Text.get_selection.html">get_selection</a>
+  
+    <a class="method" href="vfunc.Text.get_string_at_offset.html">get_string_at_offset</a>
+  
+    <a class="method" href="vfunc.Text.get_text.html">get_text</a>
+  
+    <a class="method" href="vfunc.Text.get_text_after_offset.html">get_text_after_offset</a>
+  
+    <a class="method" href="vfunc.Text.get_text_at_offset.html">get_text_at_offset</a>
+  
+    <a class="method" href="vfunc.Text.get_text_before_offset.html">get_text_before_offset</a>
+  
+    <a class="method" href="vfunc.Text.remove_selection.html">remove_selection</a>
+  
+    <a class="method" href="vfunc.Text.scroll_substring_to.html">scroll_substring_to</a>
+  
+    <a class="method" href="vfunc.Text.scroll_substring_to_point.html">scroll_substring_to_point</a>
+  
+    <a class="method" href="vfunc.Text.set_caret_offset.html">set_caret_offset</a>
+  
+    <a class="method" href="vfunc.Text.set_selection.html">set_selection</a>
+  
+    <a class="method" href="vfunc.Text.text_attributes_changed.html">text_attributes_changed</a>
+  
+    <a class="method" href="vfunc.Text.text_caret_moved.html">text_caret_moved</a>
+  
+    <a class="method" href="vfunc.Text.text_changed.html">text_changed</a>
+  
+    <a class="method" href="vfunc.Text.text_selection_changed.html">text_selection_changed</a>
+  
+  </div>
+</div>
+
+
+
+
+      <div class="section generator">
+        <p>Generated by <a href="https://gitlab.gnome.org/GNOME/gi-docgen">gi-docgen</a> 2026.1</p>
+      </div>
+    </nav>
+
+    <button id="btn-to-top" class="hidden"><span class="up-arrow"></span></button>
+
+    
+<section id="main" class="content">
+  <header>
+    <h3>Interface</h3>
+    <h1><a href="index.html">Atk</a><span class="sep"></span>Text</h1>
+  </header>
+
+  <section>
+    <summary>
+      <div class="docblock">
+        <p></p>
+      </div>
+      <div class="toggle-wrapper">
+        <h4 id="description" style="display:flex;">
+          Description
+          <a href="#description" class="anchor"></a>
+          
+          <a class="srclink" title="go to source location" href="https://gitlab.gnome.org/GNOME/at-spi2-core/-/blob/HEAD/atk/atktext.c#L27">[src]</a>
+          
+        </h4>
+
+        <pre><code>interface Atk.Text : GObject.Object</code></pre>
+
+        <div class="docblock">
+          <p>The <span class="caps">ATK</span> interface implemented by components with text&nbsp;content.</p>
+<p><code>AtkText</code> should be implemented by <code>AtkObjects</code> on behalf of widgets
+that have text content which is either attributed or otherwise
+non-trivial.  <code>AtkObjects</code> whose text content is simple,
+unattributed, and very brief may expose that content&nbsp;via</p>
+<h1 id="atk_object_get_name-instead-however-if-the-text-is-editable">atk_object_get_name instead; however if the text is editable,<a class="md-anchor" href="#atk_object_get_name-instead-however-if-the-text-is-editable" title="Permanent link"></a></h1>
+<p>multi-line, typically longer than three or four words, attributed,
+selectable, or if the object already uses the &#8216;name&#8217; <span class="caps">ATK</span> property
+for other information, the <code>AtkText</code> interface should be used to
+expose the text content.  In the case of editable text content,
+<code>AtkEditableText</code> (a subtype of the <code>AtkText</code> interface) should be
+implemented&nbsp;instead.</p>
+<p><code>AtkText</code> provides not only traversal facilities and change
+notification for text content, but also caret tracking and glyph
+bounding box calculations.  Note that the text strings are exposed
+as <span class="caps">UTF</span>-8, and are therefore potentially multi-byte, and
+caret-to-byte offset mapping makes no assumptions about the
+character length; also bounding box glyph-to-offset mapping may be
+complex for languages which use&nbsp;ligatures.</p>
+        </div>
+
+        <div class="docblock">
+          
+          
+          
+        </div>
+
+        
+      </div>
+    </summary>
+
+    <div class="toggle-wrapper prerequisite">
+      <h4 id="prerequisite">
+        Prerequisite
+        <a href="#prerequisite" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+        <p>In order to implement Text, your type must inherit from<a data-namespace="GObject" data-link="class.Object.html" href="javascript:void(0)" class="external"><code>GObject</code></a>.</p>
+      </div>
+    </div>
+
+    
+    <div class="implementations toggle-wrapper default-hide">
+      <h4 id="implementations">Implementations<a href="#implementations" class="anchor"></a></h4>
+      <div class="docblock">
+        <ul>
+          <li><a href="class.NoOpObject.html">AtkNoOpObject</a></li>
+        </ul>
+      </div>
+    </div>
+    
+
+    
+    <div class="methods toggle-wrapper">
+      <h4 id="type-functions">
+        Functions
+        <a href="#type-functions" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+      <div class="">
+        <h6><a href="type_func.Text.free_ranges.html">atk_text_free_ranges</a></h6>
+        <div class="docblock">
+          <p>Frees the memory associated with an array of AtkTextRange. It is assumed
+that the array was returned by the function atk_text_get_bounded_ranges
+and is <span class="caps">NULL</span>&nbsp;terminated.</p>
+        </div>
+        <div class="docblock">
+          <p><span class="emblem available">since: 1.3</span></p>
+        </div>
+      </div>
+      
+      </div>
+    </div>
+    
+
+    
+    <div class="methods toggle-wrapper">
+      <h4 id="methods">
+        Instance methods
+        <a href="#methods" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+        <div class="">
+          <h6><a href="method.Text.add_selection.html">atk_text_add_selection</a></h6>
+          <div class="docblock">
+            <p>Adds a selection bounded by the specified&nbsp;offsets.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_bounded_ranges.html">atk_text_get_bounded_ranges</a></h6>
+          <div class="docblock">
+            <p>Get the ranges of text in the specified bounding&nbsp;box.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 1.3</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_caret_offset.html">atk_text_get_caret_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the offset of the position of the caret&nbsp;(cursor).</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_character_at_offset.html">atk_text_get_character_at_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_character_count.html">atk_text_get_character_count</a></h6>
+          <div class="docblock">
+            <p>Gets the character&nbsp;count.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_character_extents.html">atk_text_get_character_extents</a></h6>
+          <div class="docblock">
+            <p>If the extent can not be obtained (e.g. missing support), all of x, y, width,
+height are set to&nbsp;-1.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_default_attributes.html">atk_text_get_default_attributes</a></h6>
+          <div class="docblock">
+            <p>Creates an <code>AtkAttributeSet</code> which consists of the default values of
+attributes for the text. See the enum AtkTextAttribute for types of text
+attributes that can be returned. Note that other attributes may also be&nbsp;returned.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_n_selections.html">atk_text_get_n_selections</a></h6>
+          <div class="docblock">
+            <p>Gets the number of selected&nbsp;regions.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_offset_at_point.html">atk_text_get_offset_at_point</a></h6>
+          <div class="docblock">
+            <p>Gets the offset of the character located at coordinates <code>x</code> and <code>y</code>. <code>x</code> and <code>y</code>
+are interpreted as being relative to the screen or this widget&#8217;s window
+depending on <code>coords</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_range_extents.html">atk_text_get_range_extents</a></h6>
+          <div class="docblock">
+            <p>Get the bounding box for text within the specified&nbsp;range.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 1.3</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_run_attributes.html">atk_text_get_run_attributes</a></h6>
+          <div class="docblock">
+            <p>Creates an <code>AtkAttributeSet</code> which consists of the attributes explicitly
+set at the position <code>offset</code> in the text. <code>start_offset</code> and <code>end_offset</code> are
+set to the start and end of the range around <code>offset</code> where the attributes are
+invariant. Note that <code>end_offset</code> is the offset of the first character
+after the range.  See the enum AtkTextAttribute for types of text
+attributes that can be returned. Note that other attributes may also be&nbsp;returned.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_selection.html">atk_text_get_selection</a></h6>
+          <div class="docblock">
+            <p>Gets the text from the specified&nbsp;selection.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_string_at_offset.html">atk_text_get_string_at_offset</a></h6>
+          <div class="docblock">
+            <p>Gets a portion of the text exposed through an <code>AtkText</code> according to a given <code>offset</code>
+and a specific <code>granularity</code>, along with the start and end offsets defining the
+boundaries of such a portion of&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.10</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.get_text.html">atk_text_get_text</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Text.get_text_after_offset.html">atk_text_get_text_after_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.3</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Text.get_text_at_offset.html">atk_text_get_text_at_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Text.get_text_before_offset.html">atk_text_get_text_before_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.3</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.remove_selection.html">atk_text_remove_selection</a></h6>
+          <div class="docblock">
+            <p>Removes the specified&nbsp;selection.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.scroll_substring_to.html">atk_text_scroll_substring_to</a></h6>
+          <div class="docblock">
+            <p>Makes a substring of <code>text</code> visible on the screen by scrolling all necessary&nbsp;parents.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.32</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.scroll_substring_to_point.html">atk_text_scroll_substring_to_point</a></h6>
+          <div class="docblock">
+            <p>Move the top-left of a substring of <code>text</code> to a given position of the screen
+by scrolling all necessary&nbsp;parents.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.32</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.set_caret_offset.html">atk_text_set_caret_offset</a></h6>
+          <div class="docblock">
+            <p>Sets the caret (cursor) position to the specified <code>offset</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Text.set_selection.html">atk_text_set_selection</a></h6>
+          <div class="docblock">
+            <p>Changes the start and end offset of the specified&nbsp;selection.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+
+    </div>
+    
+
+    
+
+    
+    <div class="signals toggle-wrapper">
+      <h4 id="signals">
+        Signals
+        <a href="#signals" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+        <div class="">
+          <h6><a href="signal.Text.text-attributes-changed.html">Atk.Text::text-attributes-changed</a></h6>
+          <div class="docblock">
+            <p>The &#8220;text-attributes-changed&#8221; signal is emitted when the text
+attributes of the text of an object which implements AtkText&nbsp;changes.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Text.text-caret-moved.html">Atk.Text::text-caret-moved</a></h6>
+          <div class="docblock">
+            <p>The &#8220;text-caret-moved&#8221; signal is emitted when the caret
+position of the text of an object which implements AtkText&nbsp;changes.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="signal.Text.text-changed.html">Atk.Text::text-changed</a></h6>
+          <div class="docblock">
+            <p>The &#8220;text-changed&#8221; signal is emitted when the text of the
+object which implements the AtkText interface changes, This
+signal will have a detail which is either &#8220;insert&#8221; or
+&#8220;delete&#8221; which identifies whether the text change was an
+insertion or a&nbsp;deletion.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.4</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Text.text-insert.html">Atk.Text::text-insert</a></h6>
+          <div class="docblock">
+            <p>The &#8220;text-insert&#8221; signal is emitted when a new text is
+inserted. If the signal was not triggered by the user
+(e.g. typing or pasting text), the &#8220;system&#8221; detail should be&nbsp;included.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Text.text-remove.html">Atk.Text::text-remove</a></h6>
+          <div class="docblock">
+            <p>The &#8220;text-remove&#8221; signal is emitted when a new text is
+removed. If the signal was not triggered by the user
+(e.g. typing or pasting text), the &#8220;system&#8221; detail should be&nbsp;included.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Text.text-selection-changed.html">Atk.Text::text-selection-changed</a></h6>
+          <div class="docblock">
+            <p>The &#8220;text-selection-changed&#8221; signal is emitted when the
+selected text of an object which implements AtkText&nbsp;changes.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+    </div>
+    
+
+    
+    <div class="interface toggle-wrapper default-hide">
+      <h4 style="display:flex;" id="interface-struct">
+        Interface structure
+        <a href="#interface-struct" class="anchor"></a>
+        
+      </h4>
+
+      <div class="docblock">
+        <pre><code>struct AtkTextIface {
+  GTypeInterface parent;
+  gchar* (* get_text) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset
+  );
+  gchar* (* get_text_after_offset) (
+    AtkText* text,
+    gint offset,
+    AtkTextBoundary boundary_type,
+    gint* start_offset,
+    gint* end_offset
+  );
+  gchar* (* get_text_at_offset) (
+    AtkText* text,
+    gint offset,
+    AtkTextBoundary boundary_type,
+    gint* start_offset,
+    gint* end_offset
+  );
+  gunichar (* get_character_at_offset) (
+    AtkText* text,
+    gint offset
+  );
+  gchar* (* get_text_before_offset) (
+    AtkText* text,
+    gint offset,
+    AtkTextBoundary boundary_type,
+    gint* start_offset,
+    gint* end_offset
+  );
+  gint (* get_caret_offset) (
+    AtkText* text
+  );
+  AtkAttributeSet* (* get_run_attributes) (
+    AtkText* text,
+    gint offset,
+    gint* start_offset,
+    gint* end_offset
+  );
+  AtkAttributeSet* (* get_default_attributes) (
+    AtkText* text
+  );
+  void (* get_character_extents) (
+    AtkText* text,
+    gint offset,
+    gint* x,
+    gint* y,
+    gint* width,
+    gint* height,
+    AtkCoordType coords
+  );
+  gint (* get_character_count) (
+    AtkText* text
+  );
+  gint (* get_offset_at_point) (
+    AtkText* text,
+    gint x,
+    gint y,
+    AtkCoordType coords
+  );
+  gint (* get_n_selections) (
+    AtkText* text
+  );
+  gchar* (* get_selection) (
+    AtkText* text,
+    gint selection_num,
+    gint* start_offset,
+    gint* end_offset
+  );
+  gboolean (* add_selection) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset
+  );
+  gboolean (* remove_selection) (
+    AtkText* text,
+    gint selection_num
+  );
+  gboolean (* set_selection) (
+    AtkText* text,
+    gint selection_num,
+    gint start_offset,
+    gint end_offset
+  );
+  gboolean (* set_caret_offset) (
+    AtkText* text,
+    gint offset
+  );
+  void (* text_changed) (
+    AtkText* text,
+    gint position,
+    gint length
+  );
+  void (* text_caret_moved) (
+    AtkText* text,
+    gint location
+  );
+  void (* text_selection_changed) (
+    AtkText* text
+  );
+  void (* text_attributes_changed) (
+    AtkText* text
+  );
+  void (* get_range_extents) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset,
+    AtkCoordType coord_type,
+    AtkTextRectangle* rect
+  );
+  AtkTextRange** (* get_bounded_ranges) (
+    AtkText* text,
+    AtkTextRectangle* rect,
+    AtkCoordType coord_type,
+    AtkTextClipType x_clip_type,
+    AtkTextClipType y_clip_type
+  );
+  gchar* (* get_string_at_offset) (
+    AtkText* text,
+    gint offset,
+    AtkTextGranularity granularity,
+    gint* start_offset,
+    gint* end_offset
+  );
+  gboolean (* scroll_substring_to) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset,
+    AtkScrollType type
+  );
+  gboolean (* scroll_substring_to_point) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset,
+    AtkCoordType coords,
+    gint x,
+    gint y
+  );
+  
+}</code></pre>
+      </div>
+
+      <div class="docblock">
+        <p>No description available.</p>
+      </div>
+
+      
+      <div class="docblock">
+        <h6>Interface members</h6>
+
+        <table>
+        
+        <tr>
+          <td style="vertical-align:top"><code>parent</code></td>
+          <td style="vertical-align:top"><pre><code>GTypeInterface</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_text</code></td>
+          <td style="vertical-align:top"><pre><code>gchar* (* get_text) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_text_after_offset</code></td>
+          <td style="vertical-align:top"><pre><code>gchar* (* get_text_after_offset) (
+    AtkText* text,
+    gint offset,
+    AtkTextBoundary boundary_type,
+    gint* start_offset,
+    gint* end_offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>Gets specified text. This virtual function
+  is deprecated and it should not be&nbsp;overridden.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_text_at_offset</code></td>
+          <td style="vertical-align:top"><pre><code>gchar* (* get_text_at_offset) (
+    AtkText* text,
+    gint offset,
+    AtkTextBoundary boundary_type,
+    gint* start_offset,
+    gint* end_offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>Gets specified text. This virtual function
+  is deprecated and it should not be&nbsp;overridden.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_character_at_offset</code></td>
+          <td style="vertical-align:top"><pre><code>gunichar (* get_character_at_offset) (
+    AtkText* text,
+    gint offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_text_before_offset</code></td>
+          <td style="vertical-align:top"><pre><code>gchar* (* get_text_before_offset) (
+    AtkText* text,
+    gint offset,
+    AtkTextBoundary boundary_type,
+    gint* start_offset,
+    gint* end_offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>Gets specified text. This virtual function
+  is deprecated and it should not be&nbsp;overridden.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_caret_offset</code></td>
+          <td style="vertical-align:top"><pre><code>gint (* get_caret_offset) (
+    AtkText* text
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_run_attributes</code></td>
+          <td style="vertical-align:top"><pre><code>AtkAttributeSet* (* get_run_attributes) (
+    AtkText* text,
+    gint offset,
+    gint* start_offset,
+    gint* end_offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_default_attributes</code></td>
+          <td style="vertical-align:top"><pre><code>AtkAttributeSet* (* get_default_attributes) (
+    AtkText* text
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_character_extents</code></td>
+          <td style="vertical-align:top"><pre><code>void (* get_character_extents) (
+    AtkText* text,
+    gint offset,
+    gint* x,
+    gint* y,
+    gint* width,
+    gint* height,
+    AtkCoordType coords
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_character_count</code></td>
+          <td style="vertical-align:top"><pre><code>gint (* get_character_count) (
+    AtkText* text
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_offset_at_point</code></td>
+          <td style="vertical-align:top"><pre><code>gint (* get_offset_at_point) (
+    AtkText* text,
+    gint x,
+    gint y,
+    AtkCoordType coords
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_n_selections</code></td>
+          <td style="vertical-align:top"><pre><code>gint (* get_n_selections) (
+    AtkText* text
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_selection</code></td>
+          <td style="vertical-align:top"><pre><code>gchar* (* get_selection) (
+    AtkText* text,
+    gint selection_num,
+    gint* start_offset,
+    gint* end_offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>add_selection</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* add_selection) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>remove_selection</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* remove_selection) (
+    AtkText* text,
+    gint selection_num
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>set_selection</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* set_selection) (
+    AtkText* text,
+    gint selection_num,
+    gint start_offset,
+    gint end_offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>set_caret_offset</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* set_caret_offset) (
+    AtkText* text,
+    gint offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>text_changed</code></td>
+          <td style="vertical-align:top"><pre><code>void (* text_changed) (
+    AtkText* text,
+    gint position,
+    gint length
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>The signal handler which is executed when there is a
+  text change. This virtual function is deprecated sice 2.9.4 and
+  it should not be&nbsp;overriden.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>text_caret_moved</code></td>
+          <td style="vertical-align:top"><pre><code>void (* text_caret_moved) (
+    AtkText* text,
+    gint location
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>text_selection_changed</code></td>
+          <td style="vertical-align:top"><pre><code>void (* text_selection_changed) (
+    AtkText* text
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>text_attributes_changed</code></td>
+          <td style="vertical-align:top"><pre><code>void (* text_attributes_changed) (
+    AtkText* text
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_range_extents</code></td>
+          <td style="vertical-align:top"><pre><code>void (* get_range_extents) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset,
+    AtkCoordType coord_type,
+    AtkTextRectangle* rect
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_bounded_ranges</code></td>
+          <td style="vertical-align:top"><pre><code>AtkTextRange** (* get_bounded_ranges) (
+    AtkText* text,
+    AtkTextRectangle* rect,
+    AtkCoordType coord_type,
+    AtkTextClipType x_clip_type,
+    AtkTextClipType y_clip_type
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_string_at_offset</code></td>
+          <td style="vertical-align:top"><pre><code>gchar* (* get_string_at_offset) (
+    AtkText* text,
+    gint offset,
+    AtkTextGranularity granularity,
+    gint* start_offset,
+    gint* end_offset
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>Gets a portion of the text exposed through
+  an AtkText according to a given offset and a specific
+  granularity, along with the start and end offsets defining the
+  boundaries of such a portion of&nbsp;text.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>scroll_substring_to</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* scroll_substring_to) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset,
+    AtkScrollType type
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>scroll_substring_to_point</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* scroll_substring_to_point) (
+    AtkText* text,
+    gint start_offset,
+    gint end_offset,
+    AtkCoordType coords,
+    gint x,
+    gint y
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        </table>
+      </div>
+      
+    </div>
+    
+
+    
+
+    
+    <div class="toggle-wrapper methods">
+      <h4 id="virtual-methods">
+        Virtual methods
+        <a href="#virtual-methods" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+        <div class="">
+          <h6 id="vfunc-add_selection"><a href="vfunc.Text.add_selection.html">Atk.Text.add_selection</a></h6>
+          <div class="docblock">
+            <p>Adds a selection bounded by the specified&nbsp;offsets.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_bounded_ranges"><a href="vfunc.Text.get_bounded_ranges.html">Atk.Text.get_bounded_ranges</a></h6>
+          <div class="docblock">
+            <p>Get the ranges of text in the specified bounding&nbsp;box.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 1.3</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_caret_offset"><a href="vfunc.Text.get_caret_offset.html">Atk.Text.get_caret_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the offset of the position of the caret&nbsp;(cursor).</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_character_at_offset"><a href="vfunc.Text.get_character_at_offset.html">Atk.Text.get_character_at_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_character_count"><a href="vfunc.Text.get_character_count.html">Atk.Text.get_character_count</a></h6>
+          <div class="docblock">
+            <p>Gets the character&nbsp;count.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_character_extents"><a href="vfunc.Text.get_character_extents.html">Atk.Text.get_character_extents</a></h6>
+          <div class="docblock">
+            <p>If the extent can not be obtained (e.g. missing support), all of x, y, width,
+height are set to&nbsp;-1.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_default_attributes"><a href="vfunc.Text.get_default_attributes.html">Atk.Text.get_default_attributes</a></h6>
+          <div class="docblock">
+            <p>Creates an <code>AtkAttributeSet</code> which consists of the default values of
+attributes for the text. See the enum AtkTextAttribute for types of text
+attributes that can be returned. Note that other attributes may also be&nbsp;returned.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_n_selections"><a href="vfunc.Text.get_n_selections.html">Atk.Text.get_n_selections</a></h6>
+          <div class="docblock">
+            <p>Gets the number of selected&nbsp;regions.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_offset_at_point"><a href="vfunc.Text.get_offset_at_point.html">Atk.Text.get_offset_at_point</a></h6>
+          <div class="docblock">
+            <p>Gets the offset of the character located at coordinates <code>x</code> and <code>y</code>. <code>x</code> and <code>y</code>
+are interpreted as being relative to the screen or this widget&#8217;s window
+depending on <code>coords</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_range_extents"><a href="vfunc.Text.get_range_extents.html">Atk.Text.get_range_extents</a></h6>
+          <div class="docblock">
+            <p>Get the bounding box for text within the specified&nbsp;range.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 1.3</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_run_attributes"><a href="vfunc.Text.get_run_attributes.html">Atk.Text.get_run_attributes</a></h6>
+          <div class="docblock">
+            <p>Creates an <code>AtkAttributeSet</code> which consists of the attributes explicitly
+set at the position <code>offset</code> in the text. <code>start_offset</code> and <code>end_offset</code> are
+set to the start and end of the range around <code>offset</code> where the attributes are
+invariant. Note that <code>end_offset</code> is the offset of the first character
+after the range.  See the enum AtkTextAttribute for types of text
+attributes that can be returned. Note that other attributes may also be&nbsp;returned.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_selection"><a href="vfunc.Text.get_selection.html">Atk.Text.get_selection</a></h6>
+          <div class="docblock">
+            <p>Gets the text from the specified&nbsp;selection.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_string_at_offset"><a href="vfunc.Text.get_string_at_offset.html">Atk.Text.get_string_at_offset</a></h6>
+          <div class="docblock">
+            <p>Gets a portion of the text exposed through an <code>AtkText</code> according to a given <code>offset</code>
+and a specific <code>granularity</code>, along with the start and end offsets defining the
+boundaries of such a portion of&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.10</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_text"><a href="vfunc.Text.get_text.html">Atk.Text.get_text</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6 id="vfunc-get_text_after_offset"><a href="vfunc.Text.get_text_after_offset.html">Atk.Text.get_text_after_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.3</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6 id="vfunc-get_text_at_offset"><a href="vfunc.Text.get_text_at_offset.html">Atk.Text.get_text_at_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6 id="vfunc-get_text_before_offset"><a href="vfunc.Text.get_text_before_offset.html">Atk.Text.get_text_before_offset</a></h6>
+          <div class="docblock">
+            <p>Gets the specified&nbsp;text.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.3</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-remove_selection"><a href="vfunc.Text.remove_selection.html">Atk.Text.remove_selection</a></h6>
+          <div class="docblock">
+            <p>Removes the specified&nbsp;selection.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-scroll_substring_to"><a href="vfunc.Text.scroll_substring_to.html">Atk.Text.scroll_substring_to</a></h6>
+          <div class="docblock">
+            <p>Makes a substring of <code>text</code> visible on the screen by scrolling all necessary&nbsp;parents.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.32</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-scroll_substring_to_point"><a href="vfunc.Text.scroll_substring_to_point.html">Atk.Text.scroll_substring_to_point</a></h6>
+          <div class="docblock">
+            <p>Move the top-left of a substring of <code>text</code> to a given position of the screen
+by scrolling all necessary&nbsp;parents.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.32</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-set_caret_offset"><a href="vfunc.Text.set_caret_offset.html">Atk.Text.set_caret_offset</a></h6>
+          <div class="docblock">
+            <p>Sets the caret (cursor) position to the specified <code>offset</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-set_selection"><a href="vfunc.Text.set_selection.html">Atk.Text.set_selection</a></h6>
+          <div class="docblock">
+            <p>Changes the start and end offset of the specified&nbsp;selection.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-text_attributes_changed"><a href="vfunc.Text.text_attributes_changed.html">Atk.Text.text_attributes_changed</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-text_caret_moved"><a href="vfunc.Text.text_caret_moved.html">Atk.Text.text_caret_moved</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-text_changed"><a href="vfunc.Text.text_changed.html">Atk.Text.text_changed</a></h6>
+          <div class="docblock">
+            <p>The signal handler which is executed when there is a
+  text change. This virtual function is deprecated sice 2.9.4 and
+  it should not be&nbsp;overriden.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-text_selection_changed"><a href="vfunc.Text.text_selection_changed.html">Atk.Text.text_selection_changed</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+    </div>
+    
+
+  </section>
+</section>
+
+
+    
+<div id="toc" class="toc">
+  <nav aria-labelledby="toc-title">
+    <p id="toc-title">Content</p>
+    <ul class="toc-list">
+      <li class="toc-list-item"><a href="#description"><span class="link-text">Description</span></a></li>
+      
+      <ul class="toc-list">
+      
+      
+      
+      </ul>
+      
+      
+<li class="toc-list-item"><a href="#type-functions"><span class="link-text">Functions</span></a></li>
+
+
+      
+<li class="toc-list-item"><a href="#methods"><span class="link-text">Methods</span></a></li>
+
+
+      
+
+      
+<li class="toc-list-item"><a href="#signals"><span class="link-text">Signals</span></a></li>
+
+
+      
+
+      
+<li class="toc-list-item"><a href="#virtual-methods"><span class="link-text">Virtual methods</span></a></li>
+
+
+    </ul>
+  </nav>
+</div>
+
+
+    <section id="search" class="content hidden"></section>
+
+    <footer>
+    
+    </footer>
+  </div>
+</body>
+</html>

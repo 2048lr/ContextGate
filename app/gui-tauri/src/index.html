@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: asset:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https: http:">
+  <title>ContextGate</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="background-container"></div>
+  <div id="toast-container"></div>
+  
+  <div id="app">
+    <div id="title-bar">
+      <div class="title-left">
+        <span class="app-icon">⬡</span>
+        <span class="app-title">ContextGate</span>
+      </div>
+      <div class="title-right">
+        <button id="btn-settings" class="title-btn" title="设置">⚙</button>
+        <div class="window-controls">
+          <button id="btn-minimize" class="window-btn" title="最小化">─</button>
+          <button id="btn-maximize" class="window-btn" title="最大化">□</button>
+          <button id="btn-close" class="window-btn close" title="关闭">✕</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="main-content">
+      <div id="sidebar">
+        <div class="sidebar-header">
+          <div class="status-indicator" id="proxy-status-indicator">
+            <span class="status-dot"></span>
+            <span class="status-text">未启动</span>
+          </div>
+          <div class="port-display">端口: <span id="sidebar-port">--</span></div>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">今日请求</div>
+            <div class="stat-value" id="stat-today-requests">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">今日 Token</div>
+            <div class="stat-value" id="stat-today-tokens">0</div>
+          </div>
+          <div class="stat-card highlight">
+            <div class="stat-label">今日节省</div>
+            <div class="stat-value" id="stat-today-savings">$0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">缓存命中</div>
+            <div class="stat-value" id="stat-cache-hit">0%</div>
+          </div>
+        </div>
+        
+        <div class="quick-actions">
+          <button id="btn-toggle-proxy" class="action-btn">
+            <span class="action-icon">▶</span>
+            <span class="action-text">启动代理</span>
+          </button>
+          <button id="btn-quick-build" class="action-btn secondary">
+            <span class="action-icon">⟳</span>
+            <span class="action-text">重建上下文</span>
+          </button>
+          <button id="btn-clear-cache" class="action-btn secondary">
+            <span class="action-icon">🗑</span>
+            <span class="action-text">清空缓存</span>
+          </button>
+        </div>
+        
+        <div class="sidebar-footer">
+          <div class="context-hash" id="context-hash-display">
+            <span class="hash-label">上下文:</span>
+            <span class="hash-value">未设置</span>
+          </div>
+        </div>
+      </div>
+      
+      <div id="content-area">
+        <div class="cards-container">
+          <div class="card" id="card-project">
+            <div class="card-header">
+              <div class="card-icon">📁</div>
+              <div class="card-title">项目工作区</div>
+              <div class="card-badge" id="project-badge">未选择</div>
+            </div>
+            <div class="card-body">
+              <div class="project-info" id="project-path-display">
+                <span class="info-label">路径:</span>
+                <span class="info-value">点击选择项目...</span>
+              </div>
+              <div class="file-stats">
+                <span class="file-count" id="file-count">0 文件</span>
+                <span class="char-count" id="char-count">0 字符</span>
+                <span class="token-estimate" id="token-estimate">~0 Token</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button id="btn-select-project" class="card-btn primary">选择项目</button>
+              <button id="btn-build-context" class="card-btn">构建上下文</button>
+            </div>
+          </div>
+          
+          <div class="card" id="card-proxy">
+            <div class="card-header">
+              <div class="card-icon">🔄</div>
+              <div class="card-title">API 代理</div>
+              <div class="card-badge" id="proxy-badge">已停止</div>
+            </div>
+            <div class="card-body">
+              <div class="proxy-info">
+                <div class="info-row">
+                  <span class="info-label">地址:</span>
+                  <span class="info-value" id="proxy-address">http://127.0.0.1:--</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">转发:</span>
+                  <span class="info-value" id="proxy-forward-to">OpenAI</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">缓存:</span>
+                  <span class="info-value" id="proxy-cache-status">未启用</span>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button id="btn-start-proxy" class="card-btn primary">启动</button>
+              <button id="btn-stop-proxy" class="card-btn danger" disabled>停止</button>
+            </div>
+          </div>
+          
+          <div class="card wide" id="card-log">
+            <div class="card-header">
+              <div class="card-icon">📋</div>
+              <div class="card-title">请求日志</div>
+              <div class="log-filters">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="cache">缓存</button>
+                <button class="filter-btn" data-filter="miss">直连</button>
+                <button class="filter-btn" data-filter="error">错误</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="log-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="bottom-bar">
+      <span id="connection-status">就绪</span>
+      <span class="spacer"></span>
+      <span id="memory-usage">内存: 0 MB</span>
+    </div>
+  </div>
+  
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚙ 设置</h2>
+        <button id="btn-close-settings" class="close-btn">×</button>
+      </div>
+      
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="providers">提供商</button>
+        <button class="tab-btn" data-tab="proxy">代理</button>
+        <button class="tab-btn" data-tab="monitor">监控</button>
+        <button class="tab-btn" data-tab="scanner">扫描器</button>
+        <button class="tab-btn" data-tab="context">上下文</button>
+        <button class="tab-btn" data-tab="currency">货币</button>
+      </div>
+      
+      <div class="tab-content">
+        <div id="tab-providers" class="tab-pane active">
+          <div class="providers-layout">
+            <div class="provider-list">
+              <select id="provider-select" size="8"></select>
+              <div class="provider-buttons">
+                <button id="btn-add-provider" class="small-btn">+ 新增</button>
+                <button id="btn-remove-provider" class="small-btn secondary">删除</button>
+              </div>
+            </div>
+            <div class="provider-editor">
+              <div class="form-group">
+                <label>API 密钥:</label>
+                <input type="password" id="provider-api-key" placeholder="输入 API 密钥...">
+              </div>
+              <div class="form-group">
+                <label>基础 URL:</label>
+                <input type="text" id="provider-base-url" placeholder="https://api.example.com/v1">
+              </div>
+              <div class="form-group">
+                <label>模型列表:</label>
+                <div class="models-toolbar">
+                  <button id="btn-fetch-models" class="small-btn">⬇ 获取模型列表</button>
+                  <span id="models-count" class="models-count"></span>
+                  <div class="models-search">
+                    <input type="text" id="models-search-input" placeholder="🔍 搜索模型..." class="search-input">
+                    <button id="btn-select-all" class="tiny-btn" title="全选">☑</button>
+                    <button id="btn-deselect-all" class="tiny-btn" title="取消全选">☐</button>
+                  </div>
+                </div>
+                <div id="provider-models-checkboxes" class="models-checkbox-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="tab-proxy" class="tab-pane">
+          <div class="form-group">
+            <label>主机地址:</label>
+            <input type="text" id="proxy-host" value="127.0.0.1">
+          </div>
+          <div class="form-group">
+            <label>端口:</label>
+            <input type="number" id="proxy-port" value="" min="1" max="65535">
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="proxy-sanitize" checked>
+              启用请求清洗
+            </label>
+          </div>
+          <div class="form-group">
+            <label>默认提供商:</label>
+            <select id="default-provider"></select>
+          </div>
+        </div>
+        
+        <div id="tab-monitor" class="tab-pane">
+          <div class="form-group">
+            <label>预算限制 (美元):</label>
+            <input type="number" id="budget-limit" value="10" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>警告阈值 (%):</label>
+            <input type="number" id="warning-threshold" value="75" min="1" max="100">
+          </div>
+          <div class="form-group">
+            <label>临界阈值 (%):</label>
+            <input type="number" id="critical-threshold" value="90" min="1" max="100">
+          </div>
+          <div class="form-group">
+            <label>数据库路径:</label>
+            <input type="text" id="db-path" value="contextgate.db">
+          </div>
+        </div>
+        
+        <div id="tab-scanner" class="tab-pane">
+          <div class="form-group">
+            <label>最大文件大小 (字节):</label>
+            <input type="number" id="max-file-size" value="1048576" min="1024">
+          </div>
+          <div class="form-group">
+            <label>文件扩展名 (每行一个):</label>
+            <textarea id="include-extensions" rows="8" placeholder=".py&#10;.js&#10;.ts"></textarea>
+          </div>
+          <div class="preset-buttons">
+            <button class="small-btn" data-preset="python">Python</button>
+            <button class="small-btn" data-preset="web">Web前端</button>
+            <button class="small-btn" data-preset="common">常用</button>
+          </div>
+        </div>
+        
+        <div id="tab-context" class="tab-pane">
+          <div class="form-group">
+            <label>输出文件名:</label>
+            <input type="text" id="output-file" value="full_context.txt">
+          </div>
+          <div class="form-group">
+            <label>智能上下文最大 Token:</label>
+            <input type="number" id="context-max-tokens" value="8000" min="512" max="200000" step="512">
+            <small class="form-hint">获取模型列表后自动填写</small>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="watch-enabled" checked>
+              启用文件监视 (自动更新上下文)
+            </label>
+          </div>
+          <div class="form-group">
+            <label>防抖延迟 (秒):</label>
+            <input type="number" id="debounce-seconds" value="1" min="0.1" max="10" step="0.1">
+          </div>
+        </div>
+        
+        <div id="tab-currency" class="tab-pane">
+          <div class="form-group">
+            <label>固定货币:</label>
+            <select id="fixed-currency">
+              <option value="">自动检测</option>
+              <option value="CNY">人民币 (CNY)</option>
+              <option value="USD">美元 (USD)</option>
+              <option value="EUR">欧元 (EUR)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>固定汇率 (可选):</label>
+            <input type="number" id="fixed-rate" min="0" max="100" step="0.0001" placeholder="自动">
+          </div>
+          <div class="form-group">
+            <label>人民币汇率 (相对于美元):</label>
+            <input type="number" id="cny-rate" value="7.2" min="0.01" max="100" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>欧元汇率 (相对于美元):</label>
+            <input type="number" id="eur-rate" value="0.92" min="0.01" max="100" step="0.01">
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button id="btn-save-settings" class="primary-btn">保存</button>
+        <button id="btn-cancel-settings" class="secondary-btn">取消</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="renderer.js"></script>
+</body>
+</html>

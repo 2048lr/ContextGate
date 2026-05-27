@@ -1,0 +1,2289 @@
+<!--
+SPDX-FileCopyrightText: The AT-SPI2 maintainers
+
+SPDX-License-Identifier: LGPL-2.1-or-later
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Atspi.Accessible</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta charset="utf-8" />
+
+  
+  <meta property="og:type" content="website"/>
+
+  
+  <meta property="og:image:width" content="256"/>
+  <meta property="og:image:height" content="256"/>
+  <meta property="og:image:secure_url" content="logo.png"/>
+  <meta property="og:image:alt" content="Atspi-2.0"/>
+  
+
+  
+  <meta property="og:title" content="Atspi.Accessible"/>
+  <meta property="og:description" content="Reference for Atspi.Accessible"/>
+  <meta name="twitter:title" content="Atspi.Accessible"/>
+  <meta name="twitter:description" content="Reference for Atspi.Accessible"/>
+
+
+  
+  <meta name="twitter:card" content="summary"/>
+
+  
+  
+  
+  
+
+  <link rel="stylesheet" href="style.css" type="text/css" />
+
+  
+
+  
+  <script src="urlmap.js"></script>
+  
+  
+  <script src="fzy.js"></script>
+  <script src="search.js"></script>
+  
+  <script src="main.js"></script>
+
+  
+</head>
+
+<body>
+  <div id="body-wrapper" tabindex="-1">
+
+    <nav class="sidebar devhelp-hidden">
+      
+      <div class="section">
+        <a href="index.html"><img src="logo.png" class="logo"/></a>
+      </div>
+      
+      
+      <div class="search section">
+        <form id="search-form" autocomplete="off">
+          <input id="search-input" type="text" name="do-not-autocomplete" placeholder="Click, or press 's' to search" autocomplete="off"/>
+        </form>
+      </div>
+      
+      <div class="section namespace">
+        <h3><a href="index.html">Atspi</a></h3>
+        <p>API Version: 2.0</p>
+        
+        <p>Library Version: 2.60.3</p>
+        
+      </div>
+      
+<div class="section">
+  <h5>Type</h5>
+  <div class="links">
+    <a class="current" href="class.Accessible.html#description">Accessible</a>
+  </div>
+</div>
+
+
+  
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Instance methods</h5>
+  <div class="links">
+  
+    <a class="method" href="method.Accessible.clear_cache.html">clear_cache</a>
+  
+    <a class="method" href="method.Accessible.clear_cache_single.html">clear_cache_single</a>
+  
+    <a class="method" href="method.Accessible.get_accessible_id.html">get_accessible_id</a>
+  
+    <a class="method" href="method.Accessible.get_action.html">get_action</a>
+  
+    <a class="method" href="method.Accessible.get_action_iface.html">get_action_iface</a>
+  
+    <a class="method" href="method.Accessible.get_application.html">get_application</a>
+  
+    <a class="method" href="method.Accessible.get_atspi_version.html">get_atspi_version</a>
+  
+    <a class="method" href="method.Accessible.get_attributes.html">get_attributes</a>
+  
+    <a class="method" href="method.Accessible.get_attributes_as_array.html">get_attributes_as_array</a>
+  
+    <a class="method" href="method.Accessible.get_child_at_index.html">get_child_at_index</a>
+  
+    <a class="method" href="method.Accessible.get_child_count.html">get_child_count</a>
+  
+    <a class="method" href="method.Accessible.get_collection.html">get_collection</a>
+  
+    <a class="method" href="method.Accessible.get_collection_iface.html">get_collection_iface</a>
+  
+    <a class="method" href="method.Accessible.get_component.html">get_component</a>
+  
+    <a class="method" href="method.Accessible.get_component_iface.html">get_component_iface</a>
+  
+    <a class="method" href="method.Accessible.get_description.html">get_description</a>
+  
+    <a class="method" href="method.Accessible.get_document.html">get_document</a>
+  
+    <a class="method" href="method.Accessible.get_document_iface.html">get_document_iface</a>
+  
+    <a class="method" href="method.Accessible.get_editable_text.html">get_editable_text</a>
+  
+    <a class="method" href="method.Accessible.get_editable_text_iface.html">get_editable_text_iface</a>
+  
+    <a class="method" href="method.Accessible.get_help_text.html">get_help_text</a>
+  
+    <a class="method" href="method.Accessible.get_hyperlink.html">get_hyperlink</a>
+  
+    <a class="method" href="method.Accessible.get_hypertext.html">get_hypertext</a>
+  
+    <a class="method" href="method.Accessible.get_hypertext_iface.html">get_hypertext_iface</a>
+  
+    <a class="method" href="method.Accessible.get_id.html">get_id</a>
+  
+    <a class="method" href="method.Accessible.get_image.html">get_image</a>
+  
+    <a class="method" href="method.Accessible.get_image_iface.html">get_image_iface</a>
+  
+    <a class="method" href="method.Accessible.get_index_in_parent.html">get_index_in_parent</a>
+  
+    <a class="method" href="method.Accessible.get_interfaces.html">get_interfaces</a>
+  
+    <a class="method" href="method.Accessible.get_localized_role_name.html">get_localized_role_name</a>
+  
+    <a class="method" href="method.Accessible.get_name.html">get_name</a>
+  
+    <a class="method" href="method.Accessible.get_object_locale.html">get_object_locale</a>
+  
+    <a class="method" href="method.Accessible.get_parent.html">get_parent</a>
+  
+    <a class="method" href="method.Accessible.get_process_id.html">get_process_id</a>
+  
+    <a class="method" href="method.Accessible.get_relation_set.html">get_relation_set</a>
+  
+    <a class="method" href="method.Accessible.get_role.html">get_role</a>
+  
+    <a class="method" href="method.Accessible.get_role_name.html">get_role_name</a>
+  
+    <a class="method" href="method.Accessible.get_selection.html">get_selection</a>
+  
+    <a class="method" href="method.Accessible.get_selection_iface.html">get_selection_iface</a>
+  
+    <a class="method" href="method.Accessible.get_state_set.html">get_state_set</a>
+  
+    <a class="method" href="method.Accessible.get_table.html">get_table</a>
+  
+    <a class="method" href="method.Accessible.get_table_cell.html">get_table_cell</a>
+  
+    <a class="method" href="method.Accessible.get_table_iface.html">get_table_iface</a>
+  
+    <a class="method" href="method.Accessible.get_text.html">get_text</a>
+  
+    <a class="method" href="method.Accessible.get_text_iface.html">get_text_iface</a>
+  
+    <a class="method" href="method.Accessible.get_toolkit_name.html">get_toolkit_name</a>
+  
+    <a class="method" href="method.Accessible.get_toolkit_version.html">get_toolkit_version</a>
+  
+    <a class="method" href="method.Accessible.get_value.html">get_value</a>
+  
+    <a class="method" href="method.Accessible.get_value_iface.html">get_value_iface</a>
+  
+    <a class="method" href="method.Accessible.is_action.html">is_action</a>
+  
+    <a class="method" href="method.Accessible.is_application.html">is_application</a>
+  
+    <a class="method" href="method.Accessible.is_collection.html">is_collection</a>
+  
+    <a class="method" href="method.Accessible.is_component.html">is_component</a>
+  
+    <a class="method" href="method.Accessible.is_document.html">is_document</a>
+  
+    <a class="method" href="method.Accessible.is_editable_text.html">is_editable_text</a>
+  
+    <a class="method" href="method.Accessible.is_hyperlink.html">is_hyperlink</a>
+  
+    <a class="method" href="method.Accessible.is_hypertext.html">is_hypertext</a>
+  
+    <a class="method" href="method.Accessible.is_image.html">is_image</a>
+  
+    <a class="method" href="method.Accessible.is_selection.html">is_selection</a>
+  
+    <a class="method" href="method.Accessible.is_table.html">is_table</a>
+  
+    <a class="method" href="method.Accessible.is_table_cell.html">is_table_cell</a>
+  
+    <a class="method" href="method.Accessible.is_text.html">is_text</a>
+  
+    <a class="method" href="method.Accessible.is_value.html">is_value</a>
+  
+    <a class="method" href="method.Accessible.set_cache_mask.html">set_cache_mask</a>
+  
+  </div>
+</div>
+
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Signals</h5>
+  <div class="links">
+  
+    <a class="signal" href="signal.Accessible.mode-changed.html">mode-changed</a>
+  
+    <a class="signal" href="signal.Accessible.region-changed.html">region-changed</a>
+  
+  </div>
+</div>
+
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Virtual methods</h5>
+  <div class="links">
+  
+    <a class="method" href="vfunc.Accessible.mode_changed.html">mode_changed</a>
+  
+    <a class="method" href="vfunc.Accessible.region_changed.html">region_changed</a>
+  
+  </div>
+</div>
+
+
+
+
+      <div class="section generator">
+        <p>Generated by <a href="https://gitlab.gnome.org/GNOME/gi-docgen">gi-docgen</a> 2026.1</p>
+      </div>
+    </nav>
+
+    <button id="btn-to-top" class="hidden"><span class="up-arrow"></span></button>
+
+    
+<section id="main" class="content">
+  <header>
+    <h3>Class</h3>
+    <h1 aria-label="Name"><a href="index.html">Atspi</a><span class="sep" role="presentation"></span>Accessible</h1>
+  </header>
+
+  <section>
+    <summary>
+      <div class="docblock">
+        <p></p>
+      </div>
+
+      <div class="toggle-wrapper">
+        <h4 id="description" style="display:flex;">
+          Description
+          <a href="#description" class="anchor"></a>
+          
+          <a class="srclink" title="go to source location" href="https://gitlab.gnome.org/GNOME/at-spi2-core/-/blob/HEAD/atspi/atspi-accessible.c#L29">[src]</a>
+          
+        </h4>
+
+        <pre><code>class Atspi.Accessible : Atspi.Object
+  implements Atspi.Action, Atspi.Collection, Atspi.Component, Atspi.Document, Atspi.EditableText, Atspi.Hypertext, Atspi.Image, Atspi.Selection, Atspi.Table, Atspi.TableCell, Atspi.Text, Atspi.Value {
+  AtspiAccessible* accessible_parent,
+  gpointer children[],
+  AtspiRole role,
+  gint interfaces,
+  char* name,
+  char* description,
+  AtspiStateSet* states,
+  GHashTable* attributes,
+  guint cached_properties,
+  AtspiAccessiblePrivate* priv
+}</pre></code>
+
+        <div class="docblock">
+          <p>The base interface which is implemented by all accessible&nbsp;objects.</p>
+<p>All objects support interfaces for querying their contained &#8216;children&#8217;
+and position in the accessible-object hierarchy, whether or not they
+actually have&nbsp;children.</p>
+        </div>
+
+        <div class="docblock">
+          
+          
+          
+        </div>
+
+        
+      </div>
+    </summary>
+
+    
+    <div class="toggle-wrapper hierarchy">
+      <h4 id="hierarchy">
+        Hierarchy
+        <a href="#hierarchy" class="anchor"></a>
+      </h4>
+      <div class="docblock" alt="Hierarchy for Atspi.Accessible">
+        <!-- Generated by graphviz version 14.1.4 (20260321.0153)
+ -->
+<!-- Title: hierarchy Pages: 1 -->
+<svg width="1456pt" height="260pt"
+ viewBox="0.00 0.00 1456.00 260.00">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 256)">
+<title>hierarchy</title>
+<!-- this -->
+<g id="node1" class="node">
+<title>this</title>
+<g id="a_node1"><a xlink:title="AtspiAccessible">
+<path fill="none" stroke="black" d="M828.38,-108C828.38,-108 748.62,-108 748.62,-108 742.62,-108 736.62,-102 736.62,-96 736.62,-96 736.62,-84 736.62,-84 736.62,-78 742.62,-72 748.62,-72 748.62,-72 828.38,-72 828.38,-72 834.38,-72 840.38,-78 840.38,-84 840.38,-84 840.38,-96 840.38,-96 840.38,-102 834.38,-108 828.38,-108"/>
+<text xml:space="preserve" text-anchor="middle" x="788.5" y="-83.83" font-family="Times,serif" font-size="14.00">AtspiAccessible</text>
+</a>
+</g>
+</g>
+<!-- implements_0 -->
+<g id="node4" class="node link">
+<title>implements_0</title>
+<g id="a_node4"><a xlink:href="iface.Action.html" xlink:title="AtspiAction">
+<polygon fill="none" stroke="black" points="91,-36 0,-36 0,0 91,0 91,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="45.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiAction</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_0 -->
+<g id="edge3" class="edge">
+<title>this&#45;&#45;implements_0</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M736.54,-89.03C620.94,-88.21 334.2,-81.35 99.5,-36 96.8,-35.48 94.04,-34.87 91.27,-34.19"/>
+</g>
+<!-- implements_1 -->
+<g id="node5" class="node link">
+<title>implements_1</title>
+<g id="a_node5"><a xlink:href="iface.Collection.html" xlink:title="AtspiCollection">
+<polygon fill="none" stroke="black" points="224,-36 109,-36 109,0 224,0 224,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="166.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiCollection</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_1 -->
+<g id="edge4" class="edge">
+<title>this&#45;&#45;implements_1</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M736.39,-86.77C637.51,-81.92 416.11,-68.19 232.5,-36 229.82,-35.53 227.09,-35.01 224.34,-34.45"/>
+</g>
+<!-- implements_2 -->
+<g id="node6" class="node link">
+<title>implements_2</title>
+<g id="a_node6"><a xlink:href="iface.Component.html" xlink:title="AtspiComponent">
+<polygon fill="none" stroke="black" points="369,-36 242,-36 242,0 369,0 369,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="305.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiComponent</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_2 -->
+<g id="edge5" class="edge">
+<title>this&#45;&#45;implements_2</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M736.14,-83.93C657.94,-75.98 506.16,-59.06 378.5,-36 375.43,-35.44 372.29,-34.84 369.12,-34.21"/>
+</g>
+<!-- implements_3 -->
+<g id="node7" class="node link">
+<title>implements_3</title>
+<g id="a_node7"><a xlink:href="iface.Document.html" xlink:title="AtspiDocument">
+<polygon fill="none" stroke="black" points="505.88,-36 387.12,-36 387.12,0 505.88,0 505.88,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="446.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiDocument</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_3 -->
+<g id="edge6" class="edge">
+<title>this&#45;&#45;implements_3</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M736.26,-79.66C681.19,-69.62 592,-52.84 515.5,-36 512.49,-35.34 509.41,-34.64 506.3,-33.93"/>
+</g>
+<!-- implements_4 -->
+<g id="node8" class="node link">
+<title>implements_4</title>
+<g id="a_node8"><a xlink:href="iface.EditableText.html" xlink:title="AtspiEditableText">
+<polygon fill="none" stroke="black" points="652.75,-36 524.25,-36 524.25,0 652.75,0 652.75,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="588.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiEditableText</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_4 -->
+<g id="edge7" class="edge">
+<title>this&#45;&#45;implements_4</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M738.55,-71.52C707.89,-60.79 668.77,-47.09 638.16,-36.38"/>
+</g>
+<!-- implements_5 -->
+<g id="node9" class="node link">
+<title>implements_5</title>
+<g id="a_node9"><a xlink:href="iface.Hypertext.html" xlink:title="AtspiHypertext">
+<polygon fill="none" stroke="black" points="786,-36 671,-36 671,0 786,0 786,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="728.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiHypertext</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_5 -->
+<g id="edge8" class="edge">
+<title>this&#45;&#45;implements_5</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M773.67,-71.7C764.37,-60.85 752.43,-46.92 743.16,-36.1"/>
+</g>
+<!-- implements_6 -->
+<g id="node10" class="node link">
+<title>implements_6</title>
+<g id="a_node10"><a xlink:href="iface.Image.html" xlink:title="AtspiImage">
+<polygon fill="none" stroke="black" points="894.62,-36 804.38,-36 804.38,0 894.62,0 894.62,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="849.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiImage</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_6 -->
+<g id="edge9" class="edge">
+<title>this&#45;&#45;implements_6</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M803.58,-71.7C813.03,-60.85 825.17,-46.92 834.59,-36.1"/>
+</g>
+<!-- implements_7 -->
+<g id="node11" class="node link">
+<title>implements_7</title>
+<g id="a_node11"><a xlink:href="iface.Selection.html" xlink:title="AtspiSelection">
+<polygon fill="none" stroke="black" points="1022.38,-36 912.62,-36 912.62,0 1022.38,0 1022.38,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="967.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiSelection</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_7 -->
+<g id="edge10" class="edge">
+<title>this&#45;&#45;implements_7</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M833.21,-71.52C860.65,-60.79 895.66,-47.09 923.05,-36.38"/>
+</g>
+<!-- implements_8 -->
+<g id="node12" class="node link">
+<title>implements_8</title>
+<g id="a_node12"><a xlink:href="iface.Table.html" xlink:title="AtspiTable">
+<polygon fill="none" stroke="black" points="1124.25,-36 1040.75,-36 1040.75,0 1124.25,0 1124.25,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="1082.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiTable</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_8 -->
+<g id="edge11" class="edge">
+<title>this&#45;&#45;implements_8</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M840.56,-79.32C890.03,-69.73 966.34,-53.91 1031.5,-36 1034.38,-35.21 1037.34,-34.35 1040.31,-33.45"/>
+</g>
+<!-- implements_9 -->
+<g id="node13" class="node link">
+<title>implements_9</title>
+<g id="a_node13"><a xlink:href="iface.TableCell.html" xlink:title="AtspiTableCell">
+<polygon fill="none" stroke="black" points="1250.62,-36 1142.38,-36 1142.38,0 1250.62,0 1250.62,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="1196.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiTableCell</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_9 -->
+<g id="edge12" class="edge">
+<title>this&#45;&#45;implements_9</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M840.85,-82.8C908.73,-74.34 1030.63,-57.71 1133.5,-36 1136.27,-35.42 1139.1,-34.78 1141.95,-34.12"/>
+</g>
+<!-- implements_10 -->
+<g id="node14" class="node link">
+<title>implements_10</title>
+<g id="a_node14"><a xlink:href="iface.Text.html" xlink:title="AtspiText">
+<polygon fill="none" stroke="black" points="1344.5,-36 1268.5,-36 1268.5,0 1344.5,0 1344.5,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="1306.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiText</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_10 -->
+<g id="edge13" class="edge">
+<title>this&#45;&#45;implements_10</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M840.75,-87.12C928.38,-83.09 1110.06,-70.92 1259.5,-36 1262.37,-35.33 1265.31,-34.54 1268.25,-33.67"/>
+</g>
+<!-- implements_11 -->
+<g id="node15" class="node link">
+<title>implements_11</title>
+<g id="a_node15"><a xlink:href="iface.Value.html" xlink:title="AtspiValue">
+<polygon fill="none" stroke="black" points="1448.38,-36 1362.62,-36 1362.62,0 1448.38,0 1448.38,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="1405.5" y="-14.45" font-family="sans-serif" font-size="14.00">AtspiValue</text>
+</a>
+</g>
+</g>
+<!-- this&#45;&#45;implements_11 -->
+<g id="edge14" class="edge">
+<title>this&#45;&#45;implements_11</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M840.49,-87.97C940.74,-85.15 1167.33,-74.66 1353.5,-36 1356.38,-35.4 1359.33,-34.7 1362.28,-33.93"/>
+</g>
+<!-- ancestor_0 -->
+<g id="node2" class="node link">
+<title>ancestor_0</title>
+<g id="a_node2"><a xlink:href="class.Object.html" xlink:title="AtspiObject">
+<path fill="none" stroke="black" d="M817.12,-180C817.12,-180 759.88,-180 759.88,-180 753.88,-180 747.88,-174 747.88,-168 747.88,-168 747.88,-156 747.88,-156 747.88,-150 753.88,-144 759.88,-144 759.88,-144 817.12,-144 817.12,-144 823.12,-144 829.12,-150 829.12,-156 829.12,-156 829.12,-168 829.12,-168 829.12,-174 823.12,-180 817.12,-180"/>
+<text xml:space="preserve" text-anchor="middle" x="788.5" y="-155.82" font-family="Times,serif" font-size="14.00">AtspiObject</text>
+</a>
+</g>
+</g>
+<!-- ancestor_0&#45;&#45;this -->
+<g id="edge2" class="edge">
+<title>ancestor_0&#45;&#45;this</title>
+<path fill="none" stroke="black" d="M788.5,-143.7C788.5,-132.85 788.5,-118.92 788.5,-108.1"/>
+</g>
+<!-- ancestor_1 -->
+<g id="node3" class="node">
+<title>ancestor_1</title>
+<g id="a_node3"><a xlink:title="GObject.Object">
+<path fill="none" stroke="black" d="M807.38,-252C807.38,-252 769.62,-252 769.62,-252 763.62,-252 757.62,-246 757.62,-240 757.62,-240 757.62,-228 757.62,-228 757.62,-222 763.62,-216 769.62,-216 769.62,-216 807.38,-216 807.38,-216 813.38,-216 819.38,-222 819.38,-228 819.38,-228 819.38,-240 819.38,-240 819.38,-246 813.38,-252 807.38,-252"/>
+<text xml:space="preserve" text-anchor="middle" x="788.5" y="-227.82" font-family="Times,serif" font-size="14.00">GObject</text>
+</a>
+</g>
+</g>
+<!-- ancestor_1&#45;&#45;ancestor_0 -->
+<g id="edge1" class="edge">
+<title>ancestor_1&#45;&#45;ancestor_0</title>
+<path fill="none" stroke="black" d="M788.5,-215.7C788.5,-204.85 788.5,-190.92 788.5,-180.1"/>
+</g>
+</g>
+</svg>
+
+      </div>
+    </div>
+    
+
+    
+    <div class="toggle-wrapper ancestors">
+      <h4 id="ancestors">
+        Ancestors
+        <a href="#ancestors" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+        <ul>
+        
+          
+          <li class="class"><a href="class.Object.html" title="Object">AtspiObject</a></li>
+          
+        
+          
+          <li class="class"><a class="external" href="javascript:void(0)" data-link="class.Object.html" data-namespace="GObject">GObject</a></li>
+          
+        
+        </ul>
+      </div>
+    </div>
+    
+
+    
+
+    
+    <div class="toggle-wrapper implements">
+      <h4 id="implements">
+        Implements
+        <a href="#implements" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+        <ul>
+        
+          
+          <li class="interface"><a href="iface.Action.html" title="Action">AtspiAction</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.Collection.html" title="Collection">AtspiCollection</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.Component.html" title="Component">AtspiComponent</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.Document.html" title="Document">AtspiDocument</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.EditableText.html" title="EditableText">AtspiEditableText</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.Hypertext.html" title="Hypertext">AtspiHypertext</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.Image.html" title="Image">AtspiImage</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.Selection.html" title="Selection">AtspiSelection</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.Table.html" title="Table">AtspiTable</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.TableCell.html" title="TableCell">AtspiTableCell</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.Text.html" title="Text">AtspiText</a></li>
+          
+        
+          
+          <li class="interface"><a href="iface.Value.html" title="Value">AtspiValue</a></li>
+          
+        
+        </ul>
+      </div>
+    </div>
+    
+
+    
+
+    
+
+    
+    <div class="toggle-wrapper methods">
+      <h4 id="methods">
+        Instance methods
+        <a href="#methods" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+        <div class="">
+          <h6><a href="method.Accessible.clear_cache.html">atspi_accessible_clear_cache</a></h6>
+          <div class="docblock">
+            <p>Clears the cached information for the given accessible and all of its&nbsp;descendants.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.clear_cache_single.html">atspi_accessible_clear_cache_single</a></h6>
+          <div class="docblock">
+            <p>Clears the cached information only for the given&nbsp;accessible.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_accessible_id.html">atspi_accessible_get_accessible_id</a></h6>
+          <div class="docblock">
+            <p>Gets the accessible id of the accessible.  This is not meant to be presented
+to the user, but to be an id which is stable over application development.
+Typically, this is the gtkbuilder&nbsp;id.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.34</span></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_action.html">atspi_accessible_get_action</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiAction</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_action_iface.html">atspi_accessible_get_action_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiAction</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_application.html">atspi_accessible_get_application</a></h6>
+          <div class="docblock">
+            <p>Gets the containing <code>AtspiApplication</code> for an&nbsp;object.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_atspi_version.html">atspi_accessible_get_atspi_version</a></h6>
+          <div class="docblock">
+            <p>Gets the <span class="caps">AT</span>-<span class="caps">SPI</span> <span class="caps">IPC</span> specification version supported by the application
+pointed to by the <code>AtspiAccessible</code> object.
+Only works on application root&nbsp;objects.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_attributes.html">atspi_accessible_get_attributes</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AttributeSet</code> representing any assigned
+name-value pair attributes or annotations for this object.
+For typographic, textual, or textually-semantic attributes, see
+atspi_text_get_attributes&nbsp;instead.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_attributes_as_array.html">atspi_accessible_get_attributes_as_array</a></h6>
+          <div class="docblock">
+            <p>Gets a <code>GArray</code> representing any assigned
+name-value pair attributes or annotations for this object.
+For typographic, textual, or textually-semantic attributes, see
+atspi_text_get_attributes_as_array&nbsp;instead.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_child_at_index.html">atspi_accessible_get_child_at_index</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiAccessible</code> child of an <code>AtspiAccessible</code> object at a given&nbsp;index.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_child_count.html">atspi_accessible_get_child_count</a></h6>
+          <div class="docblock">
+            <p>Gets the number of children contained by an <code>AtspiAccessible</code> object.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_collection.html">atspi_accessible_get_collection</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiCollection</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_collection_iface.html">atspi_accessible_get_collection_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiCollection</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_component.html">atspi_accessible_get_component</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiComponent</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_component_iface.html">atspi_accessible_get_component_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiComponent</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_description.html">atspi_accessible_get_description</a></h6>
+          <div class="docblock">
+            <p>Gets the description of an <code>AtspiAccessible</code> object.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_document.html">atspi_accessible_get_document</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiDocument</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_document_iface.html">atspi_accessible_get_document_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiDocument</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_editable_text.html">atspi_accessible_get_editable_text</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiEditableText</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_editable_text_iface.html">atspi_accessible_get_editable_text_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiEditableText</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_help_text.html">atspi_accessible_get_help_text</a></h6>
+          <div class="docblock">
+            <p>Gets the help text associated with the accessible, if set. When this is
+present, it provides information that a screen reader can relay to the user
+to explain how to interact with the&nbsp;object.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.52</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_hyperlink.html">atspi_accessible_get_hyperlink</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiHyperlink</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_hypertext.html">atspi_accessible_get_hypertext</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiHypertext</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_hypertext_iface.html">atspi_accessible_get_hypertext_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiHypertext</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_id.html">atspi_accessible_get_id</a></h6>
+          <div class="docblock">
+            <p>Gets the application id for a <code>AtspiAccessible</code> object.
+Only works on application root&nbsp;objects.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_image.html">atspi_accessible_get_image</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiImage</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_image_iface.html">atspi_accessible_get_image_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiImage</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_index_in_parent.html">atspi_accessible_get_index_in_parent</a></h6>
+          <div class="docblock">
+            <p>Gets the index of an <code>AtspiAccessible</code> object within its parent&#8217;s
+<code>AtspiAccessible</code> children&nbsp;list.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_interfaces.html">atspi_accessible_get_interfaces</a></h6>
+          <div class="docblock">
+            <p>A set of pointers to all interfaces supported by an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_localized_role_name.html">atspi_accessible_get_localized_role_name</a></h6>
+          <div class="docblock">
+            <p>Gets a <span class="caps">UTF</span>-8 string corresponding to the name of the role played by an
+object, translated to the current locale.
+This method will return useful values for roles that fall outside the
+enumeration used in atspi_accessible_getRole&nbsp;().</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_name.html">atspi_accessible_get_name</a></h6>
+          <div class="docblock">
+            <p>Gets the name of an <code>AtspiAccessible</code> object.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_object_locale.html">atspi_accessible_get_object_locale</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_parent.html">atspi_accessible_get_parent</a></h6>
+          <div class="docblock">
+            <p>Gets an <code>AtspiAccessible</code> object&#8217;s parent&nbsp;container.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_process_id.html">atspi_accessible_get_process_id</a></h6>
+          <div class="docblock">
+            <p>Returns the process id associated with the given accessible.  Mainly
+added for debugging; it is a shortcut to explicitly querying the
+accessible&#8217;s app-&gt;bus_name and then calling&nbsp;GetConnectionUnixProcessID.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_relation_set.html">atspi_accessible_get_relation_set</a></h6>
+          <div class="docblock">
+            <p>Gets the set of <code>AtspiRelation</code> objects which describes this <code>AtspiAccessible</code> object&#8217;s
+relationships with other <code>AtspiAccessible</code> objects.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_role.html">atspi_accessible_get_role</a></h6>
+          <div class="docblock">
+            <p>Gets the <span class="caps">UI</span> role played by an <code>AtspiAccessible</code> object.
+This role&#8217;s name can be obtained via atspi_accessible_get_role_name&nbsp;().</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_role_name.html">atspi_accessible_get_role_name</a></h6>
+          <div class="docblock">
+            <p>Gets a <span class="caps">UTF</span>-8 string corresponding to the name of the role played by an object.
+This method will return useful values for roles that fall outside the
+enumeration used in atspi_accessible_get_role&nbsp;().</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_selection.html">atspi_accessible_get_selection</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiSelection</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_selection_iface.html">atspi_accessible_get_selection_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiSelection</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_state_set.html">atspi_accessible_get_state_set</a></h6>
+          <div class="docblock">
+            <p>Gets the states currently held by an&nbsp;object.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_table.html">atspi_accessible_get_table</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiTable</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_table_cell.html">atspi_accessible_get_table_cell</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiTableCell</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_table_iface.html">atspi_accessible_get_table_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiTable</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_text.html">atspi_accessible_get_text</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiTable</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_text_iface.html">atspi_accessible_get_text_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiTable</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_toolkit_name.html">atspi_accessible_get_toolkit_name</a></h6>
+          <div class="docblock">
+            <p>Gets the toolkit name for an <code>AtspiAccessible</code> object.
+Only works on application root&nbsp;objects.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_toolkit_version.html">atspi_accessible_get_toolkit_version</a></h6>
+          <div class="docblock">
+            <p>Gets the toolkit version for an <code>AtspiAccessible</code> object.
+Only works on application root&nbsp;objects.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Accessible.get_value.html">atspi_accessible_get_value</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiTable</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.get_value_iface.html">atspi_accessible_get_value_iface</a></h6>
+          <div class="docblock">
+            <p>Gets the <code>AtspiTable</code> interface for an <code>AtspiAccessible</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_action.html">atspi_accessible_is_action</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiAction</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_application.html">atspi_accessible_is_application</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiApplication</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_collection.html">atspi_accessible_is_collection</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiCollection</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_component.html">atspi_accessible_is_component</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements <code>AtspiComponent</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_document.html">atspi_accessible_is_document</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiDocument</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_editable_text.html">atspi_accessible_is_editable_text</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiEditableText</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_hyperlink.html">atspi_accessible_is_hyperlink</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiHyperlink</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_hypertext.html">atspi_accessible_is_hypertext</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiHypertext</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_image.html">atspi_accessible_is_image</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiImage</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_selection.html">atspi_accessible_is_selection</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiSelection</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_table.html">atspi_accessible_is_table</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiTable</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_table_cell.html">atspi_accessible_is_table_cell</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiTableCell</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_text.html">atspi_accessible_is_text</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiText</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.is_value.html">atspi_accessible_is_value</a></h6>
+          <div class="docblock">
+            <p>Query whether the specified <code>AtspiAccessible</code> implements the
+<code>AtspiValue</code> interface.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Accessible.set_cache_mask.html">atspi_accessible_set_cache_mask</a></h6>
+          <div class="docblock">
+            <p>Sets the type of data to cache for accessibles.
+If this is not set for an application or is reset to ATSPI_CACHE_UNDEFINED,
+then the desktop&#8217;s cache flag will be used.
+If the desktop&#8217;s cache flag is also undefined, then all possible data will
+be cached.
+This function is intended to work around bugs in toolkits where the proper
+events are not raised / to aid in testing for such&nbsp;bugs.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+
+      
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods"><h5 style="display:block;">Methods inherited from <a class="external" href="javascript:void(0)" data-link="class.Object.html" data-namespace="GObject">GObject</a> (43)</h5>
+          <div class="docblock">
+          
+            <div class="docblock">
+              <p>Please see&nbsp;<a class="external" href="javascript:void(0)" data-link="class.Object.html#methods" data-namespace="GObject">GObject</a>&nbsp;for a full list of methods.</em></p>
+            </div>
+          
+          </div>
+        </div>
+        
+      
+
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Action.html">AtspiAction</a> (8)</h5><div class="docblock">
+          
+            <h6><a href="method.Action.do_action.html">atspi_action_do_action</a></h6><div class="docblock">
+              <p>Invoke the action indicated by&nbsp;#index.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Action.get_action_description.html">atspi_action_get_action_description</a></h6><div class="docblock">
+              <p>Get the description of &#8216;<code>i</code>-th&#8217; action invocable on an
+     object implementing <code>AtspiAction</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Action.get_action_name.html">atspi_action_get_action_name</a></h6><div class="docblock">
+              <p>Get the name of the &#8216;<code>i</code>-th&#8217; action invocable on an
+     object implementing <code>AtspiAction</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Action.get_description.html">atspi_action_get_description</a></h6><div class="docblock">
+              <p>Get the description of &#8216;<code>i</code>-th&#8217; action invocable on an
+     object implementing <code>AtspiAction</code>.</p>
+            </div>
+            <div class="docblock">
+              <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+            </div>
+            
+            <h6><a href="method.Action.get_key_binding.html">atspi_action_get_key_binding</a></h6><div class="docblock">
+              <p>Get the keybindings for the <code>i</code>-th action invocable on an
+     object implementing <code>AtspiAction</code>, if any are defined.
+     The keybindings string format is as follows:
+       there are multiple parts to a keybinding string (typically 3).
+       They are delimited with &#8220;;&#8221;.  The first is the action&#8217;s
+       keybinding which is usable if the object implementing the action
+       is currently posted to the screen, e.g. if a menu is posted
+       then these keybindings for the corresponding menu-items are
+       available.  The second keybinding substring is the full key sequence
+       necessary to post the action&#8217;s widget and activate it, e.g. for
+       a menu item such as &#8220;File-&gt;Open&#8221; it would both post the menu and
+       activate the item.  Thus the second keybinding string is available
+       during the lifetime of the containing toplevel window as a whole,
+       whereas the first keybinding string only works while the object
+       implementing AtkAction is posted.  The third (and optional)
+       keybinding string is the &#8220;keyboard shortcut&#8221; which invokes the
+       action without posting any menus.
+       Meta-keys are indicated by the conventional strings
+       &#8220;&lt;Control&gt;&#8221;, &#8220;&lt;Alt&gt;&#8221;, &#8220;&lt;Shift&gt;&#8221;, &#8220;&lt;Mod2&gt;&#8221;,
+       etc. (we use the same string as <code>gtk_accelerator_name()</code> in&nbsp;gtk+-2.X.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Action.get_localized_name.html">atspi_action_get_localized_name</a></h6><div class="docblock">
+              <p>Get the name of the &#8216;<code>i</code>-th&#8217; action invocable on an
+     object implementing <code>AtspiAction</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Action.get_n_actions.html">atspi_action_get_n_actions</a></h6><div class="docblock">
+              <p>Get the number of actions invokable on an <code>AtspiAction</code> implementor.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Action.get_name.html">atspi_action_get_name</a></h6><div class="docblock">
+              <p>Get the name of the &#8216;<code>i</code>-th&#8217; action invocable on an
+     object implementing <code>AtspiAction</code>.</p>
+            </div>
+            <div class="docblock">
+              <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Collection.html">AtspiCollection</a> (5)</h5><div class="docblock">
+          
+            <h6><a href="method.Collection.get_active_descendant.html">atspi_collection_get_active_descendant</a></h6><div class="docblock">
+              No description available.
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Collection.get_matches.html">atspi_collection_get_matches</a></h6><div class="docblock">
+              <p>Gets all <code>AtspiAccessible</code> objects from the <code>collection</code> matching a given
+<code>rule</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Collection.get_matches_from.html">atspi_collection_get_matches_from</a></h6><div class="docblock">
+              <p>Gets all <code>AtspiAccessible</code> objects from the <code>collection</code>, before
+<code>current_object</code>, matching a given <code>rule</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Collection.get_matches_to.html">atspi_collection_get_matches_to</a></h6><div class="docblock">
+              <p>Gets all <code>AtspiAccessible</code> objects from the <code>collection</code>, after
+<code>current_object</code>, matching a given <code>rule</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Collection.is_ancestor_of.html">atspi_collection_is_ancestor_of</a></h6><div class="docblock">
+              <p>Not yet&nbsp;implemented.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Component.html">AtspiComponent</a> (14)</h5><div class="docblock">
+          
+            <h6><a href="method.Component.contains.html">atspi_component_contains</a></h6><div class="docblock">
+              <p>Queries whether a given <code>AtspiComponent</code> contains a particular&nbsp;point.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.get_accessible_at_point.html">atspi_component_get_accessible_at_point</a></h6><div class="docblock">
+              <p>Gets the accessible child at a given coordinate within an <code>AtspiComponent</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.get_alpha.html">atspi_component_get_alpha</a></h6><div class="docblock">
+              <p>Gets the opacity/alpha value of a component, if alpha blending is in&nbsp;use.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.get_extents.html">atspi_component_get_extents</a></h6><div class="docblock">
+              <p>Gets the bounding box of the specified <code>AtspiComponent</code>.
+The returned values are meaningful only if the Component has both
+STATE_VISIBLE and&nbsp;STATE_SHOWING.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.get_layer.html">atspi_component_get_layer</a></h6><div class="docblock">
+              <p>Queries which layer the component is painted into, to help determine its
+     visibility in terms of stacking&nbsp;order.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.get_mdi_z_order.html">atspi_component_get_mdi_z_order</a></h6><div class="docblock">
+              <p>Queries the z stacking order of a component which is in the <span class="caps">MDI</span> or window
+      layer. (Bigger z-order numbers mean nearer the&nbsp;top).</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.get_position.html">atspi_component_get_position</a></h6><div class="docblock">
+              <p>Gets the minimum x and y coordinates of the specified <code>AtspiComponent</code>.
+The returned values are meaningful only if the Component has both
+STATE_VISIBLE and&nbsp;STATE_SHOWING.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.get_size.html">atspi_component_get_size</a></h6><div class="docblock">
+              <p>Gets the size of the specified <code>AtspiComponent</code>.
+The returned values are meaningful only if the Component has both
+STATE_VISIBLE and&nbsp;STATE_SHOWING.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.grab_focus.html">atspi_component_grab_focus</a></h6><div class="docblock">
+              <p>Attempts to set the keyboard input focus to the specified
+        <code>AtspiComponent</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.scroll_to.html">atspi_component_scroll_to</a></h6><div class="docblock">
+              <p>Scrolls whatever container of the <code>AtspiComponent</code> object so it becomes
+visible on the&nbsp;screen.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.scroll_to_point.html">atspi_component_scroll_to_point</a></h6><div class="docblock">
+              <p>Scrolls whatever container of the <code>AtspiComponent</code> object so it becomes
+visible on the screen at a given&nbsp;position.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.set_extents.html">atspi_component_set_extents</a></h6><div class="docblock">
+              <p>Moves and resizes the specified&nbsp;component.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.set_position.html">atspi_component_set_position</a></h6><div class="docblock">
+              <p>Moves the component to the specified&nbsp;position.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Component.set_size.html">atspi_component_set_size</a></h6><div class="docblock">
+              <p>Resizes the specified component to the given pixel&nbsp;dimensions.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Document.html">AtspiDocument</a> (9)</h5><div class="docblock">
+          
+            <h6><a href="method.Document.get_attribute_value.html">atspi_document_get_attribute_value</a></h6><div class="docblock">
+              <p>Gets the value of a single attribute, if specified for the document as a&nbsp;whole.</p>
+            </div>
+            <div class="docblock">
+              <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+            </div>
+            
+            <h6><a href="method.Document.get_attributes.html">atspi_document_get_attributes</a></h6><div class="docblock">
+              <p>Gets all constant attributes for the document as a whole. For attributes
+that change within the document content, see <code>atspi_text_get_attribute_run</code> instead.</p>
+            </div>
+            <div class="docblock">
+              <p><span class="emblem deprecated">deprecated: 2.10</span>&nbsp;</p>
+            </div>
+            
+            <h6><a href="method.Document.get_current_page_number.html">atspi_document_get_current_page_number</a></h6><div class="docblock">
+              <p>Gets the current page number of an <code>AccessibleDocument</code> object.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Document.get_document_attribute_value.html">atspi_document_get_document_attribute_value</a></h6><div class="docblock">
+              <p>Gets the value of a single attribute, if specified for the document as a&nbsp;whole.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Document.get_document_attributes.html">atspi_document_get_document_attributes</a></h6><div class="docblock">
+              <p>Gets all constant attributes for the document as a whole. For attributes
+that change within the document content, see <code>atspi_text_get_attribute_run</code> instead.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Document.get_locale.html">atspi_document_get_locale</a></h6><div class="docblock">
+              <p>Gets the locale associated with the document&#8217;s content,
+e.g. the locale for&nbsp;LOCALE_TYPE_MESSAGES.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Document.get_page_count.html">atspi_document_get_page_count</a></h6><div class="docblock">
+              <p>Gets the page count of an <code>AccessibleDocument</code> object.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Document.get_text_selections.html">atspi_document_get_text_selections</a></h6><div class="docblock">
+              <p>Returns an array of AtspiTextSelections within this&nbsp;document.</p>
+            </div>
+            <div class="docblock">
+              <p><span class="emblem available">since: 2.52</span></p>
+            </div>
+            
+            <h6><a href="method.Document.set_text_selections.html">atspi_document_set_text_selections</a></h6><div class="docblock">
+              <p>Makes 1 or more selections within this document denoted by the given
+array of AtspiTextSelections. Any existing physical selection (inside or
+outside this document) is replaced by the new selections. All objects within
+the given selection ranges must be descendants of this document. Otherwise
+<span class="caps">FALSE</span> will be&nbsp;returned.</p>
+            </div>
+            <div class="docblock">
+              <p><span class="emblem available">since: 2.52</span></p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.EditableText.html">AtspiEditableText</a> (6)</h5><div class="docblock">
+          
+            <h6><a href="method.EditableText.copy_text.html">atspi_editable_text_copy_text</a></h6><div class="docblock">
+              <p>Copies text from an <code>AtspiEditableText</code> object into the system&nbsp;clipboard.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.EditableText.cut_text.html">atspi_editable_text_cut_text</a></h6><div class="docblock">
+              <p>Deletes text from an <code>AtspiEditableText</code> object, copying the
+      excised portion into the system&nbsp;clipboard.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.EditableText.delete_text.html">atspi_editable_text_delete_text</a></h6><div class="docblock">
+              <p>Deletes text from an <code>AtspiEditableText</code> object, without copying the
+      excised portion into the system&nbsp;clipboard.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.EditableText.insert_text.html">atspi_editable_text_insert_text</a></h6><div class="docblock">
+              <p>Inserts text into an <code>AtspiEditableText</code> object.
+As with all character offsets, the specified <code>position</code> may not be the
+same as the resulting byte offset, since the text is in a
+variable-width&nbsp;encoding.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.EditableText.paste_text.html">atspi_editable_text_paste_text</a></h6><div class="docblock">
+              <p>Inserts text from the system clipboard into an <code>AtspiEditableText</code> object.
+As with all character offsets, the specified <code>position</code> may not be the
+      same as the resulting byte offset, since the text is in a
+      variable-width&nbsp;encoding.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.EditableText.set_text_contents.html">atspi_editable_text_set_text_contents</a></h6><div class="docblock">
+              <p>Replace the entire text contents of an <code>AtspiEditableText</code> object.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Hypertext.html">AtspiHypertext</a> (3)</h5><div class="docblock">
+          
+            <h6><a href="method.Hypertext.get_link.html">atspi_hypertext_get_link</a></h6><div class="docblock">
+              <p>Gets the <code>AtspiHyperlink</code> object at a specified&nbsp;index.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Hypertext.get_link_index.html">atspi_hypertext_get_link_index</a></h6><div class="docblock">
+              <p>Gets the index of the <code>AtspiHyperlink</code> object at a specified
+       character&nbsp;offset.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Hypertext.get_n_links.html">atspi_hypertext_get_n_links</a></h6><div class="docblock">
+              <p>Gets the total number of <code>AtspiHyperlink</code> objects that an
+<code>AtspiHypertext</code> implementor&nbsp;has.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Image.html">AtspiImage</a> (5)</h5><div class="docblock">
+          
+            <h6><a href="method.Image.get_image_description.html">atspi_image_get_image_description</a></h6><div class="docblock">
+              <p>Gets the description of the image displayed in an <code>AtspiImage</code> object.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Image.get_image_extents.html">atspi_image_get_image_extents</a></h6><div class="docblock">
+              <p>Gets the bounding box of the image displayed in a
+        specified <code>AtspiImage</code> implementor.
+The returned values are meaningful only if the Image has both
+STATE_VISIBLE and&nbsp;STATE_SHOWING.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Image.get_image_locale.html">atspi_image_get_image_locale</a></h6><div class="docblock">
+              <p>Gets the locale associated with an image and its textual&nbsp;representation.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Image.get_image_position.html">atspi_image_get_image_position</a></h6><div class="docblock">
+              <p>Gets the minimum x and y coordinates of the image displayed in a
+        specified <code>AtspiImage</code> implementor.
+The returned values are meaningful only if the Image has both
+STATE_VISIBLE and&nbsp;STATE_SHOWING.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Image.get_image_size.html">atspi_image_get_image_size</a></h6><div class="docblock">
+              <p>Gets the size of the image displayed in a specified <code>AtspiImage</code> object.
+The returned values are meaningful only if the Image has both
+STATE_VISIBLE and&nbsp;STATE_SHOWING.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Selection.html">AtspiSelection</a> (8)</h5><div class="docblock">
+          
+            <h6><a href="method.Selection.clear_selection.html">atspi_selection_clear_selection</a></h6><div class="docblock">
+              <p>Clears the current selection, removing all selected children from the
+      specified <code>AtspiSelection</code> implementor&#8217;s selection&nbsp;list.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Selection.deselect_child.html">atspi_selection_deselect_child</a></h6><div class="docblock">
+              <p>Deselects a specific child of an <code>AtspiSelection</code>.
+         Note that <code>child_index</code> is the index of the child
+         in the parent&nbsp;container.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Selection.deselect_selected_child.html">atspi_selection_deselect_selected_child</a></h6><div class="docblock">
+              <p>Removes a child from the selected children list of an <code>AtspiSelection</code>.
+         Note that <code>selected_child_index</code> is the index in the
+         selected-children list, not the index in the parent container.
+         <code>selected_child_index</code> in this method and <code>child_index</code> in
+         #atspi_selection_select_child are&nbsp;asymmetric.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Selection.get_n_selected_children.html">atspi_selection_get_n_selected_children</a></h6><div class="docblock">
+              <p>Gets the number of children of an <code>AtspiSelection</code> implementor which are
+       currently&nbsp;selected.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Selection.get_selected_child.html">atspi_selection_get_selected_child</a></h6><div class="docblock">
+              <p>Gets the i-th selected <code>AtspiAccessible</code> child of an <code>AtspiSelection</code>.
+     Note that <code>selected_child_index</code> refers to the index in the list
+     of &#8216;selected&#8217;
+     children and generally differs from that used in
+     #atspi_accessible_get_child_at_index or returned by
+     #atspi_accessible_get_index_in_parent.
+     <code>selected_child_index</code> must lie between 0
+     and #atspi_selection_get_n_selected_children - 1,&nbsp;inclusive.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Selection.is_child_selected.html">atspi_selection_is_child_selected</a></h6><div class="docblock">
+              <p>Determines whether a particular child of an <code>AtspiSelection</code> implementor
+       is currently selected.  Note that <code>child_index</code> is the index into the
+       standard <code>AtspiAccessible</code> container&#8217;s list of&nbsp;children.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Selection.select_all.html">atspi_selection_select_all</a></h6><div class="docblock">
+              <p>Attempts to select all of the children of an <code>AtspiSelection</code> implementor.
+Not all <code>AtspiSelection</code> implementors support this&nbsp;operation.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Selection.select_child.html">atspi_selection_select_child</a></h6><div class="docblock">
+              <p>Adds a child to the selected children list of an <code>AtspiSelection</code>.
+        For <code>AtspiSelection</code> implementors that only allow
+        single selections, this may replace the (single) current&nbsp;selection.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Table.html">AtspiTable</a> (26)</h5><div class="docblock">
+          
+            <div class="docblock">
+              <p><em>Please see&nbsp;<a href="iface.Table.html#methods">AtspiTable</a>&nbsp;for a full list of methods.</em></p>
+            </div>
+          
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.TableCell.html">AtspiTableCell</a> (8)</h5><div class="docblock">
+          
+            <h6><a href="method.TableCell.get_column_header_cells.html">atspi_table_cell_get_column_header_cells</a></h6><div class="docblock">
+              <p>Returns the column headers as an array of cell&nbsp;accessibles.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.TableCell.get_column_index.html">atspi_table_cell_get_column_index</a></h6><div class="docblock">
+              No description available.
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.TableCell.get_column_span.html">atspi_table_cell_get_column_span</a></h6><div class="docblock">
+              <p>Returns the number of columns occupied by this cell accessible.
+The returned values are meaningful only if the table cell has both
+STATE_VISIBLE and&nbsp;STATE_SHOWING.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.TableCell.get_position.html">atspi_table_cell_get_position</a></h6><div class="docblock">
+              <p>Retrieves the tabular position of this&nbsp;cell.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.TableCell.get_row_column_span.html">atspi_table_cell_get_row_column_span</a></h6><div class="docblock">
+              <p>Gets the row and column indexes and extents of this cell accessible.
+The returned values are meaningful only if the table cell has both
+STATE_VISIBLE and&nbsp;STATE_SHOWING.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.TableCell.get_row_header_cells.html">atspi_table_cell_get_row_header_cells</a></h6><div class="docblock">
+              <p>Returns the row headers as an array of cell&nbsp;accessibles.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.TableCell.get_row_span.html">atspi_table_cell_get_row_span</a></h6><div class="docblock">
+              <p>Returns the number of rows occupied by this cell accessible.
+The returned values are meaningful only if the table cell has both
+STATE_VISIBLE and&nbsp;STATE_SHOWING.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.TableCell.get_table.html">atspi_table_cell_get_table</a></h6><div class="docblock">
+              <p>Returns a reference to the accessible of the containing&nbsp;table.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Text.html">AtspiText</a> (26)</h5><div class="docblock">
+          
+            <div class="docblock">
+              <p><em>Please see&nbsp;<a href="iface.Text.html#methods">AtspiText</a>&nbsp;for a full list of methods.</em></p>
+            </div>
+          
+          </div>
+        </div>
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-methods">
+          <h5 style="display:block;">Methods inherited from <a href="iface.Value.html">AtspiValue</a> (6)</h5><div class="docblock">
+          
+            <h6><a href="method.Value.get_current_value.html">atspi_value_get_current_value</a></h6><div class="docblock">
+              <p>Gets the current value for an <code>AtspiValue</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Value.get_maximum_value.html">atspi_value_get_maximum_value</a></h6><div class="docblock">
+              <p>Gets the maximum allowed value for an <code>AtspiValue</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Value.get_minimum_increment.html">atspi_value_get_minimum_increment</a></h6><div class="docblock">
+              <p>Gets the minimum increment by which an <code>AtspiValue</code> can be&nbsp;adjusted.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Value.get_minimum_value.html">atspi_value_get_minimum_value</a></h6><div class="docblock">
+              <p>Gets the minimum allowed value for an <code>AtspiValue</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+            <h6><a href="method.Value.get_text.html">atspi_value_get_text</a></h6><div class="docblock">
+              <p>Gets the human readable text alternative associated with the value.
+<code>text</code> is a newly created string, that must be freed by the
+caller. Can be <span class="caps">NULL</span> if no descriptor is&nbsp;available.</p>
+            </div>
+            <div class="docblock">
+              <p><span class="emblem available">since: 2.46</span></p>
+            </div>
+            
+            <h6><a href="method.Value.set_current_value.html">atspi_value_set_current_value</a></h6><div class="docblock">
+              <p>Sets the current value of an <code>AtspiValue</code>.</p>
+            </div>
+            <div class="docblock">
+              <p></p>
+            </div>
+            
+          </div>
+        </div>
+        
+      
+    </div>
+    
+
+    
+
+    
+    <div class="signals toggle-wrapper">
+      <h4 id="signals">
+        Signals
+        <a href="#signals" class="anchor"></a>
+      </h4>
+
+      
+      <div class="docblock">
+      
+        <div class="">
+          <h6><a href="signal.Accessible.mode-changed.html">Atspi.Accessible::mode-changed</a></h6>
+          <div class="docblock">
+            <p>The signal &#8220;mode-changed&#8221; is emitted by a screen reader to indicate
+that its mode has changed. This signal supports the following details:
+focus-tracking
+flat-review
+mouse-review
+say-all&nbsp;caret-tracking.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="signal.Accessible.region-changed.html">Atspi.Accessible::region-changed</a></h6>
+          <div class="docblock">
+            <p>The signal &#8220;region-changed&#8221; is emitted by a screen reader to indicate
+that it is now reading or tracking a new object, or, a new piece of
+text within an object. This allows a magnifier to gain the information
+needed to highlight the object that the screen reader is&nbsp;reading.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+      
+
+      
+        
+      
+        
+        <div class="toggle-wrapper default-hide ancestor-signals"><h5 style="display:block;">Signals inherited from <a class="external" href="javascript:void(0)" data-link="class.Object.html" data-namespace="GObject">GObject</a> (1)</h5>
+          <div class="docblock">
+          <h6><a class="external" href="javascript:void(0)" data-namespace="GObject" data-link="signal.Object.notify.html">GObject::notify</a></h6>
+            <div class="docblock">
+              <p>The notify signal is emitted on an object when one of its properties has
+its value set through g_object_set_property(), g_object_set(), et&nbsp;al.</p>
+            </div>
+          </div>
+        </div>
+        
+      
+
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+
+    </div>
+    
+
+    
+    <div class="class toggle-wrapper default-hide">
+      <h4 id="class-struct">
+        Class structure
+        <a href="#class-struct" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+        <pre><code>struct AtspiAccessibleClass {
+  AtspiObjectClass parent_class;
+  void (* region_changed) (
+    AtspiAccessible* accessible,
+    gint current_offset,
+    gint last_offset
+  );
+  void (* mode_changed) (
+    AtspiAccessible* accessible,
+    gboolean enabled
+  );
+  
+}</code></pre>
+      </div>
+
+      <div class="docblock">
+        <p>No description available.</p>
+      </div>
+
+      
+      <div class="docblock">
+        <h6>Class members</h6>
+
+        <dl class="members">
+        
+          <dt><code>parent_class: AtspiObjectClass</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>region_changed: void (* region_changed) (
+    AtspiAccessible* accessible,
+    gint current_offset,
+    gint last_offset
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+          <dt><code>mode_changed: void (* mode_changed) (
+    AtspiAccessible* accessible,
+    gboolean enabled
+  )</code></dt>
+          <dd><p>No description available.</p></dd>
+        
+        </dd>
+      </div>
+      
+    </div>
+    
+
+    
+    <div class="toggle-wrapper methods">
+      <h4 id="virtual-methods">
+        Virtual methods
+        <a href="#virtual-methods" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+      <div class="">
+        <h6 id="vfunc-mode_changed"><a href="vfunc.Accessible.mode_changed.html">Atspi.AccessibleClass.mode_changed</a></h6>
+        <div class="docblock">
+          No description available.
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      <div class="">
+        <h6 id="vfunc-region_changed"><a href="vfunc.Accessible.region_changed.html">Atspi.AccessibleClass.region_changed</a></h6>
+        <div class="docblock">
+          No description available.
+        </div>
+        <div class="docblock">
+          <p></p>
+        </div>
+      </div>
+      
+      </div>
+    </div>
+    
+
+    
+
+  </section>
+</section>
+
+
+    
+<div id="toc" class="toc">
+  <nav aria-labelledby="toc-title">
+    <p id="toc-title">Content</p>
+    <ul class="toc-list">
+      <li class="toc-list-item"><a href="#description"><span class="link-text">Description</span></a></li>
+      
+      
+      <li class="toc-list-item"><a href="#hierarchy"><span class="link-text">Hierarchy</span></a></li>
+      
+      
+      <li class="toc-list-item"><a href="#ancestors"><span class="link-text">Ancestors</span></a></li>
+      
+      
+      <li class="toc-list-item"><a href="#implements"><span class="link-text">Implements</span></a></li>
+      
+      
+
+      
+
+      
+<li class="toc-list-item"><a href="#methods"><span class="link-text">Methods</span></a></li>
+
+
+      
+
+      
+<li class="toc-list-item"><a href="#signals"><span class="link-text">Signals</span></a></li>
+
+
+      
+
+      
+<li class="toc-list-item"><a href="#virtual-methods"><span class="link-text">Virtual methods</span></a></li>
+
+
+    </ul>
+  </nav>
+</div>
+
+
+    <section id="search" class="content hidden"></section>
+
+    <footer>
+    
+    </footer>
+  </div>
+</body>
+</html>

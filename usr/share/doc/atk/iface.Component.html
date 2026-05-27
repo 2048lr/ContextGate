@@ -1,0 +1,1053 @@
+<!--
+SPDX-FileCopyrightText: ATK Development Team
+
+SPDX-License-Identifier: LGPL-2.1-or-later
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Atk.Component</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta charset="utf-8" />
+
+  
+  <meta property="og:type" content="website"/>
+
+  
+  <meta property="og:image:width" content="256"/>
+  <meta property="og:image:height" content="256"/>
+  <meta property="og:image:secure_url" content="logo.png"/>
+  <meta property="og:image:alt" content="Atk-1.0"/>
+  
+
+  
+  <meta property="og:title" content="Atk.Component"/>
+  <meta property="og:description" content="Reference for Atk.Component"/>
+  <meta name="twitter:title" content="Atk.Component"/>
+  <meta name="twitter:description" content="Reference for Atk.Component"/>
+
+
+  
+  <meta name="twitter:card" content="summary"/>
+
+  
+  
+  
+  <link rel="search" type="application/opensearchdescription+xml" title="Atk" href="opensearch.xml">
+  
+  
+
+  <link rel="stylesheet" href="style.css" type="text/css" />
+
+  
+
+  
+  <script src="urlmap.js"></script>
+  
+  
+  <script src="fzy.js"></script>
+  <script src="search.js"></script>
+  
+  <script src="main.js"></script>
+
+  
+</head>
+
+<body>
+  <div id="body-wrapper" tabindex="-1">
+
+    <nav class="sidebar devhelp-hidden">
+      
+      <div class="section">
+        <a href="index.html"><img src="logo.png" class="logo"/></a>
+      </div>
+      
+      
+      <div class="search section">
+        <form id="search-form" autocomplete="off">
+          <input id="search-input" type="text" name="do-not-autocomplete" placeholder="Click, or press 's' to search" autocomplete="off"/>
+        </form>
+      </div>
+      
+      <div class="section namespace">
+        <h3><a href="index.html">Atk</a></h3>
+        <p>API Version: 1.0</p>
+        
+        <p>Library Version: 2.60.3</p>
+        
+      </div>
+      
+<div class="section">
+  <h5>Type</h5>
+  <div class="links">
+    <a class="current" href="iface.Component.html#description">Component</a>
+  </div>
+</div>
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Instance methods</h5>
+  <div class="links">
+  
+    <a class="method" href="method.Component.add_focus_handler.html">add_focus_handler</a>
+  
+    <a class="method" href="method.Component.contains.html">contains</a>
+  
+    <a class="method" href="method.Component.get_alpha.html">get_alpha</a>
+  
+    <a class="method" href="method.Component.get_extents.html">get_extents</a>
+  
+    <a class="method" href="method.Component.get_layer.html">get_layer</a>
+  
+    <a class="method" href="method.Component.get_mdi_zorder.html">get_mdi_zorder</a>
+  
+    <a class="method" href="method.Component.get_position.html">get_position</a>
+  
+    <a class="method" href="method.Component.get_size.html">get_size</a>
+  
+    <a class="method" href="method.Component.grab_focus.html">grab_focus</a>
+  
+    <a class="method" href="method.Component.ref_accessible_at_point.html">ref_accessible_at_point</a>
+  
+    <a class="method" href="method.Component.remove_focus_handler.html">remove_focus_handler</a>
+  
+    <a class="method" href="method.Component.scroll_to.html">scroll_to</a>
+  
+    <a class="method" href="method.Component.scroll_to_point.html">scroll_to_point</a>
+  
+    <a class="method" href="method.Component.set_extents.html">set_extents</a>
+  
+    <a class="method" href="method.Component.set_position.html">set_position</a>
+  
+    <a class="method" href="method.Component.set_size.html">set_size</a>
+  
+  </div>
+</div>
+
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Signals</h5>
+  <div class="links">
+  
+    <a class="signal" href="signal.Component.bounds-changed.html">bounds-changed</a>
+  
+  </div>
+</div>
+
+
+
+  
+
+
+  
+<div class="section">
+  <h5>Virtual methods</h5>
+  <div class="links">
+  
+    <a class="method" href="vfunc.Component.add_focus_handler.html">add_focus_handler</a>
+  
+    <a class="method" href="vfunc.Component.bounds_changed.html">bounds_changed</a>
+  
+    <a class="method" href="vfunc.Component.contains.html">contains</a>
+  
+    <a class="method" href="vfunc.Component.get_alpha.html">get_alpha</a>
+  
+    <a class="method" href="vfunc.Component.get_extents.html">get_extents</a>
+  
+    <a class="method" href="vfunc.Component.get_layer.html">get_layer</a>
+  
+    <a class="method" href="vfunc.Component.get_mdi_zorder.html">get_mdi_zorder</a>
+  
+    <a class="method" href="vfunc.Component.get_position.html">get_position</a>
+  
+    <a class="method" href="vfunc.Component.get_size.html">get_size</a>
+  
+    <a class="method" href="vfunc.Component.grab_focus.html">grab_focus</a>
+  
+    <a class="method" href="vfunc.Component.ref_accessible_at_point.html">ref_accessible_at_point</a>
+  
+    <a class="method" href="vfunc.Component.remove_focus_handler.html">remove_focus_handler</a>
+  
+    <a class="method" href="vfunc.Component.scroll_to.html">scroll_to</a>
+  
+    <a class="method" href="vfunc.Component.scroll_to_point.html">scroll_to_point</a>
+  
+    <a class="method" href="vfunc.Component.set_extents.html">set_extents</a>
+  
+    <a class="method" href="vfunc.Component.set_position.html">set_position</a>
+  
+    <a class="method" href="vfunc.Component.set_size.html">set_size</a>
+  
+  </div>
+</div>
+
+
+
+
+      <div class="section generator">
+        <p>Generated by <a href="https://gitlab.gnome.org/GNOME/gi-docgen">gi-docgen</a> 2026.1</p>
+      </div>
+    </nav>
+
+    <button id="btn-to-top" class="hidden"><span class="up-arrow"></span></button>
+
+    
+<section id="main" class="content">
+  <header>
+    <h3>Interface</h3>
+    <h1><a href="index.html">Atk</a><span class="sep"></span>Component</h1>
+  </header>
+
+  <section>
+    <summary>
+      <div class="docblock">
+        <p></p>
+      </div>
+      <div class="toggle-wrapper">
+        <h4 id="description" style="display:flex;">
+          Description
+          <a href="#description" class="anchor"></a>
+          
+          <a class="srclink" title="go to source location" href="https://gitlab.gnome.org/GNOME/at-spi2-core/-/blob/HEAD/atk/atkcomponent.c#L24">[src]</a>
+          
+        </h4>
+
+        <pre><code>interface Atk.Component : GObject.Object</code></pre>
+
+        <div class="docblock">
+          <p>The <span class="caps">ATK</span> interface provided by <span class="caps">UI</span> components
+which occupy a physical area on the screen.
+which the user can activate/interact&nbsp;with.</p>
+<p><code>AtkComponent</code> should be implemented by most if not all <span class="caps">UI</span> elements
+with an actual on-screen presence, i.e. components which can be
+said to have a screen-coordinate bounding box.  Virtually all
+widgets will need to have <code>AtkComponent</code> implementations provided
+for their corresponding <code>AtkObject</code> class.  In short, only <span class="caps">UI</span>
+elements which are <em>not</em> <span class="caps">GUI</span> elements will omit this <span class="caps">ATK</span>&nbsp;interface.</p>
+<p>A possible exception might be textual information with a
+transparent background, in which case text glyph bounding box
+information is provided by <code>AtkText</code>.</p>
+        </div>
+
+        <div class="docblock">
+          
+          
+          
+        </div>
+
+        
+      </div>
+    </summary>
+
+    <div class="toggle-wrapper prerequisite">
+      <h4 id="prerequisite">
+        Prerequisite
+        <a href="#prerequisite" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+        <p>In order to implement Component, your type must inherit from<a data-namespace="GObject" data-link="class.Object.html" href="javascript:void(0)" class="external"><code>GObject</code></a>.</p>
+      </div>
+    </div>
+
+    
+    <div class="implementations toggle-wrapper default-hide">
+      <h4 id="implementations">Implementations<a href="#implementations" class="anchor"></a></h4>
+      <div class="docblock">
+        <ul>
+          <li><a href="class.NoOpObject.html">AtkNoOpObject</a></li>
+        
+          <li><a href="class.Plug.html">AtkPlug</a></li>
+        
+          <li><a href="class.Socket.html">AtkSocket</a></li>
+        </ul>
+      </div>
+    </div>
+    
+
+    
+
+    
+    <div class="methods toggle-wrapper">
+      <h4 id="methods">
+        Instance methods
+        <a href="#methods" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+        <div class="deprecated">
+          <h6><a href="method.Component.add_focus_handler.html">atk_component_add_focus_handler</a></h6>
+          <div class="docblock">
+            <p>Add the specified handler to the set of functions to be called
+when this object receives focus events (in or out). If the handler is
+already added it is not added&nbsp;again.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.4</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.contains.html">atk_component_contains</a></h6>
+          <div class="docblock">
+            <p>Checks whether the specified point is within the extent of the <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.get_alpha.html">atk_component_get_alpha</a></h6>
+          <div class="docblock">
+            <p>Returns the alpha value (i.e. the opacity) for this
+<code>component</code>, on a scale from 0 (fully transparent) to 1.0
+(fully&nbsp;opaque).</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 1.12</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.get_extents.html">atk_component_get_extents</a></h6>
+          <div class="docblock">
+            <p>Gets the rectangle which gives the extent of the <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.get_layer.html">atk_component_get_layer</a></h6>
+          <div class="docblock">
+            <p>Gets the layer of the&nbsp;component.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.get_mdi_zorder.html">atk_component_get_mdi_zorder</a></h6>
+          <div class="docblock">
+            <p>Gets the zorder of the component. The value G_MININT will be returned
+if the layer of the component is not ATK_LAYER_MDI or&nbsp;ATK_LAYER_WINDOW.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Component.get_position.html">atk_component_get_position</a></h6>
+          <div class="docblock">
+            <p>Gets the position of <code>component</code> in the form of
+a point specifying <code>component</code><span class="quo">&#8216;</span>s top-left&nbsp;corner.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Component.get_size.html">atk_component_get_size</a></h6>
+          <div class="docblock">
+            <p>Gets the size of the <code>component</code> in terms of width and&nbsp;height.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.grab_focus.html">atk_component_grab_focus</a></h6>
+          <div class="docblock">
+            <p>Grabs focus for this <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.ref_accessible_at_point.html">atk_component_ref_accessible_at_point</a></h6>
+          <div class="docblock">
+            <p>Gets a reference to the accessible child, if one exists, at the
+coordinate point specified by <code>x</code> and <code>y</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6><a href="method.Component.remove_focus_handler.html">atk_component_remove_focus_handler</a></h6>
+          <div class="docblock">
+            <p>Remove the handler specified by <code>handler_id</code> from the list of
+functions to be executed when this object receives focus events
+(in or&nbsp;out).</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.4</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.scroll_to.html">atk_component_scroll_to</a></h6>
+          <div class="docblock">
+            <p>Makes <code>component</code> visible on the screen by scrolling all necessary&nbsp;parents.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.30</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.scroll_to_point.html">atk_component_scroll_to_point</a></h6>
+          <div class="docblock">
+            <p>Move the top-left of <code>component</code> to a given position of the screen by
+scrolling all necessary&nbsp;parents.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.30</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.set_extents.html">atk_component_set_extents</a></h6>
+          <div class="docblock">
+            <p>Sets the extents of <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.set_position.html">atk_component_set_position</a></h6>
+          <div class="docblock">
+            <p>Sets the position of <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6><a href="method.Component.set_size.html">atk_component_set_size</a></h6>
+          <div class="docblock">
+            <p>Set the size of the <code>component</code> in terms of width and&nbsp;height.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+
+    </div>
+    
+
+    
+
+    
+    <div class="signals toggle-wrapper">
+      <h4 id="signals">
+        Signals
+        <a href="#signals" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+        <div class="">
+          <h6><a href="signal.Component.bounds-changed.html">Atk.Component::bounds-changed</a></h6>
+          <div class="docblock">
+            <p>The &#8216;bounds-changed&#8221; signal is emitted when the position or
+size of the component&nbsp;changes.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+    </div>
+    
+
+    
+    <div class="interface toggle-wrapper default-hide">
+      <h4 style="display:flex;" id="interface-struct">
+        Interface structure
+        <a href="#interface-struct" class="anchor"></a>
+        
+      </h4>
+
+      <div class="docblock">
+        <pre><code>struct AtkComponentIface {
+  guint (* add_focus_handler) (
+    AtkComponent* component,
+    AtkFocusHandler handler
+  );
+  gboolean (* contains) (
+    AtkComponent* component,
+    gint x,
+    gint y,
+    AtkCoordType coord_type
+  );
+  AtkObject* (* ref_accessible_at_point) (
+    AtkComponent* component,
+    gint x,
+    gint y,
+    AtkCoordType coord_type
+  );
+  void (* get_extents) (
+    AtkComponent* component,
+    gint* x,
+    gint* y,
+    gint* width,
+    gint* height,
+    AtkCoordType coord_type
+  );
+  void (* get_position) (
+    AtkComponent* component,
+    gint* x,
+    gint* y,
+    AtkCoordType coord_type
+  );
+  void (* get_size) (
+    AtkComponent* component,
+    gint* width,
+    gint* height
+  );
+  gboolean (* grab_focus) (
+    AtkComponent* component
+  );
+  void (* remove_focus_handler) (
+    AtkComponent* component,
+    guint handler_id
+  );
+  gboolean (* set_extents) (
+    AtkComponent* component,
+    gint x,
+    gint y,
+    gint width,
+    gint height,
+    AtkCoordType coord_type
+  );
+  gboolean (* set_position) (
+    AtkComponent* component,
+    gint x,
+    gint y,
+    AtkCoordType coord_type
+  );
+  gboolean (* set_size) (
+    AtkComponent* component,
+    gint width,
+    gint height
+  );
+  AtkLayer (* get_layer) (
+    AtkComponent* component
+  );
+  gint (* get_mdi_zorder) (
+    AtkComponent* component
+  );
+  void (* bounds_changed) (
+    AtkComponent* component,
+    AtkRectangle* bounds
+  );
+  gdouble (* get_alpha) (
+    AtkComponent* component
+  );
+  gboolean (* scroll_to) (
+    AtkComponent* component,
+    AtkScrollType type
+  );
+  gboolean (* scroll_to_point) (
+    AtkComponent* component,
+    AtkCoordType coords,
+    gint x,
+    gint y
+  );
+  
+}</code></pre>
+      </div>
+
+      <div class="docblock">
+        <p>The AtkComponent interface should be supported by any object that is
+rendered on the screen. The interface provides the standard mechanism
+for an assistive technology to determine and set the graphical
+representation of an&nbsp;object.</p>
+      </div>
+
+      
+      <div class="docblock">
+        <h6>Interface members</h6>
+
+        <table>
+        
+        <tr>
+          <td style="vertical-align:top"><code>add_focus_handler</code></td>
+          <td style="vertical-align:top"><pre><code>guint (* add_focus_handler) (
+    AtkComponent* component,
+    AtkFocusHandler handler
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>This virtual function is deprecated since 2.9.4
+  and it should not be overriden. See <code>atk_component_add_focus_handler()</code>
+  for more&nbsp;information.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>contains</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* contains) (
+    AtkComponent* component,
+    gint x,
+    gint y,
+    AtkCoordType coord_type
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>ref_accessible_at_point</code></td>
+          <td style="vertical-align:top"><pre><code>AtkObject* (* ref_accessible_at_point) (
+    AtkComponent* component,
+    gint x,
+    gint y,
+    AtkCoordType coord_type
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_extents</code></td>
+          <td style="vertical-align:top"><pre><code>void (* get_extents) (
+    AtkComponent* component,
+    gint* x,
+    gint* y,
+    gint* width,
+    gint* height,
+    AtkCoordType coord_type
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_position</code></td>
+          <td style="vertical-align:top"><pre><code>void (* get_position) (
+    AtkComponent* component,
+    gint* x,
+    gint* y,
+    AtkCoordType coord_type
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>This virtual function is deprecated since 2.12 and
+  it should not be overriden. Use <code>AtkComponentIface</code>.get_extents&nbsp;instead.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_size</code></td>
+          <td style="vertical-align:top"><pre><code>void (* get_size) (
+    AtkComponent* component,
+    gint* width,
+    gint* height
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>This virtual function is deprecated since 2.12 and it
+  should not be overriden. Use <code>AtkComponentIface</code>.get_extents&nbsp;instead.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>grab_focus</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* grab_focus) (
+    AtkComponent* component
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>remove_focus_handler</code></td>
+          <td style="vertical-align:top"><pre><code>void (* remove_focus_handler) (
+    AtkComponent* component,
+    guint handler_id
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>This virtual function is deprecated since
+  2.9.4 and it should not be overriden. See <code>atk_component_remove_focus_handler()</code>
+  for more&nbsp;information.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>set_extents</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* set_extents) (
+    AtkComponent* component,
+    gint x,
+    gint y,
+    gint width,
+    gint height,
+    AtkCoordType coord_type
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>set_position</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* set_position) (
+    AtkComponent* component,
+    gint x,
+    gint y,
+    AtkCoordType coord_type
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>set_size</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* set_size) (
+    AtkComponent* component,
+    gint width,
+    gint height
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_layer</code></td>
+          <td style="vertical-align:top"><pre><code>AtkLayer (* get_layer) (
+    AtkComponent* component
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_mdi_zorder</code></td>
+          <td style="vertical-align:top"><pre><code>gint (* get_mdi_zorder) (
+    AtkComponent* component
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>bounds_changed</code></td>
+          <td style="vertical-align:top"><pre><code>void (* bounds_changed) (
+    AtkComponent* component,
+    AtkRectangle* bounds
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>get_alpha</code></td>
+          <td style="vertical-align:top"><pre><code>gdouble (* get_alpha) (
+    AtkComponent* component
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>scroll_to</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* scroll_to) (
+    AtkComponent* component,
+    AtkScrollType type
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        <tr>
+          <td style="vertical-align:top"><code>scroll_to_point</code></td>
+          <td style="vertical-align:top"><pre><code>gboolean (* scroll_to_point) (
+    AtkComponent* component,
+    AtkCoordType coords,
+    gint x,
+    gint y
+  )</code></pre></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td><td style="vertical-align:top"><p>No description available.</p></td>
+        </tr>
+        
+        </table>
+      </div>
+      
+    </div>
+    
+
+    
+
+    
+    <div class="toggle-wrapper methods">
+      <h4 id="virtual-methods">
+        Virtual methods
+        <a href="#virtual-methods" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+      
+        <div class="deprecated">
+          <h6 id="vfunc-add_focus_handler"><a href="vfunc.Component.add_focus_handler.html">Atk.Component.add_focus_handler</a></h6>
+          <div class="docblock">
+            <p>Add the specified handler to the set of functions to be called
+when this object receives focus events (in or out). If the handler is
+already added it is not added&nbsp;again.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.4</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-bounds_changed"><a href="vfunc.Component.bounds_changed.html">Atk.Component.bounds_changed</a></h6>
+          <div class="docblock">
+            No description available.
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-contains"><a href="vfunc.Component.contains.html">Atk.Component.contains</a></h6>
+          <div class="docblock">
+            <p>Checks whether the specified point is within the extent of the <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_alpha"><a href="vfunc.Component.get_alpha.html">Atk.Component.get_alpha</a></h6>
+          <div class="docblock">
+            <p>Returns the alpha value (i.e. the opacity) for this
+<code>component</code>, on a scale from 0 (fully transparent) to 1.0
+(fully&nbsp;opaque).</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 1.12</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_extents"><a href="vfunc.Component.get_extents.html">Atk.Component.get_extents</a></h6>
+          <div class="docblock">
+            <p>Gets the rectangle which gives the extent of the <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_layer"><a href="vfunc.Component.get_layer.html">Atk.Component.get_layer</a></h6>
+          <div class="docblock">
+            <p>Gets the layer of the&nbsp;component.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-get_mdi_zorder"><a href="vfunc.Component.get_mdi_zorder.html">Atk.Component.get_mdi_zorder</a></h6>
+          <div class="docblock">
+            <p>Gets the zorder of the component. The value G_MININT will be returned
+if the layer of the component is not ATK_LAYER_MDI or&nbsp;ATK_LAYER_WINDOW.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6 id="vfunc-get_position"><a href="vfunc.Component.get_position.html">Atk.Component.get_position</a></h6>
+          <div class="docblock">
+            <p>Gets the position of <code>component</code> in the form of
+a point specifying <code>component</code><span class="quo">&#8216;</span>s top-left&nbsp;corner.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6 id="vfunc-get_size"><a href="vfunc.Component.get_size.html">Atk.Component.get_size</a></h6>
+          <div class="docblock">
+            <p>Gets the size of the <code>component</code> in terms of width and&nbsp;height.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: Unknown</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-grab_focus"><a href="vfunc.Component.grab_focus.html">Atk.Component.grab_focus</a></h6>
+          <div class="docblock">
+            <p>Grabs focus for this <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-ref_accessible_at_point"><a href="vfunc.Component.ref_accessible_at_point.html">Atk.Component.ref_accessible_at_point</a></h6>
+          <div class="docblock">
+            <p>Gets a reference to the accessible child, if one exists, at the
+coordinate point specified by <code>x</code> and <code>y</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="deprecated">
+          <h6 id="vfunc-remove_focus_handler"><a href="vfunc.Component.remove_focus_handler.html">Atk.Component.remove_focus_handler</a></h6>
+          <div class="docblock">
+            <p>Remove the handler specified by <code>handler_id</code> from the list of
+functions to be executed when this object receives focus events
+(in or&nbsp;out).</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem deprecated">deprecated: 2.9.4</span>&nbsp;</p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-scroll_to"><a href="vfunc.Component.scroll_to.html">Atk.Component.scroll_to</a></h6>
+          <div class="docblock">
+            <p>Makes <code>component</code> visible on the screen by scrolling all necessary&nbsp;parents.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.30</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-scroll_to_point"><a href="vfunc.Component.scroll_to_point.html">Atk.Component.scroll_to_point</a></h6>
+          <div class="docblock">
+            <p>Move the top-left of <code>component</code> to a given position of the screen by
+scrolling all necessary&nbsp;parents.</p>
+          </div>
+          <div class="docblock">
+            <p><span class="emblem available">since: 2.30</span></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-set_extents"><a href="vfunc.Component.set_extents.html">Atk.Component.set_extents</a></h6>
+          <div class="docblock">
+            <p>Sets the extents of <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-set_position"><a href="vfunc.Component.set_position.html">Atk.Component.set_position</a></h6>
+          <div class="docblock">
+            <p>Sets the position of <code>component</code>.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+        <div class="">
+          <h6 id="vfunc-set_size"><a href="vfunc.Component.set_size.html">Atk.Component.set_size</a></h6>
+          <div class="docblock">
+            <p>Set the size of the <code>component</code> in terms of width and&nbsp;height.</p>
+          </div>
+          <div class="docblock">
+            <p></p>
+          </div>
+        </div>
+      
+      </div>
+    </div>
+    
+
+  </section>
+</section>
+
+
+    
+<div id="toc" class="toc">
+  <nav aria-labelledby="toc-title">
+    <p id="toc-title">Content</p>
+    <ul class="toc-list">
+      <li class="toc-list-item"><a href="#description"><span class="link-text">Description</span></a></li>
+      
+      
+
+      
+<li class="toc-list-item"><a href="#methods"><span class="link-text">Methods</span></a></li>
+
+
+      
+
+      
+<li class="toc-list-item"><a href="#signals"><span class="link-text">Signals</span></a></li>
+
+
+      
+
+      
+<li class="toc-list-item"><a href="#virtual-methods"><span class="link-text">Virtual methods</span></a></li>
+
+
+    </ul>
+  </nav>
+</div>
+
+
+    <section id="search" class="content hidden"></section>
+
+    <footer>
+    
+    </footer>
+  </div>
+</body>
+</html>
