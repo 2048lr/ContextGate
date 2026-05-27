@@ -1,53 +1,24 @@
 const fs = require('fs')
 const yaml = require('js-yaml')
 const { DEFAULT_PROXY_HOST, DEFAULT_PROXY_PORT } = require('../config')
+const { ProviderRegistry } = require('./provider')
 
-/**
- * @typedef {Object} ProviderConfig
- * @property {string} base_url - Provider API base URL
- * @property {string} api_key - Provider API key
- * @property {number} [timeout] - Request timeout in ms
- * @property {Object} [tls] - TLS configuration
- * @property {boolean} [tls.reject_unauthorized] - Whether to reject unauthorized certs
- */
-
-/**
- * @typedef {Object} ProxyConfig
- * @property {string} [host='127.0.0.1'] - Proxy listen host
- * @property {number} [port=12306] - Proxy listen port
- */
-
-/**
- * @typedef {Object} MonitorConfig
- * @property {boolean} [enabled=true] - Whether monitoring is enabled
- * @property {number} [monthly_limit=100] - Monthly spending limit
- */
-
-/**
- * @typedef {Object} CurrencyConfig
- * @property {string} [currency='USD'] - Currency code
- * @property {Object.<string, number>} [exchange_rates] - Exchange rates map
- */
-
-/**
- * Manages YAML-based configuration for the AI proxy.
- */
 class ConfigManager {
-  /**
-   * @param {string} configPath - Path to the YAML configuration file
-   */
   constructor(configPath) {
-    /** @type {string} */
     this.configPath = configPath
-    /** @type {Object} */
     this.config = this._load()
+    this.providerRegistry = new ProviderRegistry()
+    this._initPromise = null
   }
 
-  /**
-   * Load configuration from YAML file.
-   * @returns {Object} Parsed configuration object
-   * @private
-   */
+  async init(dataDir) {
+    if (!this._initPromise) {
+      this._initPromise = this.providerRegistry.init(dataDir)
+    }
+    await this._initPromise
+    return this
+  }
+
   _load() {
     try {
       if (fs.existsSync(this.configPath)) {
@@ -60,10 +31,6 @@ class ConfigManager {
     return {}
   }
 
-  /**
-   * Save current configuration back to the YAML file.
-   * @returns {boolean} True if saved successfully
-   */
   save() {
     try {
       const yamlStr = yaml.dump(this.config, { lineWidth: -1 })
@@ -75,64 +42,106 @@ class ConfigManager {
     }
   }
 
-  /**
-   * @returns {string|null} Workspace path
-   */
+  reload() {
+    this.config = this._load()
+  }
+
   getWorkspace() {
     return this.config.workspace || null
   }
 
-  /**
-   * @param {string} workspacePath - New workspace path
-   * @returns {boolean} True if saved successfully
-   */
   setWorkspace(workspacePath) {
     this.config.workspace = workspacePath
     return this.save()
   }
 
-  /**
-   * @param {string} providerName - Name of the provider
-   * @returns {ProviderConfig|null} Provider configuration, or null if not found
-   */
   getProvider(providerName) {
-    const providers = this.config.providers || {}
-    return providers[providerName] || null
+    const userConfig = (this.config.providers || {})[providerName]
+    if (!userConfig && !this.providerRegistry) return null
+    if (!userConfig) {
+      const builtin = require('./provider').BUILTIN_PROVIDERS[providerName]
+      if (!builtin) return null
+      return this.providerRegistry.resolveProvider(providerName, {})
+    }
+    return this.providerRegistry.resolveProvider(providerName, userConfig)
   }
 
-  /**
-   * @returns {string|null} Default provider name
-   */
+  getRawProviderConfig(providerName) {
+    return (this.config.providers || {})[providerName] || null
+  }
+
   getDefaultProvider() {
     return this.config.default_provider || null
   }
 
-  /**
-   * @returns {Object.<string, ProviderConfig>} All provider configurations
-   */
+  setDefaultProvider(name) {
+    this.config.default_provider = name
+  }
+
   getAllProviders() {
     return this.config.providers || {}
   }
 
-  /**
-   * @returns {ProxyConfig} Proxy configuration
-   */
+  getResolvedProviders() {
+    const userProviders = this.config.providers || {}
+    const result = {}
+    for (const [name, _] of Object.entries(userProviders)) {
+      result[name] = this.getProvider(name)
+    }
+    return result
+  }
+
+  addProvider(name, config) {
+    if (!this.config.providers) this.config.providers = {}
+    this.config.providers[name] = {
+      api_key: config.api_key || '',
+      base_url: config.base_url || '',
+      models: config.models || [],
+      ...config
+    }
+  }
+
+  removeProvider(name) {
+    if (!this.config.providers) return
+    delete this.config.providers[name]
+  }
+
+  getModelsFromCatalog(providerName) {
+    if (!this.providerRegistry) return []
+    return this.providerRegistry.getModelsFromModelsDev(providerName)
+  }
+
+  getRecommendedModels(providerName) {
+    if (!this.providerRegistry) return []
+    return this.providerRegistry.getRecommendedModels(providerName)
+  }
+
+  searchCatalogModels(query) {
+    if (!this.providerRegistry) return []
+    const ModelsDev = require('./models-dev')
+    return ModelsDev.searchModels(query, this.providerRegistry.modelsDevData)
+  }
+
+  getAvailableCatalogProviders() {
+    if (!this.providerRegistry) return []
+    return this.providerRegistry.getAvailableProviders()
+  }
+
   getProxyConfig() {
     return this.config.proxy || { host: DEFAULT_PROXY_HOST, port: DEFAULT_PROXY_PORT }
   }
 
-  /**
-   * @returns {MonitorConfig} Monitor configuration
-   */
   getMonitorConfig() {
     return this.config.monitor || { enabled: true, monthly_limit: 100 }
   }
 
-  /**
-   * @returns {CurrencyConfig} Currency configuration
-   */
   getCurrencyConfig() {
     return this.config.currency || { currency: 'USD', exchange_rates: {} }
+  }
+
+  getModelCostInfo(providerName, modelId) {
+    if (!this.providerRegistry) return null
+    return this.providerRegistry.enrichProviderWithCost(providerName, modelId)
   }
 }
 

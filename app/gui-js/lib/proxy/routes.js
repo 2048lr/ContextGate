@@ -1,10 +1,5 @@
 const crypto = require('crypto')
 
-/**
- * @typedef {import('./config-manager').ConfigManager} ConfigManager
- */
-
-/** @type {string[]} Whitelisted API paths for /v1/* proxy */
 const ALLOWED_V1_PATHS = [
   '/v1/chat/completions',
   '/v1/completions',
@@ -17,13 +12,11 @@ const ALLOWED_V1_PATHS = [
   '/v1/moderations'
 ]
 
-/**
- * Detect which AI provider should handle a request based on the backend path.
- * @param {string} backendPath - The API backend path
- * @param {ConfigManager} configManager - Configuration manager instance
- * @returns {string} Provider name
- */
 function detectProvider(backendPath, configManager) {
+  if (configManager.providerRegistry) {
+    return configManager.providerRegistry.detectProviderFromPath(backendPath, configManager)
+  }
+
   const lowerPath = backendPath.toLowerCase()
   if (lowerPath.includes('zhipu')) return 'zhipu'
   if (lowerPath.includes('deepseek')) return 'deepseek'
@@ -39,12 +32,6 @@ function detectProvider(backendPath, configManager) {
   return 'openai'
 }
 
-/**
- * Generate a cache key from the request and context hash.
- * @param {import('express').Request} req - Express request object
- * @param {string} contextHash - Current context hash
- * @returns {string} Cache key string
- */
 function getCacheKey(req, contextHash) {
   const body = req.body || {}
   let msgFingerprint = ''
@@ -62,11 +49,6 @@ function getCacheKey(req, contextHash) {
   return `${req.method}:${req.path}:${modelKey}:${msgFingerprint}`
 }
 
-/**
- * Check if a request method is eligible for caching.
- * @param {string} method - HTTP method
- * @returns {boolean}
- */
 function shouldCache(method) {
   return ['GET', 'POST'].includes(method)
 }

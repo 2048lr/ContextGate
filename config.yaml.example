@@ -18,34 +18,45 @@ currency:
     EUR: 0.92
 
 # 多后端 API 配置
+# base_url 可省略，系统会从 models.dev 目录自动解析
+# 只需配置 api_key 和选择要使用的模型
+#
+# API Key 处理逻辑：
+#   1. 代理配置的 api_key 优先使用（如果不是占位符）
+#   2. 如果代理 api_key 为空或是占位符，自动使用客户端传来的 key
+#   3. 占位符包括：sk-xxx, sk-your-*, your-*, placeholder, 空字符串等
+#   4. 设置 passthrough_auth: true 时，始终优先使用客户端传来的 key
+#      （适用于 Cursor、Continue、Cline 等强制要求 API Key 的客户端）
 providers:
   # OpenAI 配置
   openai:
     api_key: "your-openai-api-key"
-    base_url: "https://api.openai.com/v1"
     models:
-      - "gpt-4"
-      - "gpt-4-turbo"
       - "gpt-4o"
       - "gpt-4o-mini"
-      - "gpt-3.5-turbo"
+      - "gpt-4.1"
   
-  # 智谱 AI 配置
-  zhipu:
-    api_key: "your-zhipu-api-key"
-    base_url: "https://open.bigmodel.cn/api/paas/v4"
+  # Anthropic 配置
+  anthropic:
+    api_key: "your-anthropic-api-key"
     models:
-      - "glm-4"
-      - "glm-4-flash"
-      - "glm-4-plus"
+      - "claude-sonnet-4-20250514"
+      - "claude-haiku-4-5-20251001"
   
   # DeepSeek 配置
   deepseek:
     api_key: "your-deepseek-api-key"
-    base_url: "https://api.deepseek.com/v1"
     models:
       - "deepseek-chat"
-      - "deepseek-coder"
+      - "deepseek-reasoner"
+
+  # 智谱 AI 配置 (自定义供应商)
+  # zhipu:
+  #   api_key: "your-zhipu-api-key"
+  #   base_url: "https://open.bigmodel.cn/api/paas/v4"
+  #   models:
+  #     - "glm-4"
+  #     - "glm-4-flash"
 
 # 默认后端
 default_provider: "openai"

@@ -518,6 +518,8 @@ function _groupModels(models) {
 let _currentProviderName = null
 let _fetchedModelsMap = {}
 let _currentModelFilterFn = null
+let _catalogProvidersCache = null
+let _catalogModelsCache = {}
 
 function selectProvider() {
   if (_currentProviderName) {
@@ -533,7 +535,11 @@ function selectProvider() {
   if (!provider) return
   document.getElementById('provider-api-key').value = provider.api_key || ''
   document.getElementById('provider-base-url').value = provider.base_url || ''
-  _renderModelCheckboxes(_fetchedModelsMap[name] || [])
+  if (_catalogModelsCache[name]) {
+    _renderModelCheckboxes(_catalogModelsCache[name])
+  } else {
+    _renderModelCheckboxes(_fetchedModelsMap[name] || [])
+  }
 }
 
 function _saveProviderFieldsToConfig(providerName) {
@@ -624,16 +630,68 @@ function saveCurrentProvider() {
   if (_currentProviderName) _saveProviderFieldsToConfig(_currentProviderName)
 }
 
-function addProvider() {
+async function addProvider() {
   saveCurrentProvider()
-  const name = prompt('输入提供商名称 (例如: openai, zhipu):')
+
+  if (!_catalogProvidersCache) {
+    try {
+      const resp = await fetch(`http://127.0.0.1:${proxyPort}/providers`)
+      if (resp.ok) {
+        const data = await resp.json()
+        _catalogProvidersCache = data.providers || []
+      }
+    } catch (e) {
+      console.warn('Failed to fetch catalog providers:', e)
+    }
+  }
+
+  let name = null
+  if (_catalogProvidersCache && _catalogProvidersCache.length > 0) {
+    const options = _catalogProvidersCache
+      .filter(p => !config.providers || !config.providers[p.id])
+      .map(p => `${p.id} (${p.name}${p.modelCount ? ', ' + p.modelCount + ' models' : ''})`)
+      .join('\n')
+    const choice = prompt('选择提供商 (从 models.dev 目录) 或输入自定义名称:\n\n' + options + '\n\n输入提供商ID:')
+    if (!choice || !choice.trim()) return
+    name = choice.trim().split(' ')[0]
+  } else {
+    name = prompt('输入提供商名称 (例如: openai, anthropic, deepseek):')
+  }
+
   if (!name || !name.trim()) return
   const trimmed = name.trim()
   if (!config.providers) config.providers = {}
-  config.providers[trimmed] = config.providers[trimmed] || { api_key: '', base_url: '', models: [] }
+
+  const catalogProvider = _catalogProvidersCache?.find(p => p.id === trimmed)
+  if (catalogProvider) {
+    config.providers[trimmed] = config.providers[trimmed] || {
+      api_key: '',
+      base_url: catalogProvider.base_url || '',
+      models: []
+    }
+    _loadCatalogModelsForProvider(trimmed)
+  } else {
+    config.providers[trimmed] = config.providers[trimmed] || { api_key: '', base_url: '', models: [] }
+  }
+
   populateProviderSelect()
   document.getElementById('provider-select').value = trimmed
   selectProvider()
+}
+
+async function _loadCatalogModelsForProvider(providerId) {
+  try {
+    const resp = await fetch(`http://127.0.0.1:${proxyPort}/providers/${providerId}/models`)
+    if (resp.ok) {
+      const data = await resp.json()
+      const models = (data.models || []).map(m => m.id || m.name)
+      if (models.length > 0) {
+        _catalogModelsCache[providerId] = models
+      }
+    }
+  } catch (e) {
+    console.warn(`Failed to fetch catalog models for ${providerId}:`, e)
+  }
 }
 
 function removeProvider() {

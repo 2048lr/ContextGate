@@ -108,22 +108,81 @@ function buildAxiosConfig(providerConfig, extra = {}) {
   }
 }
 
+const PLACEHOLDER_PATTERNS = [
+  /^sk-xxx/i,
+  /^sk-none$/i,
+  /^sk-placeholder/i,
+  /^sk-your/i,
+  /^sk-test/i,
+  /^your[-_]/i,
+  /^placeholder/i,
+  /^xxx+$/i,
+  /^test[-_]?key/i,
+  /^dummy/i,
+  /^fake/i,
+  /^changeme/i,
+  /^replace[_-]?me/i,
+  /^enter[_-]?your/i,
+  /^insert[_-]?key/i,
+  /^<.*>$/,
+  /^$/,
+]
+
+function isPlaceholderKey(key) {
+  if (!key || typeof key !== 'string') return true
+  const trimmed = key.trim()
+  if (trimmed.length === 0) return true
+  return PLACEHOLDER_PATTERNS.some(pattern => pattern.test(trimmed))
+}
+
+function resolveApiKey(providerConfig, clientAuthHeader) {
+  const proxyKey = (providerConfig.api_key || '').trim()
+  let clientKey = ''
+  if (clientAuthHeader && typeof clientAuthHeader === 'string') {
+    clientKey = clientAuthHeader.replace(/^Bearer\s+/i, '').trim()
+  }
+
+  const proxyIsPlaceholder = isPlaceholderKey(proxyKey)
+  const clientIsPlaceholder = isPlaceholderKey(clientKey)
+
+  if (!proxyIsPlaceholder) {
+    return { key: proxyKey, source: 'proxy' }
+  }
+
+  if (providerConfig.passthrough_auth && !clientIsPlaceholder) {
+    return { key: clientKey, source: 'client' }
+  }
+
+  if (!clientIsPlaceholder) {
+    return { key: clientKey, source: 'client' }
+  }
+
+  return { key: '', source: 'none', error: 'No valid API key: configure one in ContextGate settings or pass a real key from the client' }
+}
+
 /**
  * Forward a generic API request to the provider backend.
  * @param {ProviderConfig} providerConfig
  * @param {string} backendPath - API path (e.g. '/chat/completions')
  * @param {Object} data - Request body
+ * @param {Object} [requestHeaders] - Original request headers from client
  * @returns {Promise<import('axios').AxiosResponse>}
  */
-async function forwardRequest(providerConfig, backendPath, data) {
+async function forwardRequest(providerConfig, backendPath, data, requestHeaders) {
   const url = `${providerConfig.base_url}${backendPath}`
+  const resolved = resolveApiKey(providerConfig, requestHeaders && requestHeaders.authorization)
+  if (resolved.error) {
+    const err = new Error(resolved.error)
+    err.response = { status: 401, data: { error: resolved.error } }
+    throw err
+  }
   return axiosRetry(buildAxiosConfig(providerConfig, {
     method: 'POST',
     url,
     data,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${providerConfig.api_key}`
+      'Authorization': `Bearer ${resolved.key}`
     }
   }))
 }
@@ -134,17 +193,24 @@ async function forwardRequest(providerConfig, backendPath, data) {
  * @param {string} model - Model identifier
  * @param {Array<Object>} messages - Chat messages array
  * @param {Object} [options] - Additional request options
+ * @param {Object} [requestHeaders] - Original request headers from client
  * @returns {Promise<import('axios').AxiosResponse>}
  */
-async function forwardChatRequest(providerConfig, model, messages, options) {
+async function forwardChatRequest(providerConfig, model, messages, options, requestHeaders) {
   const url = `${providerConfig.base_url}/chat/completions`
+  const resolved = resolveApiKey(providerConfig, requestHeaders && requestHeaders.authorization)
+  if (resolved.error) {
+    const err = new Error(resolved.error)
+    err.response = { status: 401, data: { error: resolved.error } }
+    throw err
+  }
   return axiosRetry(buildAxiosConfig(providerConfig, {
     method: 'POST',
     url,
     data: { model, messages, ...options },
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${providerConfig.api_key}`
+      'Authorization': `Bearer ${resolved.key}`
     }
   }))
 }
@@ -226,5 +292,7 @@ module.exports = {
   forwardChatRequest,
   parseSSEChunks,
   serializeSSEEvents,
-  extractMsgPreview
+  extractMsgPreview,
+  isPlaceholderKey,
+  resolveApiKey
 }

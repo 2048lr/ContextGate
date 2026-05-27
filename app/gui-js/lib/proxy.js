@@ -8,7 +8,7 @@ const { computeContextSignature, checkContextChanged, getContextHash } = require
 const {
   axiosRetry, buildAxiosConfig, forwardRequest, forwardChatRequest,
   parseSSEChunks, serializeSSEEvents, extractMsgPreview, axiosInstance,
-  getAgent
+  getAgent, resolveApiKey
 } = require('./proxy/forwarder')
 const { ALLOWED_V1_PATHS, detectProvider, getCacheKey, shouldCache } = require('./proxy/routes')
 
@@ -17,6 +17,7 @@ class AIProxy {
     this.contextFile = options.contextFile
     this.configPath = options.configPath
     this.projectRoot = options.projectRoot || null
+    this.dataDir = options.dataDir || null
     this.configManager = new ConfigManager(this.configPath)
     this.dynamicContext = options.dynamicContext || false
     this.onRequestComplete = options.onRequestComplete || null
@@ -29,8 +30,20 @@ class AIProxy {
     )
     this.requestCount = 0
     this.contextSignature = null
+    this._initialized = false
+    this._initPromise = null
     this._setupRoutes()
     this._loadContextSignature()
+  }
+
+  async init() {
+    if (this._initialized) return this
+    if (this._initPromise) return this._initPromise
+    this._initPromise = (async () => {
+      await this.configManager.init(this.dataDir)
+      this._initialized = true
+    })()
+    return this._initPromise
   }
 
   _recordRequest(provider, model, responseData, cached, responseTime) {
@@ -129,12 +142,16 @@ class AIProxy {
         if (!providerConfig) {
           return res.status(400).json({ error: `Unknown provider: ${provider}` })
         }
+        const resolved = resolveApiKey(providerConfig, req.headers.authorization)
+        if (resolved.error) {
+          return res.status(401).json({ error: resolved.error })
+        }
         const response = await axiosRetry(buildAxiosConfig(providerConfig, {
           method: 'GET',
           url: `${providerConfig.base_url}/models`,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${providerConfig.api_key}`
+            'Authorization': `Bearer ${resolved.key}`
           }
         }))
         res.json(response.data)
@@ -233,7 +250,7 @@ class AIProxy {
           )
         }
 
-        const response = await forwardRequest(providerConfig, backendPath, body)
+        const response = await forwardRequest(providerConfig, backendPath, body, req.headers)
         const responseTime = Date.now() - reqStart
         const respUsage = response.data && response.data.usage
 
@@ -304,7 +321,7 @@ class AIProxy {
       }
 
       try {
-        const response = await forwardChatRequest(providerConfig, model, messages, options)
+        const response = await forwardChatRequest(providerConfig, model, messages, options, req.headers)
         const responseTime = Date.now() - reqStart
         const respUsage = response.data && response.data.usage
         this.cache.set(cacheKey, response.data)
@@ -354,6 +371,57 @@ class AIProxy {
       this.cache.clear()
       res.json({ success: true })
     })
+
+    this.app.get('/providers', (req, res) => {
+      try {
+        const providers = this.configManager.getAvailableCatalogProviders()
+        res.json({ providers })
+      } catch (error) {
+        res.status(500).json({ error: error.message })
+      }
+    })
+
+    this.app.get('/providers/:id/models', (req, res) => {
+      try {
+        const providerId = req.params.id
+        const models = this.configManager.getModelsFromCatalog(providerId)
+        res.json({ provider: providerId, models })
+      } catch (error) {
+        res.status(500).json({ error: error.message })
+      }
+    })
+
+    this.app.get('/providers/:id/models/recommended', (req, res) => {
+      try {
+        const providerId = req.params.id
+        const models = this.configManager.getRecommendedModels(providerId)
+        res.json({ provider: providerId, models })
+      } catch (error) {
+        res.status(500).json({ error: error.message })
+      }
+    })
+
+    this.app.get('/models/search', (req, res) => {
+      try {
+        const q = req.query.q || ''
+        if (!q) return res.json({ results: [] })
+        const results = this.configManager.searchCatalogModels(q)
+        res.json({ query: q, results })
+      } catch (error) {
+        res.status(500).json({ error: error.message })
+      }
+    })
+
+    this.app.get('/models/:providerId/:modelId/cost', (req, res) => {
+      try {
+        const { providerId, modelId } = req.params
+        const cost = this.configManager.getModelCostInfo(providerId, modelId)
+        if (!cost) return res.status(404).json({ error: 'Model not found' })
+        res.json({ provider: providerId, model: modelId, cost })
+      } catch (error) {
+        res.status(500).json({ error: error.message })
+      }
+    })
   }
 
   _streamChatRequestCached(providerConfig, provider, model, messages, options, req, res, cacheKey, reqStart) {
@@ -369,6 +437,17 @@ class AIProxy {
       messagePreview: msgPreview, status: 200, responseTime: Date.now() - reqStart
     })
 
+    const resolved = resolveApiKey(providerConfig, req.headers && req.headers.authorization)
+    if (resolved.error) {
+      this._emitLog({
+        type: 'error', method: 'POST', path: req.path,
+        provider, model, requestSize: 0,
+        messagePreview: msgPreview,
+        error: resolved.error, status: 401, responseTime: Date.now() - reqStart
+      })
+      return res.status(401).json({ error: resolved.error })
+    }
+
     const axiosReq = axiosInstance({
       ...buildAxiosConfig(providerConfig, {
         method: 'POST',
@@ -376,7 +455,7 @@ class AIProxy {
         data: { model, messages, stream: true, ...options },
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${providerConfig.api_key}`
+          'Authorization': `Bearer ${resolved.key}`
         },
         responseType: 'stream'
       })
@@ -440,6 +519,7 @@ class AIProxy {
   }
 
   async run(host = DEFAULT_PROXY_HOST, port = DEFAULT_PROXY_PORT) {
+    await this.init()
     return new Promise((resolve, reject) => {
       this.server = this.app.listen(port, host, () => {
         resolve({ port, host })

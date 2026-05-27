@@ -113,6 +113,7 @@ async function startProxy(port = DEFAULT_PROXY_PORT) {
     contextFile,
     configPath: path.join(getDataDir(), 'config.yaml'),
     projectRoot: workspace,
+    dataDir: getDataDir(),
     onRequestComplete: (data) => tokenMonitor && tokenMonitor.recordRequest(data),
     onRequestLog: (data) => {
       if (mainWindow && !mainWindow.isDestroyed()) {
