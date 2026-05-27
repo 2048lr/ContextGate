@@ -7,13 +7,15 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-5.2.5-blue" alt="Version">
   <img src="https://img.shields.io/badge/Electron-28-blue" alt="Electron">
-  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows-green" alt="Platform">
+  <img src="https://img.shields.io/badge/platform-Windows-blue" alt="Platform">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="License">
 </p>
 
 <p align="center">
   <a href="#english">English</a> | <a href="#中文">中文</a>
 </p>
+
+> **⚠️ Notice:** Linux and macOS platform development has been **paused**. The project currently focuses on **Windows** only. Linux/macOS support may be revisited in the future.
 
 ---
 
@@ -37,25 +39,13 @@ ContextGate is a desktop application that serves as an intelligent API proxy and
 | **Token Monitor** | Real-time tracking of token usage and cost estimation |
 | **Multi-Provider** | Supports OpenAI, Zhipu AI, DeepSeek, and custom providers |
 | **Modern GUI** | GNOME-style dark theme with system tray integration |
-| **Cross-Platform** | Available for Linux (deb/rpm/AppImage) and Windows |
+| **Cross-Platform** | Available for Windows (development on Linux/macOS is paused) |
 
 ### Quick Start
 
 #### Installation
 
 Download the latest release from [GitHub Releases](https://github.com/2048lr/ContextGate/releases):
-
-**Linux:**
-```bash
-# Debian/Ubuntu
-sudo dpkg -i contextgate_*.deb
-
-# Fedora/RHEL
-sudo dnf install contextgate-*.rpm
-
-# AppImage
-chmod +x ContextGate-*.AppImage && ./ContextGate-*.AppImage
-```
 
 **Windows:** Download and run `ContextGate-Setup-*.exe`
 
@@ -139,22 +129,13 @@ ContextGate 是一款桌面应用程序，为 AI 助手提供智能 API 代理�
 - **Token 监控** - 实时追踪 token 使用量和费用估算
 - **多提供商支持** - 支持 OpenAI、智谱 AI、DeepSeek 等
 - **现代化界面** - GNOME 风格深色主题，系统托盘集成
-- **跨平台** - 支持 Linux 和 Windows
+- **跨平台** - 当前仅支持 Windows（Linux/macOS 开发已暂停）
 
 ### 快速开始
 
 #### 安装
 
 从 [GitHub Releases](https://github.com/2048lr/ContextGate/releases) 下载最新版本：
-
-**Linux:**
-```bash
-# Debian/Ubuntu
-sudo dpkg -i contextgate_*.deb
-
-# Fedora/RHEL
-sudo dnf install contextgate-*.rpm
-```
 
 **Windows:** 下载并运行 `ContextGate-Setup-*.exe`
 
@@ -215,6 +196,10 @@ providers:
 </p>
 
 ## Changelog
+
+### v5.2.8
+- 暂停 Linux 和 macOS 平台开发，专注 Windows 平台
+- 移除 Linux 构建配置及相关脚本文件
 
 ### v4.0.6-beta
 - 修复 Electron 在某些 Linux 环境下的崩溃问题

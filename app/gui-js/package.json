@@ -12,21 +12,6 @@
     "test:monitor": "node --test test/monitor.test.js",
     "test:proxy": "node --test test/proxy.test.js",
     "build": "electron-builder",
-    "build:linux": "electron-builder --linux",
-    "build:linux:x64": "electron-builder --linux --x64",
-    "build:linux:arm64": "electron-builder --linux --arm64",
-    "build:linux:ia32": "electron-builder --linux --ia32",
-    "build:all": "electron-builder --linux -l deb,rpm,AppImage --x64 --arm64 --ia32",
-    "build:deb": "electron-builder --linux deb",
-    "build:rpm": "electron-builder --linux rpm",
-    "build:appimage": "electron-builder --linux AppImage",
-    "build:deb:x64": "electron-builder --linux deb --x64",
-    "build:deb:arm64": "electron-builder --linux deb --arm64",
-    "build:deb:ia32": "electron-builder --linux deb --ia32",
-    "build:rpm:x64": "electron-builder --linux rpm --x64",
-    "build:rpm:arm64": "electron-builder --linux rpm --arm64",
-    "build:appimage:x64": "electron-builder --linux AppImage --x64",
-    "build:appimage:arm64": "electron-builder --linux AppImage --arm64",
     "build:win": "electron-builder --win",
     "build:win:x64": "electron-builder --win --x64",
     "build:win:ia32": "electron-builder --win --ia32",
@@ -87,73 +72,6 @@
         "to": "config.yaml.example"
       }
     ],
-    "linux": {
-      "target": [
-        {
-          "target": "deb",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "rpm",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "AppImage",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ],
-      "category": "Development",
-      "icon": "build/icon",
-      "maintainer": "JerryLiu <jerry@example.com>",
-      "desktop": {
-        "Name": "ContextGate",
-        "Comment": "AI Context Management & Proxy System",
-        "Categories": "Development;Utility;",
-        "StartupWMClass": "contextgate"
-      },
-      "executableName": "contextgate",
-      "synopsis": "AI Context Management & Proxy System",
-      "description": "ContextGate is an AI context management and proxy system that helps manage code context for AI assistants."
-    },
-    "deb": {
-      "priority": "optional",
-      "compression": "xz",
-      "packageCategory": "devel",
-      "afterInstall": "build/after-install.sh",
-      "afterRemove": "build/after-remove.sh",
-      "depends": [
-        "libgtk-3-0t64 | libgtk-3-0",
-        "libnotify4",
-        "libnss3",
-        "libxss1",
-        "libxtst6",
-        "libasound2t64 | libasound2",
-        "libgbm1"
-      ]
-    },
-    "rpm": {
-      "compression": "bzip2",
-      "afterInstall": "build/after-install.sh",
-      "afterRemove": "build/after-remove.sh",
-      "depends": [
-        "gtk3",
-        "libnotify",
-        "nss",
-        "libXScrnSaver",
-        "alsa-lib",
-        "mesa-libgbm"
-      ]
-    },
-    "appImage": {},
     "win": {
       "target": [
         {

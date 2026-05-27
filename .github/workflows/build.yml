@@ -34,73 +34,6 @@ jobs:
         working-directory: app/gui-js
         run: npm test
 
-  build-linux:
-    needs: ci
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Import GPG key
-        if: env.GPG_SIGNING_KEY != ''
-        env:
-          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
-        run: |
-          echo "$GPG_SIGNING_KEY" | gpg --import --no-tty --batch --yes
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fakeroot rpm
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: app/gui-js/package-lock.json
-
-      - name: Prepare build resources
-        run: |
-          mkdir -p app/gui-js/build
-          cp resources/icon.png app/gui-js/build/icon.png
-
-      - name: Install dependencies
-        working-directory: app/gui-js
-        run: npm install
-
-      - name: Build deb x64
-        working-directory: app/gui-js
-        run: npx electron-builder --linux deb --x64
-
-      - name: Build deb arm64
-        working-directory: app/gui-js
-        run: npx electron-builder --linux deb --arm64
-
-      - name: Build rpm x64
-        working-directory: app/gui-js
-        run: npx electron-builder --linux rpm --x64
-
-      - name: Build rpm arm64
-        working-directory: app/gui-js
-        run: npx electron-builder --linux rpm --arm64
-
-      - name: Build AppImage x64
-        working-directory: app/gui-js
-        run: npx electron-builder --linux AppImage --x64
-
-      - name: Build AppImage arm64
-        working-directory: app/gui-js
-        run: npx electron-builder --linux AppImage --arm64
-
-      - name: Clean temp files
-        run: rm -rf app/gui-js/dist/linux-* app/gui-js/dist/*.yml
-
-      - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: linux-packages
-          path: app/gui-js/dist/*
-
   build-windows:
     needs: ci
     runs-on: windows-latest
@@ -174,18 +107,12 @@ jobs:
             app/gui-js/dist/*.msi
 
   release:
-    needs: [build-linux, build-windows]
+    needs: [build-windows]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
     steps:
-      - name: Download Linux artifacts
-        uses: actions/download-artifact@v7
-        with:
-          name: linux-packages
-          path: dist/
-
       - name: Download Windows artifacts
         uses: actions/download-artifact@v7
         with:
