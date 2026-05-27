@@ -1,1 +1,0 @@
-Result<hyper::Response<http_body_util::Full<hyper::body::Bytes>>, hyper::Error>
