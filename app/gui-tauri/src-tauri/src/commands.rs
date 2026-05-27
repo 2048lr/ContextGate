@@ -96,6 +96,7 @@ pub fn window_close(app: tauri::AppHandle) {
 
 #[tauri::command]
 pub async fn start_proxy(
+    app: tauri::AppHandle,
     state: State<'_, AppState>,
     port: u16,
 ) -> Result<serde_json::Value, String> {
@@ -130,6 +131,8 @@ pub async fn start_proxy(
         200,
         100,
     );
+
+    server.set_app_handle(app);
 
     let actual_port = server.start(DEFAULT_PROXY_HOST, port).await?;
 

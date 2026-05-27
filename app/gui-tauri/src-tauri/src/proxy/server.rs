@@ -2,9 +2,9 @@ use crate::cache::LruCache;
 use crate::config::{ConfigManager, DEFAULT_PROXY_HOST, VERSION};
 use crate::monitor::{RequestData, TokenMonitor};
 use crate::proxy::context_signature::{
-    compute_context_signature, get_context_hash, ContextSignature,
+    check_context_changed, compute_context_signature, get_context_hash, ContextSignature,
 };
-use crate::proxy::forwarder::{build_client, collect_stream_body, forward_request, SSEEvent};
+use crate::proxy::forwarder::{build_client, collect_stream_body, forward_request};
 use crate::proxy::routes::{detect_provider, get_cache_key, should_cache, ALLOWED_V1_PATHS};
 
 use http_body_util::{BodyExt, Full};
@@ -17,6 +17,7 @@ use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use tauri::{Emitter, Manager};
 use tokio::net::TcpListener;
 use tokio::sync::oneshot;
 
@@ -52,6 +53,7 @@ struct ProxyState {
     context_signature: Option<ContextSignature>,
     clients: HashMap<String, reqwest::Client>,
     token_monitor: Option<TokenMonitor>,
+    app_handle: Option<tauri::AppHandle>,
 }
 
 impl ProxyState {
@@ -81,6 +83,7 @@ impl ProxyState {
             context_signature,
             clients,
             token_monitor,
+            app_handle: None,
         }
     }
 
@@ -91,6 +94,12 @@ impl ProxyState {
     fn update_context_signature(&mut self) {
         if let (Some(cf), Some(ws)) = (&self.context_file, &self.workspace) {
             self.context_signature = compute_context_signature(cf, Some(ws));
+        }
+    }
+
+    fn emit_log(&self, data: &serde_json::Value) {
+        if let Some(ref handle) = self.app_handle {
+            let _ = handle.emit("proxy-log", data);
         }
     }
 }
@@ -129,6 +138,10 @@ impl ProxyServer {
             running: false,
             port: 0,
         }
+    }
+
+    pub fn set_app_handle(&self, handle: tauri::AppHandle) {
+        self.state.lock().app_handle = Some(handle);
     }
 
     pub async fn start(&mut self, host: &str, port: u16) -> Result<u16, String> {
@@ -188,6 +201,9 @@ impl ProxyServer {
             let _ = tx.send(());
         }
         self.running = false;
+        if let Some(ref handle) = self.state.lock().app_handle {
+            let _ = handle.emit("proxy-stopped", ());
+        }
     }
 
     pub fn is_running(&self) -> bool {
@@ -205,8 +221,6 @@ async fn handle_request(
 ) -> Result<Response<BoxBody>, hyper::Error> {
     let method = req.method().clone();
     let path = req.uri().path().to_string();
-    let query = req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default();
-    let full_path = format!("{}{}", path, query);
 
     let body_bytes = req.collect().await?.to_bytes();
     let body_str = String::from_utf8_lossy(&body_bytes).to_string();
@@ -264,11 +278,51 @@ async fn handle_request(
                 ok_json(&serde_json::json!({}))
             }
         }
+        "/context/hash" => {
+            let mut state_guard = state.lock();
+            state_guard.update_context_signature();
+            let sig = state_guard.context_signature.clone();
+            let context_file = state_guard.context_file.clone();
+            let workspace = state_guard.workspace.clone();
+            let changed = sig.as_ref().map_or(false, |s| {
+                let cf = context_file.as_deref().unwrap_or("");
+                let ws = workspace.as_deref();
+                check_context_changed(Some(s), cf, ws)
+            });
+            ok_json(&serde_json::json!({
+                "contextFile": context_file,
+                "hash": sig.as_ref().map(|s| &s.main_hash),
+                "combinedHash": sig.as_ref().map(|s| &s.combined_hash),
+                "fileCount": sig.as_ref().map(|s| s.file_count),
+                "changed": changed
+            }))
+        }
         p if p.starts_with("/v1/") => {
             handle_v1_request(method.clone(), &path, &body_json, state).await
         }
         _ => error_response(404, "Not found"),
     }
+}
+
+fn extract_msg_preview(body: &serde_json::Value) -> String {
+    if let Some(messages) = body.get("messages").and_then(|m| m.as_array()) {
+        for msg in messages.iter().rev() {
+            if msg.get("role").and_then(|r| r.as_str()) == Some("user") {
+                if let Some(content) = msg.get("content") {
+                    let text = match content {
+                        serde_json::Value::String(s) => s.clone(),
+                        other => serde_json::to_string(other).unwrap_or_default(),
+                    };
+                    return if text.len() > 120 {
+                        format!("{}...", &text[..120])
+                    } else {
+                        text
+                    };
+                }
+            }
+        }
+    }
+    String::new()
 }
 
 async fn handle_v1_request(
@@ -281,6 +335,9 @@ async fn handle_v1_request(
     if !ALLOWED_V1_PATHS.iter().any(|p| backend_path.starts_with(p)) {
         return error_response(404, "Endpoint not supported");
     }
+
+    let req_size = serde_json::to_string(body).map(|s| s.len()).unwrap_or(0);
+    let msg_preview = extract_msg_preview(body);
 
     let (provider_name, provider_config) = {
         let state_guard = state.lock();
@@ -298,11 +355,34 @@ async fn handle_v1_request(
     };
 
     let cache_key = get_cache_key(method.as_str(), path, body, &context_hash);
-    let should_use_cache = should_cache(method.as_str()) && !body.get("stream").and_then(|s| s.as_bool()).unwrap_or(false);
+    let is_stream = body.get("stream").and_then(|s| s.as_bool()).unwrap_or(false);
+    let should_use_cache = should_cache(method.as_str()) && !is_stream;
+    let model = body.get("model").and_then(|m| m.as_str()).unwrap_or("").to_string();
 
     if should_use_cache {
         let state_guard = state.lock();
         if let Some(cached) = state_guard.cache.get(&cache_key) {
+            let usage = cached.get("usage");
+            let prompt_tokens = usage.and_then(|u| u.get("prompt_tokens")).and_then(|t| t.as_u64()).unwrap_or(0);
+            let completion_tokens = usage.and_then(|u| u.get("completion_tokens")).and_then(|t| t.as_u64()).unwrap_or(0);
+
+            state_guard.emit_log(&serde_json::json!({
+                "type": "response",
+                "method": method.as_str(),
+                "path": path,
+                "provider": provider_name,
+                "model": model,
+                "tokens": {
+                    "prompt": prompt_tokens,
+                    "completion": completion_tokens,
+                    "total": prompt_tokens + completion_tokens
+                },
+                "cached": true,
+                "status": 200,
+                "responseTime": 0,
+                "messagePreview": msg_preview,
+                "requestSize": req_size
+            }));
             return ok_json(&cached);
         }
     }
@@ -320,15 +400,29 @@ async fn handle_v1_request(
     match forward_request(&client, &provider_config, backend_path, body).await {
         Ok(response) => {
             let status = response.status();
-            let is_stream = body.get("stream").and_then(|s| s.as_bool()).unwrap_or(false);
 
             if is_stream {
-                handle_stream_response(response, state, cache_key, provider_name, req_start).await
+                handle_stream_response(response, state, provider_name, model, msg_preview, req_size, req_start).await
             } else {
-                handle_normal_response(response, status, state, cache_key, should_use_cache, provider_name, req_start).await
+                handle_normal_response(response, status, state, cache_key, should_use_cache, provider_name, model, msg_preview, req_size, req_start).await
             }
         }
-        Err(e) => error_response(502, &e),
+        Err(e) => {
+            let response_time = req_start.elapsed().as_millis() as u64;
+            state.lock().emit_log(&serde_json::json!({
+                "type": "error",
+                "method": method.as_str(),
+                "path": path,
+                "provider": provider_name,
+                "model": model,
+                "error": e,
+                "status": 502,
+                "responseTime": response_time,
+                "messagePreview": msg_preview,
+                "requestSize": req_size
+            }));
+            error_response(502, &e)
+        }
     }
 }
 
@@ -339,6 +433,9 @@ async fn handle_normal_response(
     cache_key: String,
     should_cache: bool,
     provider_name: String,
+    model: String,
+    msg_preview: String,
+    req_size: usize,
     req_start: std::time::Instant,
 ) -> Result<Response<BoxBody>, hyper::Error> {
     let body_bytes = match collect_stream_body(response).await {
@@ -354,7 +451,32 @@ async fn handle_normal_response(
     }
 
     let response_time = req_start.elapsed().as_millis() as u64;
-    record_usage(&state, &provider_name, &response_json, false, response_time);
+    let usage = response_json.get("usage");
+    let prompt_tokens = usage.and_then(|u| u.get("prompt_tokens")).and_then(|t| t.as_u64()).unwrap_or(0);
+    let completion_tokens = usage.and_then(|u| u.get("completion_tokens")).and_then(|t| t.as_u64()).unwrap_or(0);
+
+    record_usage(&state, &provider_name, &model, &response_json, false, response_time);
+
+    {
+        let state_guard = state.lock();
+        state_guard.emit_log(&serde_json::json!({
+            "type": "response",
+            "method": "POST",
+            "path": "/v1/chat/completions",
+            "provider": provider_name,
+            "model": model,
+            "tokens": {
+                "prompt": prompt_tokens,
+                "completion": completion_tokens,
+                "total": prompt_tokens + completion_tokens
+            },
+            "cached": false,
+            "status": status.as_u16(),
+            "responseTime": response_time,
+            "messagePreview": msg_preview,
+            "requestSize": req_size
+        }));
+    }
 
     Ok(Response::builder()
         .status(StatusCode::from_u16(status.as_u16()).unwrap_or(StatusCode::OK))
@@ -366,11 +488,26 @@ async fn handle_normal_response(
 async fn handle_stream_response(
     mut response: reqwest::Response,
     state: Arc<Mutex<ProxyState>>,
-    _cache_key: String,
     provider_name: String,
+    model: String,
+    msg_preview: String,
+    req_size: usize,
     req_start: std::time::Instant,
 ) -> Result<Response<BoxBody>, hyper::Error> {
-    use futures::StreamExt;
+    {
+        let state_guard = state.lock();
+        state_guard.emit_log(&serde_json::json!({
+            "type": "stream",
+            "method": "POST",
+            "path": "/v1/chat/completions",
+            "provider": provider_name,
+            "model": model,
+            "messagePreview": msg_preview,
+            "requestSize": req_size,
+            "status": 200,
+            "responseTime": 0
+        }));
+    }
 
     let mut full_body = String::new();
     let mut usage_data: Option<(u64, u64)> = None;
@@ -406,19 +543,31 @@ async fn handle_stream_response(
 
     let response_time = req_start.elapsed().as_millis() as u64;
     if let Some((input_tokens, output_tokens)) = usage_data {
+        record_usage(&state, &provider_name, &model, &serde_json::json!({
+            "usage": {
+                "prompt_tokens": input_tokens,
+                "completion_tokens": output_tokens
+            }
+        }), false, response_time);
+
         let state_guard = state.lock();
-        if let Some(ref monitor) = state_guard.token_monitor {
-            let _ = monitor.record_request(&RequestData {
-                provider: provider_name,
-                model: "".to_string(),
-                input_tokens,
-                output_tokens,
-                cost: None,
-                currency: "USD".to_string(),
-                cached: false,
-                response_time,
-            });
-        }
+        state_guard.emit_log(&serde_json::json!({
+            "type": "response",
+            "method": "POST",
+            "path": "/v1/chat/completions",
+            "provider": provider_name,
+            "model": model,
+            "tokens": {
+                "prompt": input_tokens,
+                "completion": output_tokens,
+                "total": input_tokens + output_tokens
+            },
+            "cached": false,
+            "status": 200,
+            "responseTime": response_time,
+            "messagePreview": msg_preview,
+            "requestSize": req_size
+        }));
     }
 
     Ok(Response::builder()
@@ -433,6 +582,7 @@ async fn handle_stream_response(
 fn record_usage(
     state: &Arc<Mutex<ProxyState>>,
     provider: &str,
+    model: &str,
     response_json: &serde_json::Value,
     cached: bool,
     response_time: u64,
@@ -441,7 +591,6 @@ fn record_usage(
     if let Some(usage) = usage {
         let input_tokens = usage.get("prompt_tokens").and_then(|t| t.as_u64()).unwrap_or(0);
         let output_tokens = usage.get("completion_tokens").and_then(|t| t.as_u64()).unwrap_or(0);
-        let model = response_json.get("model").and_then(|m| m.as_str()).unwrap_or("");
 
         let state_guard = state.lock();
         if let Some(ref monitor) = state_guard.token_monitor {

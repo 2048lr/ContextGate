@@ -1,0 +1,14 @@
+/home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/deps/thiserror-c8e99bda1cde38a1.d: /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/build/thiserror-f42ae234695a0056/out/private.rs
+
+/home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/deps/libthiserror-c8e99bda1cde38a1.rlib: /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/build/thiserror-f42ae234695a0056/out/private.rs
+
+/home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/deps/libthiserror-c8e99bda1cde38a1.rmeta: /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/build/thiserror-f42ae234695a0056/out/private.rs
+
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs:
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs:
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs:
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs:
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs:
+/home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/build/thiserror-f42ae234695a0056/out/private.rs:
+
+# env-dep:OUT_DIR=/home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/build/thiserror-f42ae234695a0056/out

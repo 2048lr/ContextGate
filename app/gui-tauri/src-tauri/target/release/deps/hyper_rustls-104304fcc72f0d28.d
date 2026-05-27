@@ -1,0 +1,11 @@
+/home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/deps/hyper_rustls-104304fcc72f0d28.d: /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/lib.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/config.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/connector.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/connector/builder.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/stream.rs
+
+/home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/deps/libhyper_rustls-104304fcc72f0d28.rlib: /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/lib.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/config.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/connector.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/connector/builder.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/stream.rs
+
+/home/runliu/ContextGate/app/gui-tauri/src-tauri/target/release/deps/libhyper_rustls-104304fcc72f0d28.rmeta: /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/lib.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/config.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/connector.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/connector/builder.rs /home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/stream.rs
+
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/lib.rs:
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/config.rs:
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/connector.rs:
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/connector/builder.rs:
+/home/runliu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9/src/stream.rs:
