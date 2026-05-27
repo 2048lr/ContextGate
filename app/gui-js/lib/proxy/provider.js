@@ -211,8 +211,7 @@ class ProviderRegistry {
 
     for (const mapping of pathMappings) {
       if (mapping.keywords.some(kw => lowerPath.includes(kw))) {
-        const allProviders = configManager.getAllProviders()
-        if (allProviders[mapping.provider]) return mapping.provider
+        return mapping.provider
       }
     }
 
