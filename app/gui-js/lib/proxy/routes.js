@@ -36,17 +36,20 @@ function getCacheKey(req, contextHash) {
   const body = req.body || {}
   let msgFingerprint = ''
   if (body.messages && Array.isArray(body.messages)) {
-    const lastUser = [...body.messages].reverse().find(m => m.role === 'user')
-    if (lastUser && lastUser.content) {
-      const text = typeof lastUser.content === 'string' ? lastUser.content : JSON.stringify(lastUser.content)
-      msgFingerprint = crypto.createHash('md5').update(text).digest('hex').substring(0, 12)
+    const allContent = body.messages.map(m => {
+      if (!m.content) return ''
+      return typeof m.content === 'string' ? m.content : JSON.stringify(m.content)
+    }).join('\n')
+    if (allContent) {
+      msgFingerprint = crypto.createHash('md5').update(allContent).digest('hex').substring(0, 12)
     }
   }
   const modelKey = body.model || 'unknown'
   if (!msgFingerprint) {
     msgFingerprint = crypto.createHash('md5').update(JSON.stringify(body)).digest('hex').substring(0, 12)
   }
-  return `${req.method}:${req.path}:${modelKey}:${msgFingerprint}`
+  const ctxPart = contextHash ? contextHash.substring(0, 8) : 'none'
+  return `${req.method}:${req.path}:${modelKey}:${ctxPart}:${msgFingerprint}`
 }
 
 function shouldCache(method) {

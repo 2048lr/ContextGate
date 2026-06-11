@@ -240,7 +240,8 @@ function parseSSEChunks(rawChunks) {
     if (line.startsWith('event:')) {
       currentEvent.event = line.substring(6).trim()
     } else if (line.startsWith('data:')) {
-      currentEvent.data = line.substring(5).trim()
+      const dataValue = line.substring(5).trim()
+      currentEvent.data = currentEvent.data ? currentEvent.data + '\n' + dataValue : dataValue
     } else if (line.startsWith('id:')) {
       currentEvent.id = line.substring(3).trim()
     } else if (line.startsWith('retry:')) {

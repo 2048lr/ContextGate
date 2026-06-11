@@ -70,6 +70,19 @@ class LRUCache {
     return this.cache.has(key)
   }
 
+  /**
+   * Remove a specific entry from the cache.
+   * @param {string} key - Cache key to remove
+   * @returns {boolean} True if the entry existed and was removed
+   */
+  delete(key) {
+    if (!this.cache.has(key)) return false
+    const entry = this.cache.get(key)
+    this.currentMemory -= entry.size
+    this.cache.delete(key)
+    return true
+  }
+
   /** Clear all entries from the cache. */
   clear() {
     this.cache.clear()

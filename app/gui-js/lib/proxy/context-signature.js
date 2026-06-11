@@ -101,17 +101,19 @@ function computeContextSignature(contextFile, projectRoot) {
 
 /**
  * Check if the context has changed since the last known signature.
+ * Returns both the boolean result and the new signature to avoid recomputing.
  * @param {ContextSignature|null} currentSignature - Previously known signature
  * @param {string} contextFile - Path to the context file
  * @param {string|null} projectRoot - Project root directory
- * @returns {boolean} True if context has changed
+ * @returns {{changed: boolean, signature: ContextSignature|null}}
  */
 function checkContextChanged(currentSignature, contextFile, projectRoot) {
   const newSignature = computeContextSignature(contextFile, projectRoot)
-  if (!newSignature) return false
-  if (!currentSignature) return true
-  return newSignature.combinedHash !== currentSignature.combinedHash ||
-         newSignature.mainHash !== currentSignature.mainHash
+  if (!newSignature) return { changed: false, signature: null }
+  if (!currentSignature) return { changed: true, signature: newSignature }
+  const changed = newSignature.combinedHash !== currentSignature.combinedHash ||
+                  newSignature.mainHash !== currentSignature.mainHash
+  return { changed, signature: newSignature }
 }
 
 /**

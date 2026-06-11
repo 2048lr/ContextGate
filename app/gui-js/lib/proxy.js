@@ -101,14 +101,16 @@ class AIProxy {
   }
 
   _checkContextChanged() {
-    return checkContextChanged(this.contextSignature, this.contextFile, this.projectRoot)
+    const result = checkContextChanged(this.contextSignature, this.contextFile, this.projectRoot)
+    return result.changed
   }
 
   _invalidateCacheIfNeeded() {
-    if (this._checkContextChanged()) {
+    const result = checkContextChanged(this.contextSignature, this.contextFile, this.projectRoot)
+    if (result.changed) {
       console.log('[Cache INVALIDATED] Source file changed')
       this.cache.clear()
-      this._loadContextSignature()
+      this.contextSignature = result.signature
     }
   }
 

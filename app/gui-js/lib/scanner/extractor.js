@@ -22,7 +22,9 @@ class CodeBlockExtractor {
       while ((match = regex.exec(this.content)) !== null) {
         const name = match[1]
         const startPos = match.index
-        const endPos = this._findBlockEnd(startPos + match[0].length)
+        const endPos = this.language === 'python'
+          ? this._findPythonBlockEnd(match.index + match[0].length)
+          : this._findBlockEnd(startPos + match[0].length)
         const body = this.content.substring(startPos, endPos)
         this.blocks.push({
           type: blockType,
@@ -66,6 +68,35 @@ class CodeBlockExtractor {
     }
 
     return pos
+  }
+
+  _findPythonBlockEnd(startPos) {
+    const lines = this.content.substring(startPos).split('\n')
+    const defLineIdx = this.content.substring(0, startPos).split('\n').length - 1
+    let baseIndent = null
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      if (line.trim() === '' || line.trim().startsWith('#')) continue
+
+      const indent = line.length - line.trimStart().length
+      if (baseIndent === null) {
+        baseIndent = indent
+        continue
+      }
+      if (indent <= this._getDefIndent(defLineIdx)) {
+        const preceding = lines.slice(0, i).join('\n')
+        return startPos + preceding.length
+      }
+    }
+    return this.content.length
+  }
+
+  _getDefIndent(defLineIdx) {
+    const lines = this.content.split('\n')
+    if (defLineIdx >= lines.length) return 0
+    const line = lines[defLineIdx]
+    return line.length - line.trimStart().length
   }
 
   _skipString(startPos, quote) {

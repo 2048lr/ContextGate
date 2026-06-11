@@ -99,13 +99,13 @@ class IntentExtractor {
 
   _extractCodeConcepts() {
     const concepts = {
-      function: /函数|function|方法|method|def\s|func\s/gi,
-      class: /类|class|结构体|struct/gi,
-      interface: /接口|interface|协议|protocol/gi,
-      variable: /变量|variable|常量|const|let|var/gi,
-      import: /导入|import|引用|require|include/gi,
-      error: /错误|error|异常|exception|bug/gi,
-      test: /测试|test|单元测试|unit test/gi
+      function: /函数|方法|def\s|func\s|\bfunction\b|\bmethod\b/gi,
+      class: /类|结构体|\bclass\b|\bstruct\b/gi,
+      interface: /接口|协议|\binterface\b|\bprotocol\b/gi,
+      variable: /变量|常量|\bconst\b|\blet\b|\bvar\b/gi,
+      import: /导入|引用|\bimport\b|\brequire\b|\binclude\b/gi,
+      error: /错误|异常|\berror|\bexception|\bbug\b/gi,
+      test: /测试|单元测试|\btest\b|\bunit\s+test\b/gi
     }
 
     for (const [concept, pattern] of Object.entries(concepts)) {
