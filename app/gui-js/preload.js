@@ -16,15 +16,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   stopProxy: () => ipcRenderer.invoke('stop-proxy'),
   proxyStatus: () => ipcRenderer.invoke('proxy-status'),
   buildContext: (projectPath) => ipcRenderer.invoke('build-context', projectPath),
-  runScript: (scriptPath, action) => ipcRenderer.invoke('run-script', scriptPath, action),
   getStats: () => ipcRenderer.invoke('get-stats'),
   getMemoryUsage: () => ipcRenderer.invoke('get-memory-usage'),
-  onProxyLog: (callback) => ipcRenderer.on('proxy-log', (event, data) => callback(data)),
-  onProxyError: (callback) => ipcRenderer.on('proxy-error', (event, data) => callback(data)),
-  onProxyStopped: (callback) => ipcRenderer.on('proxy-stopped', () => callback()),
-  removeProxyListeners: () => {
-    ipcRenderer.removeAllListeners('proxy-log')
-    ipcRenderer.removeAllListeners('proxy-error')
-    ipcRenderer.removeAllListeners('proxy-stopped')
-  }
+  onProxyLog: (cb) => ipcRenderer.on('proxy-log', (_, data) => cb(data)),
+  onProxyStopped: (cb) => ipcRenderer.on('proxy-stopped', () => cb()),
+  removeProxyListeners: () => { ipcRenderer.removeAllListeners('proxy-log'); ipcRenderer.removeAllListeners('proxy-stopped') },
 })

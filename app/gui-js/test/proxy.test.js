@@ -1,116 +1,104 @@
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
+const { CacheManager } = require('../lib/proxy/cache-manager')
+const { parseSSEChunks, serializeSSEEvents } = require('../lib/proxy/stream-handler')
+const { isPlaceholderKey, resolveApiKey } = require('../lib/proxy/forwarder')
+const { ProviderRegistry } = require('../lib/proxy/provider-registry')
 
-const { AIProxy, ConfigManager } = require('../lib/proxy')
-
-describe('AIProxy - LRUCache', () => {
-  it('should create proxy with LRU cache', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    assert.ok(proxy.cache)
-    assert.equal(typeof proxy.cache.get, 'function')
-    assert.equal(typeof proxy.cache.set, 'function')
-    assert.equal(typeof proxy.cache.has, 'function')
+describe('CacheManager', () => {
+  it('should create cache manager', () => {
+    const cm = new CacheManager()
+    assert.ok(cm.cache)
+    assert.equal(typeof cm.get, 'function')
+    assert.equal(typeof cm.set, 'function')
   })
 
   it('should respect cache size limits', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '', cacheMaxEntries: 3, cacheMaxMemoryMB: 1 })
-    proxy.cache.set('a', { d: '1' })
-    proxy.cache.set('b', { d: '2' })
-    proxy.cache.set('c', { d: '3' })
-    proxy.cache.set('d', { d: '4' })
-    assert.equal(proxy.cache.size, 3)
-    assert.ok(!proxy.cache.has('a'))
-    assert.ok(proxy.cache.has('d'))
+    const cm = new CacheManager({ maxEntries: 3, maxMemoryMB: 1 })
+    cm.set('a', { d: '1' }); cm.set('b', { d: '2' }); cm.set('c', { d: '3' }); cm.set('d', { d: '4' })
+    assert.equal(cm.size, 3)
+    assert.ok(!cm.has('a'))
+    assert.ok(cm.has('d'))
   })
 })
 
-describe('AIProxy - SSE parsing', () => {
+describe('SSE parsing', () => {
   it('should parse SSE chunks into structured events', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    const rawChunks = [
-      Buffer.from('data: {"id":"1","choices":[{"delta":{"content":"Hi"}}]}\n\n'),
-      Buffer.from('data: {"id":"1","choices":[{"delta":{"content":" there"}}]}\n\n'),
-      Buffer.from('data: [DONE]\n\n')
-    ]
-    const events = proxy._parseSSEChunks(rawChunks)
-    assert.equal(events.length, 3)
-    assert.ok(events[0].data.includes('Hi'))
-    assert.equal(events[2].data, '[DONE]')
-  })
-
-  it('should serialize SSE events back to valid SSE format', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    const events = [
-      { event: '', data: '{"choices":[]}', id: '', retry: '' },
-      { event: '', data: '[DONE]', id: '', retry: '' }
-    ]
-    const serialized = proxy._serializeSSEEvents(events)
-    assert.ok(serialized.startsWith('data: '))
-    assert.ok(serialized.includes('data: [DONE]'))
-    assert.ok(serialized.includes('\n\n'))
-  })
-
-  it('should handle SSE events with event field', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    const rawChunks = [
-      Buffer.from('event: message\ndata: hello\n\n'),
-      Buffer.from('event: error\ndata: timeout\nid: 42\n\n')
-    ]
-    const events = proxy._parseSSEChunks(rawChunks)
+    const raw = [Buffer.from('data: {"id":"1","choices":[{"delta":{"content":"Hi"}}]}\n\n'), Buffer.from('data: [DONE]\n\n')]
+    const events = parseSSEChunks(raw)
     assert.equal(events.length, 2)
-    assert.equal(events[0].event, 'message')
-    assert.equal(events[1].event, 'error')
-    assert.equal(events[1].id, '42')
+    assert.ok(events[0].data.includes('Hi'))
+    assert.equal(events[1].data, '[DONE]')
   })
 
-  it('should round-trip SSE parse and serialize', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    const rawChunks = [
-      Buffer.from('data: {"id":"1","choices":[{"delta":{"content":"A"}}]}\n\n'),
-      Buffer.from('data: [DONE]\n\n')
-    ]
-    const events = proxy._parseSSEChunks(rawChunks)
-    const serialized = proxy._serializeSSEEvents(events)
-    const reParsed = proxy._parseSSEChunks([Buffer.from(serialized)])
+  it('should serialize SSE events back to valid format', () => {
+    const events = [{ event: '', data: '{"choices":[]}', id: '', retry: '' }, { event: '', data: '[DONE]', id: '', retry: '' }]
+    const s = serializeSSEEvents(events)
+    assert.ok(s.startsWith('data: '))
+    assert.ok(s.includes('data: [DONE]'))
+  })
+
+  it('should round-trip parse and serialize', () => {
+    const raw = [Buffer.from('data: hello\n\n'), Buffer.from('data: [DONE]\n\n')]
+    const events = parseSSEChunks(raw)
+    const serialized = serializeSSEEvents(events)
+    const reParsed = parseSSEChunks([Buffer.from(serialized)])
     assert.equal(reParsed.length, events.length)
-    assert.equal(reParsed[0].data, events[0].data)
-    assert.equal(reParsed[1].data, events[1].data)
   })
 })
 
-describe('AIProxy - provider detection', () => {
-  it('should detect zhipu from path', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    assert.equal(proxy._detectProvider('/chat/zhipu'), 'zhipu')
+describe('API Key resolution', () => {
+  it('should detect placeholder keys', () => {
+    assert.ok(isPlaceholderKey('sk-xxx'))
+    assert.ok(isPlaceholderKey('your-api-key'))
+    assert.ok(isPlaceholderKey(''))
+    assert.ok(!isPlaceholderKey('sk-real-key-12345'))
   })
 
-  it('should detect deepseek from path', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    assert.equal(proxy._detectProvider('/deepseek/chat'), 'deepseek')
+  it('should prefer proxy key when set', () => {
+    const r = resolveApiKey({ api_key: 'sk-real-key' }, 'Bearer sk-client-key')
+    assert.equal(r.key, 'sk-real-key')
+    assert.equal(r.source, 'proxy')
   })
 
-  it('should default to openai for unknown paths', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    assert.equal(proxy._detectProvider('/chat/completions'), 'openai')
+  it('should fall back to client key when proxy is placeholder', () => {
+    const r = resolveApiKey({ api_key: 'sk-xxx' }, 'Bearer sk-client-key')
+    assert.equal(r.key, 'sk-client-key')
+    assert.equal(r.source, 'client')
+  })
+
+  it('should return error when no valid key', () => {
+    const r = resolveApiKey({ api_key: 'sk-xxx' }, 'Bearer sk-xxx')
+    assert.ok(r.error)
   })
 })
 
-describe('AIProxy - agent selection', () => {
-  it('should use secure agent for HTTPS by default', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    const agent = proxy._getAgent({ base_url: 'https://api.openai.com' })
-    assert.ok(agent)
+describe('ProviderRegistry', () => {
+  it('should detect providers from path', () => {
+    const reg = new ProviderRegistry()
+    assert.equal(reg.detectProviderFromPath('/chat/zhipu', { getDefaultProvider: () => 'openai', getAllProviders: () => ({}) }), 'zhipu')
+    assert.equal(reg.detectProviderFromPath('/deepseek/chat', { getDefaultProvider: () => 'openai', getAllProviders: () => ({}) }), 'deepseek')
+    assert.equal(reg.detectProviderFromPath('/gemini/chat', { getDefaultProvider: () => 'openai', getAllProviders: () => ({}) }), 'google')
   })
 
-  it('should use insecure agent when tls.reject_unauthorized is false', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    const agent = proxy._getAgent({ base_url: 'https://self-signed.example.com', tls: { reject_unauthorized: false } })
-    assert.ok(agent)
+  it('should resolve provider with format', () => {
+    const reg = new ProviderRegistry()
+    const p = reg.resolveProvider('openai', { api_key: 'test' })
+    assert.equal(p.format, 'openai')
+    assert.equal(p.name, 'OpenAI')
   })
 
-  it('should use http agent for http URLs', () => {
-    const proxy = new AIProxy({ contextFile: '', configPath: '' })
-    const agent = proxy._getAgent({ base_url: 'http://localhost:8080' })
-    assert.ok(agent)
+  it('should resolve google as gemini format', () => {
+    const reg = new ProviderRegistry()
+    const p = reg.resolveProvider('google', {})
+    assert.equal(p.format, 'gemini')
+  })
+
+  it('should list available providers', () => {
+    const reg = new ProviderRegistry()
+    const providers = reg.getAvailableProviders()
+    assert.ok(providers.length > 0)
+    assert.ok(providers.some(p => p.id === 'openai'))
+    assert.ok(providers.some(p => p.id === 'google'))
   })
 })

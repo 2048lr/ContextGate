@@ -2,12 +2,35 @@ const globals = require('globals')
 
 module.exports = [
   {
+    files: ['lib/ui/**/*.js', 'renderer.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'script',
+      globals: { ...globals.browser }
+    },
+  },
+  {
+    files: ['lib/**/*.js', 'cli.js', 'main.js', 'preload.js'],
+    ignores: ['lib/ui/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
-      globals: {
-        ...globals.node
-      }
+      globals: { ...globals.node }
+    },
+  },
+  {
+    files: ['test/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+      globals: { ...globals.node }
+    },
+  },
+  {
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+      globals: { ...globals.node }
     },
     rules: {
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
