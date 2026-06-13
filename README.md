@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.2.8-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-5.2.9-blue" alt="Version">
   <img src="https://img.shields.io/badge/Electron-28-blue" alt="Electron">
   <img src="https://img.shields.io/badge/platform-Windows-blue" alt="Platform">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="License">
@@ -197,7 +197,7 @@ providers:
 
 ## Changelog
 
-### v5.2.8
+### v5.2.9
 - 暂停 Linux 和 macOS 平台开发，专注 Windows 平台
 - 移除 Linux 构建配置及相关脚本文件
 

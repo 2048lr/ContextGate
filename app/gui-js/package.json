@@ -1,6 +1,6 @@
 {
   "name": "contextgate",
-  "version": "5.2.8",
+  "version": "5.2.9",
   "description": "AI Context Management & Proxy System",
   "main": "main.js",
   "scripts": {
@@ -15,7 +15,10 @@
     "build:win": "electron-builder --win",
     "build:win:x64": "electron-builder --win --x64",
     "build:win:ia32": "electron-builder --win --ia32",
-    "build:win:arm64": "electron-builder --win --arm64"
+    "build:win:arm64": "electron-builder --win --arm64",
+    "version:sync": "node ../../scripts/version-sync.js",
+    "version:check": "node ../../scripts/version-sync.js --check",
+    "version:current": "node ../../scripts/version-sync.js --current"
   },
   "author": "JerryLiu",
   "homepage": "https://github.com/2048lr/ContextGate",
@@ -90,7 +93,9 @@
       ],
       "icon": "build/icon.png",
       "signAndEditExecutable": true,
-      "signingHashAlgorithms": ["sha256"],
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
       "rfc3161TimeStampServer": "http://timestamp.digicert.com",
       "timeStampServer": "http://timestamp.digicert.com"
     },
