@@ -1,6 +1,6 @@
 {
   "name": "contextgate",
-  "version": "5.2.9",
+  "version": "5.3.0",
   "description": "AI Context Management & Proxy System",
   "main": "main.js",
   "scripts": {
@@ -18,7 +18,12 @@
     "build:win:arm64": "electron-builder --win --arm64",
     "version:sync": "node ../../scripts/version-sync.js",
     "version:check": "node ../../scripts/version-sync.js --check",
-    "version:current": "node ../../scripts/version-sync.js --current"
+    "version:current": "node ../../scripts/version-sync.js --current",
+    "version:rollback": "node ../../scripts/version-rollback.js",
+    "version:patch": "node ../../scripts/version-bump.js patch",
+    "version:minor": "node ../../scripts/version-bump.js minor",
+    "version:major": "node ../../scripts/version-bump.js major",
+    "release": "node ../../scripts/release.js"
   },
   "author": "JerryLiu",
   "homepage": "https://github.com/2048lr/ContextGate",

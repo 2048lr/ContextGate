@@ -2,7 +2,7 @@ const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
 const { CacheManager } = require('../lib/proxy/cache-manager')
 const { parseSSEChunks, serializeSSEEvents } = require('../lib/proxy/stream-handler')
-const { isPlaceholderKey, resolveApiKey } = require('../lib/proxy/forwarder')
+const { isPlaceholderKey, resolveApiKey, joinUrl } = require('../lib/proxy/forwarder')
 const { ProviderRegistry } = require('../lib/proxy/provider-registry')
 
 describe('CacheManager', () => {
@@ -45,6 +45,23 @@ describe('SSE parsing', () => {
     const reParsed = parseSSEChunks([Buffer.from(serialized)])
     assert.equal(reParsed.length, events.length)
   })
+
+  // 回归：Bug#6 — CRLF 行尾应正确分隔事件
+  it('should parse CRLF line endings correctly', () => {
+    const raw = [Buffer.from('data: {"a":1}\r\n\r\ndata: [DONE]\r\n\r\n')]
+    const events = parseSSEChunks(raw)
+    assert.equal(events.length, 2)
+    assert.equal(events[0].data, '{"a":1}')
+    assert.equal(events[1].data, '[DONE]')
+  })
+
+  it('should parse mixed CRLF and LF without merging events', () => {
+    const raw = [Buffer.from('data: a\r\n\r\n'), Buffer.from('data: b\n\n')]
+    const events = parseSSEChunks(raw)
+    assert.equal(events.length, 2)
+    assert.equal(events[0].data, 'a')
+    assert.equal(events[1].data, 'b')
+  })
 })
 
 describe('API Key resolution', () => {
@@ -76,6 +93,29 @@ describe('API Key resolution', () => {
   it('should return error when no valid key', () => {
     const r = resolveApiKey({ api_key: 'sk-xxx' }, 'Bearer sk-xxx')
     assert.ok(r.error)
+  })
+})
+
+// 回归：Bug#9 — URL 拼接不应产生双斜杠或缺失斜杠
+describe('joinUrl', () => {
+  it('should join base without trailing slash and path with leading slash', () => {
+    assert.equal(joinUrl('https://api.openai.com/v1', '/chat/completions'), 'https://api.openai.com/v1/chat/completions')
+  })
+
+  it('should not produce double slash when base has trailing slash', () => {
+    assert.equal(joinUrl('https://api.openai.com/v1/', '/chat/completions'), 'https://api.openai.com/v1/chat/completions')
+  })
+
+  it('should handle path without leading slash', () => {
+    assert.equal(joinUrl('https://api.openai.com/v1', 'chat/completions'), 'https://api.openai.com/v1/chat/completions')
+  })
+
+  it('should handle multiple trailing/leading slashes', () => {
+    assert.equal(joinUrl('https://x.com/v1///', '///chat'), 'https://x.com/v1/chat')
+  })
+
+  it('should return base alone when path is empty', () => {
+    assert.equal(joinUrl('https://x.com/v1/', ''), 'https://x.com/v1')
   })
 })
 

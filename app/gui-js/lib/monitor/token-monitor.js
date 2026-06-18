@@ -89,7 +89,15 @@ class TokenMonitor {
   }
 
   async recordRequest(data) {
-    await this._ensureReady()
+    // 代理停止后仍可能有 in-flight 请求触发本回调；此时静默丢弃，
+    // 避免 _ensureReady 抛错变成未捕获的 Promise rejection
+    if (this._closed) return
+    try {
+      await this._ensureReady()
+    } catch (e) {
+      if (this._closed) return
+      throw e
+    }
     const { provider, model, input_tokens = 0, output_tokens = 0, cost: explicitCost, currency = 'USD', cached = false, response_time = 0 } = data
     const totalTokens = input_tokens + output_tokens
     const cost = explicitCost != null ? explicitCost : calculateCost(model, input_tokens, output_tokens)

@@ -227,7 +227,7 @@ function escapeHtml(str) { const d = document.createElement('div'); d.textConten
 function addLogEntry(data) {
   const lc = document.getElementById('log-content'); if (!lc) return
   const isErr = data.type === 'error', isCache = data.cached === true, isStream = data.type === 'stream'
-  const t = data.tokens || {}, cost = data.cost ?? (t.total ? (t.total * 0.000002).toFixed(6) : 0)
+  const t = data.tokens || {}, cost = data.cost ?? 0
   const row = document.createElement('div')
   row.className = 'log-row' + (isErr ? ' log-row-error' : '') + (isCache ? ' log-row-cache' : '') + (isStream ? ' log-row-stream' : '')
   const ms = (data.model || '').length > 26 ? (data.model || '').substring(0, 24) + '…' : (data.model || '-')

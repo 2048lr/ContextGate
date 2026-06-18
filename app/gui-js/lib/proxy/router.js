@@ -26,9 +26,16 @@ function createRoutes(app, svc) {
 
   app.get('/v1/models', async (req, res) => {
     try {
-      const provider = req.query.provider || configManager.getDefaultProvider() || 'openai'
-      const providerConfig = providerRegistry.resolveProvider(provider, configManager.getProvider(provider))
-      if (!providerConfig.base_url) return res.status(400).json({ error: `Unknown provider: ${provider}` })
+      // 支持 X-Target-Base-Url header，用于前端获取任意 base_url 的模型列表
+      const targetBaseUrl = req.headers['x-target-base-url']
+      let providerConfig
+      if (targetBaseUrl) {
+        providerConfig = { base_url: targetBaseUrl.replace(/\/+$/, ''), api_key: '', passthrough_auth: true, format: 'openai' }
+      } else {
+        const provider = req.query.provider || configManager.getDefaultProvider() || 'openai'
+        providerConfig = providerRegistry.resolveProvider(provider, configManager.getProvider(provider))
+      }
+      if (!providerConfig.base_url) return res.status(400).json({ error: 'Unknown provider' })
       const resolved = resolveApiKey(providerConfig, req.headers.authorization)
       if (resolved.error) return res.status(401).json({ error: resolved.error })
       const response = await axiosRetry(buildAxiosConfig(providerConfig, {
@@ -108,21 +115,31 @@ function createRoutes(app, svc) {
   app.post('/proxy/chat', async (req, res) => {
     const reqStart = Date.now()
     const { provider = 'openai', model, messages, ...options } = req.body || {}
+    const reqSize = JSON.stringify(req.body || {}).length
+    const msgPreview = extractMsgPreview(messages)
     cacheManager.invalidateIfNeeded(svc.contextFile, svc.projectRoot)
     const providerConfig = providerRegistry.resolveProvider(provider, configManager.getProvider(provider))
     if (!providerConfig.base_url) return res.status(400).json({ error: `Unknown provider: ${provider}` })
     const cacheKey = cacheManager.getCacheKey(req, cacheManager.getContextHash())
     if (cacheManager.has(cacheKey)) {
       const cached = cacheManager.get(cacheKey)
+      const usage = cached._usage || cached.usage || {}
+      const cost = calculateCost(model, usage.prompt_tokens || 0, usage.completion_tokens || 0)
+      eventBus.emit('request:complete', { provider, model, input_tokens: usage.prompt_tokens || 0, output_tokens: usage.completion_tokens || 0, cost, cached: true, response_time: 0 })
+      eventBus.emit('request:log', { type: 'response', method: 'POST', path: req.path, provider, model, backendUrl: providerConfig.base_url, requestSize: reqSize, messagePreview: msgPreview, tokens: { prompt: usage.prompt_tokens || 0, completion: usage.completion_tokens || 0, total: usage.total_tokens || 0 }, cost, cached: true, status: 200, responseTime: Date.now() - reqStart })
       return res.json(cached)
     }
     try {
       const { forwardChatRequest } = require('./forwarder')
       const response = await forwardChatRequest(providerConfig, model, messages, options, req.headers)
+      const usage = response.data?.usage
+      const cost = calculateCost(model, usage?.prompt_tokens || 0, usage?.completion_tokens || 0)
       cacheManager.set(cacheKey, response.data)
-      eventBus.emit('request:complete', { provider, model, input_tokens: response.data?.usage?.prompt_tokens || 0, output_tokens: response.data?.usage?.completion_tokens || 0, cached: false, response_time: Date.now() - reqStart })
+      eventBus.emit('request:complete', { provider, model, input_tokens: usage?.prompt_tokens || 0, output_tokens: usage?.completion_tokens || 0, cost, cached: false, response_time: Date.now() - reqStart })
+      eventBus.emit('request:log', { type: 'response', method: 'POST', path: req.path, provider, model, backendUrl: providerConfig.base_url, requestSize: reqSize, messagePreview: msgPreview, tokens: { prompt: usage?.prompt_tokens || 0, completion: usage?.completion_tokens || 0, total: usage?.total_tokens || 0 }, cost, cached: false, status: response.status, responseTime: Date.now() - reqStart })
       res.json(response.data)
     } catch (error) {
+      eventBus.emit('request:log', { type: 'error', method: 'POST', path: req.path, provider, model, requestSize: reqSize, messagePreview: msgPreview, error: error.message, status: error.response?.status || 500, responseTime: Date.now() - reqStart })
       res.status(500).json({ error: error.message })
     }
   })
@@ -180,8 +197,6 @@ function handleStreamProxy(providerConfig, providerId, model, messages, body, re
   const resolved = resolveApiKey(providerConfig, req.headers?.authorization)
   if (resolved.error) return res.status(401).json({ error: resolved.error })
 
-  svc.eventBus.emit('request:log', { type: 'stream', method: 'POST', path: req.path, provider: providerId, model, backendUrl: url, status: 200, responseTime: Date.now() - reqStart })
-
   axiosInstance({
     ...buildAxiosConfig(providerConfig, {
       method: 'POST', url,
@@ -202,13 +217,24 @@ function handleStreamProxy(providerConfig, providerId, model, messages, body, re
       }
     })
     response.data.on('end', () => {
+      // usage 解析单独包裹，解析失败不应影响后续缓存与统计
+      let usage = {}
+      if (lastChunkData) {
+        try { const parsed = JSON.parse(lastChunkData); usage = parsed.usage || parsed }
+        catch (e) { console.error('Stream usage parse error:', e.message) }
+      }
+      const inputTokens = usage.prompt_tokens || 0
+      const outputTokens = usage.completion_tokens || 0
+      const cost = calculateCost(model, inputTokens, outputTokens)
       try {
-        let usage = {}
-        if (lastChunkData) { const parsed = JSON.parse(lastChunkData); usage = parsed.usage || parsed }
         const sseEvents = parseSSEChunks(rawChunks)
         svc.cacheManager.set(cacheKey, { _sseEvents: sseEvents, _usage: usage })
-        svc.eventBus.emit('request:complete', { provider: providerId, model, input_tokens: usage.prompt_tokens || 0, output_tokens: usage.completion_tokens || 0, cached: false, response_time: Date.now() - reqStart })
-      } catch (e) { console.error('Stream parse error:', e) }
+      } catch (e) { console.error('Stream cache error:', e.message) }
+      try {
+        svc.eventBus.emit('request:complete', { provider: providerId, model, input_tokens: inputTokens, output_tokens: outputTokens, cost, cached: false, response_time: Date.now() - reqStart })
+        // 发送带最终 tokens 和 cost 的日志事件，供 UI 显示
+        svc.eventBus.emit('request:log', { type: 'stream', method: 'POST', path: req.path, provider: providerId, model, backendUrl: url, tokens: { prompt: inputTokens, completion: outputTokens, total: usage.total_tokens || inputTokens + outputTokens }, cost, cached: false, status: 200, responseTime: Date.now() - reqStart })
+      } catch (e) { console.error('Stream stats error:', e.message) }
       res.end()
     })
     response.data.on('error', (err) => {

@@ -92,13 +92,20 @@ async function startProxy(port = DEFAULT_PROXY_PORT) {
   }
 }
 
-function stopProxy() {
+async function stopProxy() {
   const wasRunning = !!proxyServer
-  if (proxyServer) { try { proxyServer.stop() } catch {} proxyServer = null; isProxyRunning = false }
+  if (proxyServer) {
+    try { await proxyServer.stop() } catch {}
+    proxyServer = null; isProxyRunning = false
+  }
   if (tokenMonitor) { tokenMonitor.close(); tokenMonitor = null }
   for (const unsub of _proxyEventUnsubs) { try { unsub() } catch {} }
   _proxyEventUnsubs = []
   updateTrayMenu()
+  // 通知渲染进程代理已停止（含从托盘/退出流程触发的情况），保持 UI 状态同步
+  if (wasRunning && mainWindow && !mainWindow.isDestroyed()) {
+    try { mainWindow.webContents.send('proxy-stopped') } catch {}
+  }
   return wasRunning ? { success: true } : { success: false, error: 'Proxy not running' }
 }
 
@@ -121,7 +128,7 @@ function createWindow() {
   else mainWindow.on('close', e => { e.preventDefault(); mainWindow.hide() })
 }
 
-function cleanupAndQuit() { stopProxy(); if (tray && !tray.isDestroyed()) tray.destroy(); tray = null; mainWindow = null; app.quit() }
+async function cleanupAndQuit() { await stopProxy(); if (tray && !tray.isDestroyed()) tray.destroy(); tray = null; mainWindow = null; app.quit() }
 
 function createTray() {
   let icon = nativeImage.createFromPath(getIconPath())
@@ -144,22 +151,29 @@ function updateTrayMenu() {
 }
 
 app.whenReady().then(() => { loadConfig(); createWindow(); createTray(); app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow() }) })
+let _quitting = false
 app.on('window-all-closed', () => { if (isLinux) cleanupAndQuit(); else if (!isMac) app.quit() })
-app.on('before-quit', () => stopProxy())
+app.on('before-quit', async (e) => { if (_quitting) return; _quitting = true; e.preventDefault(); await stopProxy(); app.exit(0) })
 
 ipcMain.handle('get-platform', () => ({ os: process.platform, isLinux, isMac, isWin, usesFrame: isLinux }))
 ipcMain.handle('get-config', () => loadConfig())
 ipcMain.handle('save-config', (_, newConfig) => saveConfig(newConfig))
-ipcMain.handle('select-folder', async () => (await dialog.showOpenDialog(mainWindow, { properties: ['openDirectory'] })).filePaths[0] || null)
+ipcMain.handle('select-folder', async () => {
+  const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null
+  const result = parent
+    ? await dialog.showOpenDialog(parent, { properties: ['openDirectory'] })
+    : await dialog.showOpenDialog({ properties: ['openDirectory'] })
+  return result.filePaths[0] || null
+})
 ipcMain.handle('get-background-url', () => `file://${getBackgroundPath()}`)
 ipcMain.handle('get-locale', () => app.getLocale())
-ipcMain.handle('window-minimize', () => mainWindow.minimize())
-ipcMain.handle('window-maximize', () => mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize())
-ipcMain.handle('window-close', () => isLinux ? cleanupAndQuit() : mainWindow.hide())
-ipcMain.handle('window-show', () => { mainWindow.show(); mainWindow.focus() })
+ipcMain.handle('window-minimize', () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.minimize() })
+ipcMain.handle('window-maximize', () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize() })
+ipcMain.handle('window-close', () => isLinux ? cleanupAndQuit() : (mainWindow && !mainWindow.isDestroyed() && mainWindow.hide()))
+ipcMain.handle('window-show', () => { if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus() } })
 ipcMain.handle('quit-app', () => cleanupAndQuit())
 ipcMain.handle('start-proxy', async (_, port) => startProxy(port || DEFAULT_PROXY_PORT))
-ipcMain.handle('stop-proxy', () => stopProxy())
+ipcMain.handle('stop-proxy', async () => stopProxy())
 ipcMain.handle('proxy-status', () => ({ running: isProxyRunning, port: proxyPort, host: proxyHost }))
 ipcMain.handle('build-context', async (_, projectPath) => {
   try {

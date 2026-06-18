@@ -5,7 +5,9 @@ function parseSSEChunks(rawChunks) {
   const lines = buffer.split('\n')
   let current = { event: '', data: '', id: '', retry: '' }
 
-  for (const line of lines) {
+  for (const rawLine of lines) {
+    // 兼容 CRLF 行尾：去除尾部 \r，否则空行变成 '\r' 导致事件无法分隔
+    const line = rawLine.endsWith('\r') ? rawLine.slice(0, -1) : rawLine
     if (line === '') {
       if (current.data || current.event) events.push({ ...current })
       current = { event: '', data: '', id: '', retry: '' }

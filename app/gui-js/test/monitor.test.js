@@ -66,4 +66,27 @@ describe('calculateCost', () => {
     const expected = 1000 * MODEL_PRICING['gpt-4o-mini'].input + 500 * MODEL_PRICING['gpt-4o-mini'].output
     assert.ok(Math.abs(cost - expected) < 1e-10)
   })
+
+  // 回归：Bug#1 — o1-mini 不应被 o1 前缀误匹配（精确匹配优先）
+  it('should NOT match o1-mini as o1 (exact match wins over prefix)', () => {
+    const cost = calculateCost('o1-mini', 1000, 500)
+    const expected = 1000 * MODEL_PRICING['o1-mini'].input + 500 * MODEL_PRICING['o1-mini'].output
+    assert.ok(Math.abs(cost - expected) < 1e-10, `o1-mini cost ${cost} should equal o1-mini price ${expected}`)
+    // 确认没有被算成 o1 的价格
+    const o1Cost = 1000 * MODEL_PRICING['o1'].input + 500 * MODEL_PRICING['o1'].output
+    assert.ok(Math.abs(cost - o1Cost) > 1e-10, 'o1-mini must not be priced as o1')
+  })
+
+  // 回归：Bug#1 — o1-mini-2024 变体应走最长前缀匹配到 o1-mini 而非 o1
+  it('should match o1-mini variants by longest prefix', () => {
+    const cost = calculateCost('o1-mini-2024-09-12', 1000, 500)
+    const expected = 1000 * MODEL_PRICING['o1-mini'].input + 500 * MODEL_PRICING['o1-mini'].output
+    assert.ok(Math.abs(cost - expected) < 1e-10)
+  })
+
+  it('should still match exact o1 correctly', () => {
+    const cost = calculateCost('o1', 1000, 500)
+    const expected = 1000 * MODEL_PRICING['o1'].input + 500 * MODEL_PRICING['o1'].output
+    assert.ok(Math.abs(cost - expected) < 1e-10)
+  })
 })

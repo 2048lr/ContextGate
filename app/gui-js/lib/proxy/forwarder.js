@@ -87,8 +87,15 @@ async function axiosRetry(config, retries = 2) {
   throw lastErr
 }
 
+// 拼接 base_url 与路径，去除多余斜杠避免出现 .../v1//chat/completions
+function joinUrl(base, path) {
+  const b = String(base || '').replace(/\/+$/, '')
+  const p = String(path || '').replace(/^\/+/, '')
+  return p ? `${b}/${p}` : b
+}
+
 async function forwardRequest(providerConfig, backendPath, data, requestHeaders) {
-  const url = `${providerConfig.base_url}${backendPath}`
+  const url = joinUrl(providerConfig.base_url, backendPath)
   const resolved = resolveApiKey(providerConfig, requestHeaders?.authorization)
   if (resolved.error) {
     const err = new Error(resolved.error)
@@ -102,7 +109,7 @@ async function forwardRequest(providerConfig, backendPath, data, requestHeaders)
 }
 
 async function forwardChatRequest(providerConfig, model, messages, options, requestHeaders) {
-  const url = `${providerConfig.base_url}/chat/completions`
+  const url = joinUrl(providerConfig.base_url, '/chat/completions')
   const resolved = resolveApiKey(providerConfig, requestHeaders?.authorization)
   if (resolved.error) {
     const err = new Error(resolved.error)
@@ -118,6 +125,6 @@ async function forwardChatRequest(providerConfig, model, messages, options, requ
 
 module.exports = {
   axiosInstance, axiosRetry, getAgent, buildAxiosConfig,
-  forwardRequest, forwardChatRequest,
+  forwardRequest, forwardChatRequest, joinUrl,
   isPlaceholderKey, resolveApiKey,
 }

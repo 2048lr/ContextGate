@@ -26,8 +26,18 @@ const MODEL_PRICING = {
 function calculateCost(model, inputTokens, outputTokens) {
   if (!model) return 0
   const lower = model.toLowerCase()
-  for (const [prefix, pricing] of Object.entries(MODEL_PRICING)) {
-    if (lower.startsWith(prefix)) return (inputTokens || 0) * pricing.input + (outputTokens || 0) * pricing.output
+  // 精确匹配优先（避免 'o1' 前缀误匹配 'o1-mini' 等情况）
+  if (MODEL_PRICING[lower]) {
+    const p = MODEL_PRICING[lower]
+    return (inputTokens || 0) * p.input + (outputTokens || 0) * p.output
+  }
+  // 降级：按前缀长度降序匹配最长的前缀（保证 o1-mini 先于 o1 匹配）
+  const prefixes = Object.keys(MODEL_PRICING).sort((a, b) => b.length - a.length)
+  for (const prefix of prefixes) {
+    if (lower.startsWith(prefix)) {
+      const p = MODEL_PRICING[prefix]
+      return (inputTokens || 0) * p.input + (outputTokens || 0) * p.output
+    }
   }
   return 0
 }

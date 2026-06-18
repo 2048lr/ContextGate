@@ -35,8 +35,10 @@ class CacheManager {
       .filter(k => body[k] !== undefined)
       .map(k => `${k}=${body[k]}`)
       .join(',')
+    // 包含 provider，避免不同 provider 相同请求共享缓存
+    const providerKey = body.provider || 'default'
     const ctxPart = contextHash ? contextHash.substring(0, 8) : 'none'
-    return `${req.method}:${req.path}:${modelKey}:${ctxPart}:${msgFingerprint}:${paramFingerprint}`
+    return `${req.method}:${req.path}:${providerKey}:${modelKey}:${ctxPart}:${msgFingerprint}:${paramFingerprint}`
   }
 
   shouldCache(method) { return ['GET', 'POST'].includes(method) }
@@ -50,12 +52,15 @@ class CacheManager {
   }
 
   invalidateIfNeeded(contextFile, projectRoot) {
-    // 快速路径：先检查上下文文件 mtime，未变化则跳过完整哈希计算
+    // 快速路径：先检查上下文文件 mtime，未变化则检查源文件 mtime
     if (this.contextSignature && this.contextSignature.file) {
       try {
         const stat = fs.statSync(this.contextSignature.file)
         if (this.contextSignature.mtimeMs && stat.mtimeMs === this.contextSignature.mtimeMs) {
-          return false
+          // 上下文文件未变，再快速检查源文件 mtime
+          if (this._sourceMtimesUnchanged(this.contextSignature, projectRoot)) {
+            return false
+          }
         }
       } catch { /* 文件可能已删除，继续走完整检查 */ }
     }
@@ -67,6 +72,20 @@ class CacheManager {
       return true
     }
     return false
+  }
+
+  _sourceMtimesUnchanged(signature, projectRoot) {
+    if (!signature || !signature.files || !projectRoot) return true
+    for (const rel of signature.files) {
+      try {
+        const stat = fs.statSync(path.join(projectRoot, rel))
+        // 源文件 mtime 记录在 fileHashes 中不合适，用单独的 map 存储
+        if (!signature.sourceMtimes) return false // 无 mtime 记录，走完整检查
+        const recorded = signature.sourceMtimes[rel]
+        if (recorded === undefined || stat.mtimeMs !== recorded) return false
+      } catch { return false } // 文件可能已删除
+    }
+    return true
   }
 }
 
@@ -89,14 +108,17 @@ function computeContextSignature(contextFile, projectRoot) {
       if (m) files.push(m[1])
     }
     const fileHashes = {}
+    const sourceMtimes = {}
     if (projectRoot) {
       for (const rel of files) {
-        const hash = computeFileHash(path.join(projectRoot, rel))
+        const fullPath = path.join(projectRoot, rel)
+        const hash = computeFileHash(fullPath)
         if (hash) fileHashes[rel] = hash
+        try { sourceMtimes[rel] = fs.statSync(fullPath).mtimeMs } catch { /* 文件可能已删除 */ }
       }
     }
     const combinedHash = crypto.createHash('sha1').update(JSON.stringify(fileHashes)).digest('hex')
-    return { mainHash, combinedHash, fileHashes, fileCount: files.length, files, file: contextFile, mtimeMs: stat.mtimeMs }
+    return { mainHash, combinedHash, fileHashes, sourceMtimes, fileCount: files.length, files, file: contextFile, mtimeMs: stat.mtimeMs }
   } catch { return null }
 }
 
