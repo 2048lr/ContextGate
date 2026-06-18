@@ -28,6 +28,7 @@ let mainWindow = null, tray = null, config = {}
 let proxyServer = null, proxyPort = DEFAULT_PROXY_PORT
 const proxyHost = DEFAULT_PROXY_HOST
 let isProxyRunning = false, tokenMonitor = null
+let _proxyEventUnsubs = []
 const eventBus = new EventBus()
 
 function getDataDir() { const p = app.getPath('userData'); if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); return p }
@@ -73,8 +74,10 @@ async function startProxy(port = DEFAULT_PROXY_PORT) {
   if (workspace) { const scanner = new CodeScanner(workspace); await scanner.buildContext(contextFile) }
 
   tokenMonitor = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') })
-  eventBus.on('request:complete', data => tokenMonitor?.recordRequest(data))
-  eventBus.on('request:log', data => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('proxy-log', data) })
+  _proxyEventUnsubs = [
+    eventBus.on('request:complete', data => tokenMonitor?.recordRequest(data)),
+    eventBus.on('request:log', data => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('proxy-log', data) }),
+  ]
 
   const proxy = new ProxyServer({ contextFile, configPath: cfgPath, projectRoot: workspace, dataDir: getDataDir(), eventBus })
   try {
@@ -93,7 +96,8 @@ function stopProxy() {
   const wasRunning = !!proxyServer
   if (proxyServer) { try { proxyServer.stop() } catch {} proxyServer = null; isProxyRunning = false }
   if (tokenMonitor) { tokenMonitor.close(); tokenMonitor = null }
-  eventBus.clear()
+  for (const unsub of _proxyEventUnsubs) { try { unsub() } catch {} }
+  _proxyEventUnsubs = []
   updateTrayMenu()
   return wasRunning ? { success: true } : { success: false, error: 'Proxy not running' }
 }
@@ -130,11 +134,11 @@ function createTray() {
 function updateTrayMenu() {
   if (!tray || tray.isDestroyed()) return
   const template = [
-    { label: '显示窗口', click: () => { mainWindow.show(); mainWindow.focus() } },
+    { label: '显示窗口', click: () => { if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus() } } },
     { type: 'separator' },
     { label: isProxyRunning ? '停止代理' : '启动代理', click: () => isProxyRunning ? stopProxy() : startProxy(proxyPort) },
     { type: 'separator' },
-    { label: '退出', click: () => { stopProxy(); if (!isLinux) mainWindow.destroy(); app.quit() } },
+    { label: '退出', click: () => { stopProxy(); if (!isLinux && mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy(); app.quit() } },
   ]
   tray.setContextMenu(Menu.buildFromTemplate(template))
 }
@@ -166,5 +170,10 @@ ipcMain.handle('build-context', async (_, projectPath) => {
     return { success: true, fileCount, totalChars, estimatedTokens, outputPath }
   } catch (e) { return { success: false, error: e.message } }
 })
-ipcMain.handle('get-stats', () => { if (!tokenMonitor) tokenMonitor = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') }); return tokenMonitor.getSummary() })
+ipcMain.handle('get-stats', async () => {
+  if (tokenMonitor) return tokenMonitor.getSummary()
+  const monitor = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') })
+  try { return await monitor.getSummary() }
+  finally { monitor.close() }
+})
 ipcMain.handle('get-memory-usage', () => { const m = process.memoryUsage(); return { heapUsed: Math.round(m.heapUsed / 1024 / 1024), heapTotal: Math.round(m.heapTotal / 1024 / 1024), rss: Math.round(m.rss / 1024 / 1024) } })

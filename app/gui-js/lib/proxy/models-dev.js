@@ -8,9 +8,11 @@ const CACHE_TTL = 24 * 60 * 60 * 1000
 let _cache = null
 let _cacheTime = 0
 let _cachePath = null
+let _cacheDataDir = null
 
 function getCachePath(dataDir) {
-  if (_cachePath) return _cachePath
+  if (_cachePath && _cacheDataDir === dataDir) return _cachePath
+  _cacheDataDir = dataDir
   _cachePath = path.join(dataDir || require('os').tmpdir(), 'models-dev-cache.json')
   return _cachePath
 }

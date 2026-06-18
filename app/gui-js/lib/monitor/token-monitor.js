@@ -13,6 +13,7 @@ class TokenMonitor {
     this._flushTimer = null
     this._flushing = false
     this._processing = false
+    this._closed = false
   }
 
   async _init() {
@@ -25,7 +26,17 @@ class TokenMonitor {
     }
   }
 
-  async _ensureReady() { if (!this.db) await this._initPromise }
+  async _ensureReady() {
+    if (this._closed) throw new Error('TokenMonitor is closed')
+    if (!this.db) {
+      try {
+        await this._initPromise
+      } catch (e) {
+        throw new Error(`TokenMonitor not initialized: ${e.message}`)
+      }
+    }
+    if (this._closed || !this.db) throw new Error('TokenMonitor is closed')
+  }
 
   _createTables() {
     this.db.run(`CREATE TABLE IF NOT EXISTS requests (
@@ -94,7 +105,7 @@ class TokenMonitor {
     )
     const month = today.substring(0, 7)
     this._enQueueWrite(
-      `INSERT INTO monthly_stats (month,total_requests,total_tokens,total_cost) VALUES (1,?,?) ON CONFLICT(month) DO UPDATE SET total_requests=total_requests+1,total_tokens=total_tokens+?,total_cost=total_cost+?`,
+      `INSERT INTO monthly_stats (month,total_requests,total_tokens,total_cost) VALUES (?,1,?,?) ON CONFLICT(month) DO UPDATE SET total_requests=total_requests+1,total_tokens=total_tokens+?,total_cost=total_cost+?`,
       [month, totalTokens, cost, totalTokens, cost],
     )
   }
@@ -138,12 +149,22 @@ class TokenMonitor {
   }
 
   close() {
-    if (this._flushTimer) { clearTimeout(this._flushTimer); this._flushTimer = null }
-    if (this._writeQueue.length > 0 && this.db) {
-      for (const w of this._writeQueue) try { this.db.run(w.sql, w.params) } catch {}
-      this._writeQueue = []; this._saveDb()
+    this._closed = true
+    // 若初始化仍在进行，先等待完成再关闭，防止 _init 完成后创建悬空 db 实例
+    const doClose = () => {
+      if (this._flushTimer) { clearTimeout(this._flushTimer); this._flushTimer = null }
+      if (this._writeQueue.length > 0 && this.db) {
+        for (const w of this._writeQueue) try { this.db.run(w.sql, w.params) } catch (e) { console.error('TokenMonitor close write failed:', e) }
+        this._writeQueue = []; this._saveDb()
+      }
+      if (this.db) { this.db.close(); this.db = null }
     }
-    if (this.db) { this.db.close(); this.db = null }
+    // 若 _initPromise 尚未 settled，等待后再关闭
+    if (!this.db) {
+      Promise.resolve(this._initPromise).catch(() => {}).then(doClose)
+    } else {
+      doClose()
+    }
   }
 }
 

@@ -54,7 +54,13 @@ class CodeScanner {
         }
         for (const d of subDirs) queue.push(d)
       } catch (e) { console.error(`Failed to read ${currentDir}:`, e.message) }
-      finally { active--; if (active === 0 && queue.length === 0) resolveDrain() }
+      finally {
+        active--
+        // 延迟一个微任务，让外层 while 循环有机会先从 queue 取出新目录并递增 active，
+        // 避免 drain 在子目录入队但尚未被调度时提前触发
+        await Promise.resolve()
+        if (active === 0 && queue.length === 0) resolveDrain()
+      }
     }
 
     while (queue.length > 0 || active > 0) {

@@ -46,9 +46,10 @@ function resolveApiKey(providerConfig, clientAuthHeader) {
   if (clientAuthHeader && typeof clientAuthHeader === 'string') {
     clientKey = clientAuthHeader.replace(/^Bearer\s+/i, '').trim()
   }
+  // 优先使用代理配置的 key
   if (!isPlaceholderKey(proxyKey)) return { key: proxyKey, source: 'proxy' }
+  // 代理未配置 key 时，仅在 passthrough_auth 启用时使用客户端 key
   if (providerConfig.passthrough_auth && !isPlaceholderKey(clientKey)) return { key: clientKey, source: 'client' }
-  if (!isPlaceholderKey(clientKey)) return { key: clientKey, source: 'client' }
   return { key: '', source: 'none', error: 'No valid API key configured' }
 }
 

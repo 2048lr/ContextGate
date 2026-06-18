@@ -29,7 +29,11 @@ function serializeSSEEvents(events) {
     if (evt.id) output += `id: ${evt.id}\n`
     if (evt.event) output += `event: ${evt.event}\n`
     if (evt.retry) output += `retry: ${evt.retry}\n`
-    output += `data: ${evt.data}\n\n`
+    // 多行 data 必须每行单独加 "data: " 前缀，否则不符合 SSE 规范
+    for (const dataLine of (evt.data || '').split('\n')) {
+      output += `data: ${dataLine}\n`
+    }
+    output += '\n'
   }
   return output
 }

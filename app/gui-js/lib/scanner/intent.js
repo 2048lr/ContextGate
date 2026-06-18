@@ -23,11 +23,13 @@ class IntentExtractor {
   }
 
   _extractFileReferences() {
-    const patterns = [
+    const patternDefs = [
       /["']([^"']+\.(?:js|ts|jsx|tsx|py|go|java|rs|c|cpp|h|vue|svelte))["']/gi,
       /\b(\w+\.(?:js|ts|jsx|tsx|py|go|java|rs|c|cpp|h|vue|svelte))\b/gi,
     ]
-    for (const pattern of patterns) {
+    for (const pat of patternDefs) {
+      // 每次使用前复制正则，避免带 g 标志的字面量 lastIndex 污染跨实例调用
+      const pattern = new RegExp(pat.source, pat.flags)
       let m
       while ((m = pattern.exec(this.prompt)) !== null) {
         const f = m[1].toLowerCase()
@@ -37,8 +39,10 @@ class IntentExtractor {
   }
 
   _extractModuleReferences() {
-    const patterns = [/(\w+)[Mm]odule/g, /(\w+)[Ss]ervice/g, /(\w+)[Cc]ontroller/g, /(\w+)[Mm]odel/g, /(\w+)[Hh]andler/g, /(\w+)[Cc]omponent/g]
-    for (const p of patterns) {
+    const patternDefs = [/(\w+)[Mm]odule/g, /(\w+)[Ss]ervice/g, /(\w+)[Cc]ontroller/g, /(\w+)[Mm]odel/g, /(\w+)[Hh]andler/g, /(\w+)[Cc]omponent/g]
+    for (const pat of patternDefs) {
+      // 每次使用前复制正则，避免 lastIndex 污染
+      const p = new RegExp(pat.source, pat.flags)
       let m
       while ((m = p.exec(this.prompt)) !== null) {
         const mod = m[1].toLowerCase()
@@ -60,11 +64,11 @@ class IntentExtractor {
 
   _extractCodeConcepts() {
     const concepts = {
-      function: /函数|方法|\bfunction\b|\bmethod\b/gi,
-      class: /类|结构体|\bclass\b|\bstruct\b/gi,
-      interface: /接口|\binterface\b/gi,
-      error: /错误|异常|\berror|\bexception|\bbug\b/gi,
-      test: /测试|\btest\b/gi,
+      function: /函数|方法|\bfunction\b|\bmethod\b/i,
+      class: /类|结构体|\bclass\b|\bstruct\b/i,
+      interface: /接口|\binterface\b/i,
+      error: /错误|异常|\berrors?\b|\bexceptions?\b|\bbug\b/i,
+      test: /测试|\btest\b/i,
     }
     for (const [c, p] of Object.entries(concepts)) {
       if (p.test(this.prompt)) this.codeConcepts.push(c)

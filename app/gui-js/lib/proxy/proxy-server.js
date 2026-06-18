@@ -47,13 +47,28 @@ class ProxyServer {
   async start(host = DEFAULT_PROXY_HOST, port = DEFAULT_PROXY_PORT) {
     await this.init()
     return new Promise((resolve, reject) => {
-      this.server = this.app.listen(port, host, () => resolve({ port, host }))
+      this.server = this.app.listen(port, host, () => {
+        // 启动成功后替换为运行期错误处理器，防止 error 事件无人处理导致进程崩溃
+        this.server.removeAllListeners('error')
+        this.server.on('error', (err) => console.error('[ProxyServer] runtime error:', err))
+        resolve({ port, host })
+      })
       this.server.on('error', reject)
     })
   }
 
   stop() {
-    if (this.server) { this.server.close(); this.server = null }
+    return new Promise((resolve) => {
+      if (!this.server) return resolve()
+      const srv = this.server
+      this.server = null
+      let resolved = false
+      const done = () => { if (!resolved) { resolved = true; resolve() } }
+      srv.close(done)
+      // 防止 server 已关闭或出错时回调不执行导致 Promise 永久挂起
+      srv.on('error', done)
+      setTimeout(done, 3000)
+    })
   }
 }
 

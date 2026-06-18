@@ -2,6 +2,7 @@ const { VERSION } = require('../core/constants')
 const { resolveApiKey } = require('./forwarder')
 const { axiosRetry, buildAxiosConfig } = require('./forwarder')
 const { extractMsgPreview } = require('./stream-handler')
+const { calculateCost } = require('../monitor/cost-calculator')
 
 const ALLOWED_V1_PATHS = [
   '/v1/chat/completions', '/v1/completions', '/v1/embeddings',
@@ -41,7 +42,9 @@ function createRoutes(app, svc) {
   })
 
   app.all('/v1/*', async (req, res) => {
-    if (!ALLOWED_V1_PATHS.includes(req.path)) {
+    // 规范化路径，移除尾部斜杠以匹配允许列表
+    const normalizedPath = req.path.endsWith('/') && req.path.length > 1 ? req.path.replace(/\/+$/, '') : req.path
+    if (!ALLOWED_V1_PATHS.includes(normalizedPath)) {
       return res.status(403).json({ error: 'Path not allowed', allowed: ALLOWED_V1_PATHS })
     }
     const reqStart = Date.now()
@@ -69,7 +72,7 @@ function createRoutes(app, svc) {
         const cached = cacheManager.get(cacheKey)
         const usage = cached._usage || cached.usage || {}
         eventBus.emit('request:complete', { provider: providerId, model, input_tokens: usage.prompt_tokens || 0, output_tokens: usage.completion_tokens || 0, cached: true, response_time: 0 })
-        eventBus.emit('request:log', { type: 'response', method: req.method, path: req.path, provider: providerId, model, backendUrl, requestSize: reqSize, messagePreview: msgPreview, tokens: { prompt: usage.prompt_tokens || 0, completion: usage.completion_tokens || 0, total: usage.total_tokens || 0 }, cached: true, status: 200, responseTime: Date.now() - reqStart })
+        eventBus.emit('request:log', { type: 'response', method: req.method, path: req.path, provider: providerId, model, backendUrl, requestSize: reqSize, messagePreview: msgPreview, tokens: { prompt: usage.prompt_tokens || 0, completion: usage.completion_tokens || 0, total: usage.total_tokens || 0 }, cost: calculateCost(model, usage.prompt_tokens || 0, usage.completion_tokens || 0), cached: true, status: 200, responseTime: Date.now() - reqStart })
         if (cached._sseEvents) {
           res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'X-Cache': 'HIT' })
           return res.end(require('./stream-handler').serializeSSEEvents(cached._sseEvents))
@@ -84,7 +87,7 @@ function createRoutes(app, svc) {
       }
 
       if (isStream) {
-        return handleStreamProxy(providerConfig, providerId, model, messages, body, req, res, cacheKey, reqStart, svc)
+        return handleStreamProxy(providerConfig, providerId, model, messages, body, req, res, cacheKey, reqStart, svc, backendUrl)
       }
 
       const { forwardRequest } = require('./forwarder')
@@ -93,7 +96,7 @@ function createRoutes(app, svc) {
       const usage = response.data?.usage
       if (response.data && cacheManager.shouldCache(req.method)) cacheManager.set(cacheKey, response.data)
       eventBus.emit('request:complete', { provider: providerId, model, input_tokens: usage?.prompt_tokens || 0, output_tokens: usage?.completion_tokens || 0, cached: false, response_time: responseTime })
-      eventBus.emit('request:log', { type: 'response', method: req.method, path: req.path, provider: providerId, model, backendUrl, requestSize: reqSize, messagePreview: msgPreview, tokens: { prompt: usage?.prompt_tokens || 0, completion: usage?.completion_tokens || 0, total: usage?.total_tokens || 0 }, cached: false, status: response.status, responseTime })
+      eventBus.emit('request:log', { type: 'response', method: req.method, path: req.path, provider: providerId, model, backendUrl, requestSize: reqSize, messagePreview: msgPreview, tokens: { prompt: usage?.prompt_tokens || 0, completion: usage?.completion_tokens || 0, total: usage?.total_tokens || 0 }, cost: calculateCost(model, usage?.prompt_tokens || 0, usage?.completion_tokens || 0), cached: false, status: response.status, responseTime })
       res.json(response.data)
     } catch (error) {
       const responseTime = Date.now() - reqStart
@@ -170,10 +173,10 @@ function createRoutes(app, svc) {
   })
 }
 
-function handleStreamProxy(providerConfig, providerId, model, messages, body, req, res, cacheKey, reqStart, svc) {
+function handleStreamProxy(providerConfig, providerId, model, messages, body, req, res, cacheKey, reqStart, svc, backendUrl) {
   const { axiosInstance, buildAxiosConfig, resolveApiKey } = require('./forwarder')
   const { parseSSEChunks } = require('./stream-handler')
-  const url = `${providerConfig.base_url}/chat/completions`
+  const url = backendUrl || `${providerConfig.base_url}/chat/completions`
   const resolved = resolveApiKey(providerConfig, req.headers?.authorization)
   if (resolved.error) return res.status(401).json({ error: resolved.error })
 
@@ -182,7 +185,7 @@ function handleStreamProxy(providerConfig, providerId, model, messages, body, re
   axiosInstance({
     ...buildAxiosConfig(providerConfig, {
       method: 'POST', url,
-      data: { model, messages, stream: true, ...body },
+      data: { ...body, model, messages, stream: true },
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resolved.key}` },
       responseType: 'stream',
     }),
@@ -208,10 +211,15 @@ function handleStreamProxy(providerConfig, providerId, model, messages, body, re
       } catch (e) { console.error('Stream parse error:', e) }
       res.end()
     })
-    response.data.on('error', (err) => { console.error('Stream error:', err.message); res.end() })
+    response.data.on('error', (err) => {
+      console.error('Stream error:', err.message)
+      svc.eventBus.emit('request:complete', { provider: providerId, model, input_tokens: 0, output_tokens: 0, cached: false, response_time: Date.now() - reqStart })
+      if (!res.headersSent) res.status(500).json({ error: err.message }); else res.end()
+    })
   }).catch(error => {
     svc.eventBus.emit('request:log', { type: 'error', method: 'POST', path: req.path, provider: providerId, model, error: error.message, status: error.response?.status || 500, responseTime: Date.now() - reqStart })
-    res.status(500).json({ error: error.message })
+    if (!res.headersSent) res.status(500).json({ error: error.message })
+    else res.end()
   })
 }
 

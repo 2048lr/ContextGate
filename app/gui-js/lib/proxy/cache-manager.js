@@ -29,8 +29,14 @@ class CacheManager {
     if (!msgFingerprint) {
       msgFingerprint = crypto.createHash('md5').update(JSON.stringify(body)).digest('hex').substring(0, 12)
     }
+    // 包含影响输出的关键参数，避免相同消息不同参数命中同一缓存
+    const paramKeys = ['temperature', 'max_tokens', 'top_p', 'frequency_penalty', 'presence_penalty', 'stream']
+    const paramFingerprint = paramKeys
+      .filter(k => body[k] !== undefined)
+      .map(k => `${k}=${body[k]}`)
+      .join(',')
     const ctxPart = contextHash ? contextHash.substring(0, 8) : 'none'
-    return `${req.method}:${req.path}:${modelKey}:${ctxPart}:${msgFingerprint}`
+    return `${req.method}:${req.path}:${modelKey}:${ctxPart}:${msgFingerprint}:${paramFingerprint}`
   }
 
   shouldCache(method) { return ['GET', 'POST'].includes(method) }
@@ -44,6 +50,15 @@ class CacheManager {
   }
 
   invalidateIfNeeded(contextFile, projectRoot) {
+    // 快速路径：先检查上下文文件 mtime，未变化则跳过完整哈希计算
+    if (this.contextSignature && this.contextSignature.file) {
+      try {
+        const stat = fs.statSync(this.contextSignature.file)
+        if (this.contextSignature.mtimeMs && stat.mtimeMs === this.contextSignature.mtimeMs) {
+          return false
+        }
+      } catch { /* 文件可能已删除，继续走完整检查 */ }
+    }
     const result = checkContextChanged(this.contextSignature, contextFile, projectRoot)
     if (result.changed) {
       console.log('[Cache INVALIDATED] Source file changed')
@@ -65,6 +80,7 @@ function computeFileHash(filePath) {
 function computeContextSignature(contextFile, projectRoot) {
   try {
     if (!fs.existsSync(contextFile)) return null
+    const stat = fs.statSync(contextFile)
     const content = fs.readFileSync(contextFile, 'utf8')
     const mainHash = crypto.createHash('sha1').update(content).digest('hex')
     const files = []
@@ -80,13 +96,17 @@ function computeContextSignature(contextFile, projectRoot) {
       }
     }
     const combinedHash = crypto.createHash('sha1').update(JSON.stringify(fileHashes)).digest('hex')
-    return { mainHash, combinedHash, fileHashes, fileCount: files.length, files, file: contextFile }
+    return { mainHash, combinedHash, fileHashes, fileCount: files.length, files, file: contextFile, mtimeMs: stat.mtimeMs }
   } catch { return null }
 }
 
 function checkContextChanged(currentSignature, contextFile, projectRoot) {
   const newSig = computeContextSignature(contextFile, projectRoot)
-  if (!newSig) return { changed: false, signature: null }
+  // 上下文文件被删除时，应失效缓存
+  if (!newSig) {
+    if (currentSignature) return { changed: true, signature: null }
+    return { changed: false, signature: null }
+  }
   if (!currentSignature) return { changed: true, signature: newSig }
   const changed = newSig.combinedHash !== currentSignature.combinedHash || newSig.mainHash !== currentSignature.mainHash
   return { changed, signature: newSig }

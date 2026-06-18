@@ -99,7 +99,7 @@ async function startProxy() {
   else toast('启动失败: ' + r.error, 'error')
 }
 async function stopProxy() { const r = await window.electronAPI.stopProxy(); if (r.success) { proxyRunning = false; updateProxyUI(); document.getElementById('connection-status').textContent = '已停止' } }
-async function clearCache() { try { await fetch(`http://127.0.0.1:${proxyPort}/cache`, { method: 'DELETE' }); toast('缓存已清空', 'success') } catch (e) { toast('失败: ' + e.message, 'error') } }
+async function clearCache() { try { await fetch(`http://${config.proxy?.host || '127.0.0.1'}:${proxyPort}/cache`, { method: 'DELETE' }); toast('缓存已清空', 'success') } catch (e) { toast('失败: ' + e.message, 'error') } }
 
 function updateProxyUI() {
   const ind = document.getElementById('proxy-status-indicator'), badge = document.getElementById('proxy-badge')
@@ -149,7 +149,9 @@ async function fetchModels() {
   if (!apiKey) { toast('请先填写 API 密钥', 'warn'); return }
   const btn = document.getElementById('btn-fetch-models'); btn.disabled = true; btn.textContent = '⏳ 获取中...'
   try {
-    const res = await fetch(baseUrl.replace(/\/+$/, '') + '/models', { headers: { 'Authorization': `Bearer ${apiKey}` } })
+    // 通过代理服务器转发请求，避免渲染进程直接请求外部 API 的 CORS 问题
+    const proxyHost = config.proxy?.host || '127.0.0.1'
+    const res = await fetch(`http://${proxyHost}:${proxyPort}/v1/models`, { headers: { 'Authorization': `Bearer ${apiKey}`, 'X-Target-Base-Url': baseUrl.replace(/\/+$/, '') } })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const models = ((await res.json()).data || []).map(m => m.id || m.model || m.name).filter(Boolean)
     if (!models.length) { toast('未返回模型列表', 'warn'); btn.disabled = false; btn.textContent = '⬇ 获取模型列表'; return }
@@ -212,13 +214,15 @@ function setupProxyListeners() {
       addLogEntry(data)
       if (data.type === 'response' || data.type === 'stream') {
         stats.todayRequests++; stats.todayTokens += data.tokens?.total || 0
-        if (data.cached) { stats.todaySavings += 0.002 * (data.tokens?.total || 0); stats.cacheHits++ }
+        if (data.cached) { stats.todaySavings += data.cost || 0; stats.cacheHits++ }
         updateStatsUI()
       }
     }
   })
   window.electronAPI.onProxyStopped(() => { proxyRunning = false; updateProxyUI() })
 }
+
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str ?? ''; return d.innerHTML }
 
 function addLogEntry(data) {
   const lc = document.getElementById('log-content'); if (!lc) return
@@ -227,7 +231,12 @@ function addLogEntry(data) {
   const row = document.createElement('div')
   row.className = 'log-row' + (isErr ? ' log-row-error' : '') + (isCache ? ' log-row-cache' : '') + (isStream ? ' log-row-stream' : '')
   const ms = (data.model || '').length > 26 ? (data.model || '').substring(0, 24) + '…' : (data.model || '-')
-  row.innerHTML = `<div class="log-row-main"><span class="log-tag ${isErr ? 'log-tag-err' : isCache ? 'log-tag-cache' : isStream ? 'log-tag-stream' : 'log-tag-ok'}">${isErr ? 'ERR' : isCache ? 'CACHE' : isStream ? 'STREAM' : 'OK'}</span><span class="log-row-model">${ms}</span><span class="log-row-tokens">${t.prompt || 0}↑ ${t.completion || 0}↓ ${t.total || 0}∑</span><span class="log-row-time">${data.responseTime || 0}ms</span><span class="log-row-cost">${currencySymbols[currentCurrency]}${cost}</span></div><div class="log-row-detail"><span class="log-row-path">${data.method || ''} ${data.path || ''}</span><span class="log-row-url">→ ${data.backendUrl || ''}</span></div>${data.messagePreview ? `<div class="log-row-preview">${data.messagePreview}</div>` : ''}${isErr ? `<div class="log-row-errmsg">${data.error || ''}</div>` : ''}`
+  const safeMs = escapeHtml(ms)
+  const safePath = escapeHtml(`${data.method || ''} ${data.path || ''}`)
+  const safeUrl = escapeHtml(data.backendUrl || '')
+  const safePreview = escapeHtml(data.messagePreview || '')
+  const safeError = escapeHtml(data.error || '')
+  row.innerHTML = `<div class="log-row-main"><span class="log-tag ${isErr ? 'log-tag-err' : isCache ? 'log-tag-cache' : isStream ? 'log-tag-stream' : 'log-tag-ok'}">${isErr ? 'ERR' : isCache ? 'CACHE' : isStream ? 'STREAM' : 'OK'}</span><span class="log-row-model">${safeMs}</span><span class="log-row-tokens">${t.prompt || 0}↑ ${t.completion || 0}↓ ${t.total || 0}∑</span><span class="log-row-time">${data.responseTime || 0}ms</span><span class="log-row-cost">${currencySymbols[currentCurrency]}${cost}</span></div><div class="log-row-detail"><span class="log-row-path">${safePath}</span><span class="log-row-url">→ ${safeUrl}</span></div>${safePreview ? `<div class="log-row-preview">${safePreview}</div>` : ''}${isErr ? `<div class="log-row-errmsg">${safeError}</div>` : ''}`
   lc.appendChild(row); lc.scrollTop = lc.scrollHeight
 }
 

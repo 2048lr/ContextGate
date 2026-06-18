@@ -61,10 +61,16 @@ describe('API Key resolution', () => {
     assert.equal(r.source, 'proxy')
   })
 
-  it('should fall back to client key when proxy is placeholder', () => {
-    const r = resolveApiKey({ api_key: 'sk-xxx' }, 'Bearer sk-client-key')
+  it('should fall back to client key when proxy is placeholder and passthrough_auth is enabled', () => {
+    const r = resolveApiKey({ api_key: 'sk-xxx', passthrough_auth: true }, 'Bearer sk-client-key')
     assert.equal(r.key, 'sk-client-key')
     assert.equal(r.source, 'client')
+  })
+
+  it('should not use client key when passthrough_auth is disabled', () => {
+    const r = resolveApiKey({ api_key: 'sk-xxx', passthrough_auth: false }, 'Bearer sk-client-key')
+    assert.ok(r.error)
+    assert.equal(r.key, '')
   })
 
   it('should return error when no valid key', () => {

@@ -47,11 +47,14 @@ const FILE_CONFIGS = [
     id: 'package-lock.json',
     filePath: path.join(PROJECT_ROOT, 'app', 'gui-js', 'package-lock.json'),
     type: 'json',
-    // Replace the top-level "version" field only (lockfileVersion stays untouched)
+    // Replace the top-level "version" field and packages[""].version
     replace: (content, newVersion) => {
       const json = JSON.parse(content);
       const oldVersion = json.version;
       json.version = newVersion;
+      if (json.packages && json.packages['']) {
+        json.packages[''].version = newVersion;
+      }
       return { result: JSON.stringify(json, null, 2) + '\n', oldVersion };
     },
     extract: (content) => JSON.parse(content).version,
