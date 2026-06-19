@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.3.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-5.3.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/Electron-28-blue" alt="Electron">
   <img src="https://img.shields.io/badge/platform-Windows-blue" alt="Platform">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="License">
@@ -197,7 +197,7 @@ providers:
 
 ## Changelog
 
-### v5.3.0
+### v5.3.1
 - **Bug 修复（高严重度）**:
   - 修复 `stopProxy` 不 await `proxyServer.stop()` 导致端口占用和数据库写入丢失
   - 修复 `invalidateIfNeeded` mtime 快速路径遗漏源文件变化（回归问题）
