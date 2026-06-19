@@ -297,6 +297,428 @@ async function handleRelease(type) {
   };
 }
 
+// Git 标签创建
+async function handleTagCreate(version, message) {
+  const semverRegex = /^[0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9.]+)?$/;
+  if (!semverRegex.test(version)) {
+    return { exitCode: -1, output: '', error: 'Invalid version format: ' + version };
+  }
+  const tag = 'v' + version;
+  const msg = message || ('Release ' + tag);
+  const existingTags = await getGitTags();
+  if (existingTags.some(t => t.tag === tag)) {
+    return { exitCode: -1, output: '', error: 'Tag ' + tag + ' already exists' };
+  }
+  const result = await runGit(['tag', '-a', tag, '-m', msg]);
+  return {
+    exitCode: result.code,
+    output: result.stdout || result.stderr || ('Created tag ' + tag),
+    error: result.stderr,
+    tag: tag,
+  };
+}
+
+// 构建打包
+function handleBuild() {
+  return new Promise((resolve) => {
+    const child = execFile('npm', ['run', 'build:win'], {
+      cwd: GUI_JS_DIR,
+      encoding: 'utf8',
+      maxBuffer: 50 * 1024 * 1024,
+      timeout: 600000,
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d) => { stdout += d; });
+    child.stderr.on('data', (d) => { stderr += d; });
+    child.on('close', (code) => {
+      const distPath = path.join(GUI_JS_DIR, 'dist');
+      let artifacts = [];
+      try {
+        if (fs.existsSync(distPath)) {
+          artifacts = fs.readdirSync(distPath).map(f => {
+            const filePath = path.join(distPath, f);
+            const stat = fs.statSync(filePath);
+            return { name: f, size: stat.size, path: filePath };
+          }).filter(f => f.name.endsWith('.exe') || f.name.endsWith('.7z') || f.name.endsWith('.yml') || f.name.endsWith('.blockmap'));
+        }
+      } catch (e) {}
+      resolve({ exitCode: code, stdout: stdout, stderr: stderr, artifacts: artifacts });
+    });
+    child.on('error', (err) => {
+      resolve({ exitCode: -1, stdout: '', stderr: err.message, artifacts: [] });
+    });
+  });
+}
+
+// GitHub Releases 上传 - 使用 SSE 流式传输进度
+const uploadSessions = new Map();
+
+// 从 git remote 自动检测 GitHub owner/repo
+async function getGitHubRepoInfo() {
+  const remoteResult = await runGit(['remote', 'get-url', 'origin']);
+  if (remoteResult.code !== 0) {
+    return { hasRemote: false, owner: null, repo: null };
+  }
+  const url = remoteResult.stdout.trim();
+  let owner = null, repo = null;
+  // https://github.com/owner/repo.git
+  let m = url.match(/github\.com[/:]([^\/]+)\/([^\/\s]+?)(?:\.git)?$/);
+  if (m) {
+    owner = m[1];
+    repo = m[2];
+  }
+  return { hasRemote: !!owner, owner: owner, repo: repo, remoteUrl: url };
+}
+
+// 创建 GitHub Release
+function handleGitHubReleaseCreate(token, owner, repo, tagName, releaseName, body, prerelease, draft) {
+  return new Promise((resolve) => {
+    const https = require('https');
+    const payload = JSON.stringify({
+      tag_name: tagName,
+      name: releaseName || tagName,
+      body: body || '',
+      draft: !!draft,
+      prerelease: !!prerelease,
+    });
+    const options = {
+      hostname: 'api.github.com',
+      path: '/repos/' + owner + '/' + repo + '/releases',
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'ContextGate-VersionGUI',
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (d) => { data += d; });
+      res.on('end', () => {
+        let parsed = null;
+        try { parsed = JSON.parse(data); } catch(e) {}
+        if (res.statusCode >= 200 && res.statusCode < 300 && parsed) {
+          resolve({
+            exitCode: 0,
+            releaseId: parsed.id,
+            htmlUrl: parsed.html_url,
+            uploadUrl: parsed.upload_url,
+            tagName: parsed.tag_name,
+            output: 'GitHub Release 已创建: ' + (parsed.html_url || ''),
+          });
+        } else {
+          resolve({
+            exitCode: -1,
+            error: 'HTTP ' + res.statusCode + ': ' + (parsed && parsed.message ? parsed.message : data),
+            output: data,
+          });
+        }
+      });
+    });
+    req.on('error', (err) => {
+      resolve({ exitCode: -1, error: err.message, output: '' });
+    });
+    req.write(payload);
+    req.end();
+  });
+}
+
+// 启动 GitHub 资源上传
+function handleUploadStart(artifactPath, github) {
+  const uploadId = 'upload_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  if (!fs.existsSync(artifactPath)) {
+    return { exitCode: -1, error: 'File not found: ' + artifactPath };
+  }
+  const stat = fs.statSync(artifactPath);
+  const session = {
+    id: uploadId,
+    filePath: artifactPath,
+    fileSize: stat.size,
+    fileName: path.basename(artifactPath),
+    github: github,
+    progress: 0,
+    status: 'pending',
+    startTime: null,
+    endTime: null,
+    error: null,
+    response: null,
+  };
+  uploadSessions.set(uploadId, session);
+  startGitHubUpload(session);
+  return { exitCode: 0, uploadId: uploadId, fileSize: stat.size, fileName: path.basename(artifactPath) };
+}
+
+// 上传到 GitHub Releases Assets 端点
+function startGitHubUpload(session) {
+  session.status = 'uploading';
+  session.startTime = Date.now();
+  const https = require('https');
+  const g = session.github;
+  if (!g || !g.token || !g.owner || !g.repo || !g.releaseId) {
+    session.status = 'failed';
+    session.error = '缺少 GitHub 配置 (token/owner/repo/releaseId)';
+    session.endTime = Date.now();
+    return;
+  }
+  const fileName = encodeURIComponent(session.fileName);
+  const options = {
+    hostname: 'uploads.github.com',
+    path: '/repos/' + g.owner + '/' + g.repo + '/releases/' + g.releaseId + '/assets?name=' + fileName,
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + g.token,
+      'Accept': 'application/vnd.github+json',
+      'User-Agent': 'ContextGate-VersionGUI',
+      'Content-Type': 'application/octet-stream',
+      'Content-Length': session.fileSize,
+    },
+  };
+  const fileStream = fs.createReadStream(session.filePath);
+  let uploaded = 0;
+  const req = https.request(options, (res) => {
+    let body = '';
+    res.on('data', (d) => { body += d; });
+    res.on('end', () => {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        session.progress = 100;
+        session.status = 'completed';
+        session.endTime = Date.now();
+        session.response = body;
+      } else {
+        session.status = 'failed';
+        session.error = 'HTTP ' + res.statusCode + ': ' + body;
+        session.endTime = Date.now();
+      }
+    });
+  });
+  req.on('error', (err) => {
+    session.status = 'failed';
+    session.error = err.message;
+    session.endTime = Date.now();
+  });
+  fileStream.on('data', (chunk) => {
+    uploaded += chunk.length;
+    session.progress = Math.round((uploaded / session.fileSize) * 100);
+  });
+  fileStream.pipe(req);
+}
+
+function handleUploadProgress(uploadId) {
+  const session = uploadSessions.get(uploadId);
+  if (!session) return null;
+  return {
+    uploadId: session.id,
+    progress: session.progress,
+    status: session.status,
+    fileSize: session.fileSize,
+    fileName: session.fileName,
+    error: session.error,
+  };
+}
+
+// 提交管理 + 自动更新 CHANGELOG.md
+async function handleCommit(message, changelogContent, version) {
+  const results = { commit: null, changelog: null };
+
+  // 1. 更新 CHANGELOG.md（将所有提交信息合并为一个完整整体，不分类不分组）
+  if (changelogContent && changelogContent.trim().length > 0) {
+    try {
+      const changelogPath = path.join(PROJECT_ROOT, 'CHANGELOG.md');
+      let content = fs.readFileSync(changelogPath, 'utf8');
+      const today = new Date().toISOString().slice(0, 10);
+      const versionStr = version || readCurrentVersion();
+      let newSection = '## [' + versionStr + '] - ' + today + '\n\n';
+      // 直接将完整内容写入，保持原始完整性和逻辑连贯性
+      newSection += changelogContent.trim() + '\n';
+      const firstVersionIdx = content.indexOf('\n## [');
+      if (firstVersionIdx !== -1) {
+        content = content.slice(0, firstVersionIdx + 1) + newSection + content.slice(firstVersionIdx + 1);
+      } else {
+        content += '\n' + newSection;
+      }
+      fs.writeFileSync(changelogPath, content, 'utf8');
+      results.changelog = { success: true, version: versionStr, date: today };
+    } catch (e) {
+      results.changelog = { success: false, error: e.message };
+    }
+  }
+
+  // 2. Git add 和 commit
+  try {
+    await runGit(['add', '-A']);
+    const commitResult = await runGit(['commit', '-m', message]);
+    results.commit = {
+      exitCode: commitResult.code,
+      output: commitResult.stdout || commitResult.stderr,
+      error: commitResult.stderr,
+    };
+  } catch (e) {
+    results.commit = { exitCode: -1, output: '', error: e.message };
+  }
+  return results;
+}
+
+// 仓库状态对比
+async function handleRepoDiff() {
+  const result = {
+    isRepo: false,
+    branch: null,
+    remote: null,
+    ahead: 0,
+    behind: 0,
+    aheadCommits: [],
+    behindCommits: [],
+    localChanges: [],
+    remoteExists: false,
+    fetchError: null,
+  };
+  const isRepoResult = await runGit(['rev-parse', '--is-inside-work-tree']);
+  if (isRepoResult.code !== 0 || isRepoResult.stdout.trim() !== 'true') return result;
+  result.isRepo = true;
+
+  const branchResult = await runGit(['rev-parse', '--abbrev-ref', 'HEAD']);
+  result.branch = branchResult.stdout.trim();
+
+  const remoteResult = await runGit(['remote']);
+  result.remoteExists = remoteResult.stdout.trim().length > 0;
+  if (result.remoteExists) {
+    result.remote = remoteResult.stdout.trim().split('\n')[0];
+    const fetchResult = await runGit(['fetch', result.remote, '--quiet']);
+    if (fetchResult.code !== 0) result.fetchError = fetchResult.stderr || 'Fetch failed';
+
+    if (result.branch) {
+      const upstream = result.remote + '/' + result.branch;
+      const countResult = await runGit(['rev-list', '--left-right', '--count', upstream + '...HEAD']);
+      if (countResult.code === 0) {
+        const parts = countResult.stdout.trim().split(/\s+/);
+        result.behind = parseInt(parts[0], 10) || 0;
+        result.ahead = parseInt(parts[1], 10) || 0;
+      }
+      if (result.ahead > 0) {
+        const aheadResult = await runGit(['log', '--oneline', upstream + '..HEAD']);
+        if (aheadResult.code === 0) {
+          result.aheadCommits = aheadResult.stdout.split('\n').filter(Boolean).map(line => {
+            const m = line.match(/^([a-f0-9]+)\s+(.*)/);
+            return m ? { hash: m[1], message: m[2] } : { hash: '', message: line };
+          });
+        }
+      }
+      if (result.behind > 0) {
+        const behindResult = await runGit(['log', '--oneline', 'HEAD..' + upstream]);
+        if (behindResult.code === 0) {
+          result.behindCommits = behindResult.stdout.split('\n').filter(Boolean).map(line => {
+            const m = line.match(/^([a-f0-9]+)\s+(.*)/);
+            return m ? { hash: m[1], message: m[2] } : { hash: '', message: line };
+          });
+        }
+      }
+    }
+  }
+
+  const statusResult = await runGit(['status', '--porcelain']);
+  if (statusResult.code === 0) {
+    result.localChanges = statusResult.stdout.split('\n').filter(Boolean).map(line => ({
+      status: line.slice(0, 2),
+      file: line.slice(3),
+    }));
+  }
+  return result;
+}
+
+// 完整发布流程（整合标签+构建+上传）
+async function handleFullRelease(type, options) {
+  const steps = [];
+  const currentVersion = readCurrentVersion();
+
+  // Step 1: 检查版本一致性
+  const checkResult = await runScript('version-sync.js', ['--check']);
+  steps.push({ step: 'check', name: '版本一致性检查', exitCode: checkResult.code, output: checkResult.stdout });
+  if (checkResult.code !== 0) {
+    return { steps: steps, error: '版本一致性检查失败', currentVersion: currentVersion };
+  }
+
+  // Step 2: 递增版本号
+  if (type) {
+    const bumpResult = await runScript('version-bump.js', [type]);
+    steps.push({ step: 'bump', name: '版本递增', exitCode: bumpResult.code, output: bumpResult.stdout });
+    if (bumpResult.code !== 0) {
+      return { steps: steps, error: '版本递增失败', currentVersion: currentVersion };
+    }
+  }
+  const newVersion = readCurrentVersion();
+
+  // Step 3: 更新 CHANGELOG（合并为完整整体，不分类不分组）
+  if (options && options.changelogContent && options.changelogContent.trim().length > 0) {
+    try {
+      const changelogPath = path.join(PROJECT_ROOT, 'CHANGELOG.md');
+      let content = fs.readFileSync(changelogPath, 'utf8');
+      const today = new Date().toISOString().slice(0, 10);
+      let newSection = '## [' + newVersion + '] - ' + today + '\n\n';
+      newSection += options.changelogContent.trim() + '\n';
+      const firstVersionIdx = content.indexOf('\n## [');
+      if (firstVersionIdx !== -1) {
+        content = content.slice(0, firstVersionIdx + 1) + newSection + content.slice(firstVersionIdx + 1);
+      } else {
+        content += '\n' + newSection;
+      }
+      fs.writeFileSync(changelogPath, content, 'utf8');
+      steps.push({ step: 'changelog', name: '更新变更日志', exitCode: 0, output: 'CHANGELOG.md 已更新 (v' + newVersion + ')' });
+    } catch (e) {
+      steps.push({ step: 'changelog', name: '更新变更日志', exitCode: -1, output: e.message });
+    }
+  }
+
+  // Step 4: Git 提交
+  const commitMessage = (options && options.commitMessage) || ('release: v' + newVersion);
+  await runGit(['add', '-A']);
+  const commitResult = await runGit(['commit', '-m', commitMessage]);
+  steps.push({ step: 'commit', name: 'Git 提交', exitCode: commitResult.code, output: commitResult.stdout || commitResult.stderr });
+
+  // Step 5: 创建标签
+  const tagMessage = (options && options.tagMessage) || ('Release v' + newVersion);
+  const tagResult = await runGit(['tag', '-a', 'v' + newVersion, '-m', tagMessage]);
+  steps.push({ step: 'tag', name: '创建 Git 标签', exitCode: tagResult.code, output: tagResult.stdout || tagResult.stderr || ('已创建标签 v' + newVersion) });
+
+  // Step 6: 构建（如果请求）
+  if (options && options.build) {
+    const buildResult = await handleBuild();
+    steps.push({ step: 'build', name: '构建打包', exitCode: buildResult.exitCode, output: buildResult.stdout.slice(-500), artifacts: buildResult.artifacts });
+
+    // Step 7: 创建 GitHub Release 并上传（如果请求）
+    if (options.upload && buildResult.artifacts && buildResult.artifacts.length > 0) {
+      if (!options.githubToken || !options.githubOwner || !options.githubRepo) {
+        steps.push({ step: 'upload', name: 'GitHub Release 上传', exitCode: -1, output: '缺少 GitHub 配置 (token/owner/repo)' });
+      } else {
+        // 创建 Release
+        const tagName = 'v' + newVersion;
+        const releaseBody = (options.changelogContent && options.changelogContent.trim()) || '';
+        const releaseResult = await handleGitHubReleaseCreate(
+          options.githubToken, options.githubOwner, options.githubRepo,
+          tagName, 'Release ' + tagName, releaseBody, false, false
+        );
+        steps.push({ step: 'release_create', name: '创建 GitHub Release', exitCode: releaseResult.exitCode, output: releaseResult.output || releaseResult.error });
+        if (releaseResult.exitCode === 0 && releaseResult.releaseId) {
+          // 上传所有构建产物
+          for (const artifact of buildResult.artifacts) {
+            const uploadStart = handleUploadStart(artifact.path, {
+              token: options.githubToken,
+              owner: options.githubOwner,
+              repo: options.githubRepo,
+              releaseId: releaseResult.releaseId,
+            });
+            steps.push({ step: 'upload', name: '上传 ' + artifact.name, exitCode: uploadStart.exitCode, output: uploadStart.error || ('开始上传: ' + artifact.name), uploadId: uploadStart.uploadId });
+          }
+        }
+      }
+    }
+  }
+
+  return { steps: steps, currentVersion: currentVersion, newVersion: newVersion, error: null };
+}
+
 // ---------------------------------------------------------------------------
 // HTTP 服务器
 // ---------------------------------------------------------------------------
@@ -372,6 +794,44 @@ async function handleApi(req, res, pathname) {
     if (pathname === '/api/release' && method === 'POST') {
       const body = await readBody(req);
       const data = await handleRelease(body.type);
+      return sendJson(res, 200, data);
+    }
+
+    if (pathname === '/api/tag/create' && method === 'POST') {
+      const body = await readBody(req);
+      const data = await handleTagCreate(body.version, body.message);
+      return sendJson(res, 200, data);
+    }
+    if (pathname === '/api/build' && method === 'POST') {
+      const data = await handleBuild();
+      return sendJson(res, 200, data);
+    }
+    if (pathname === '/api/upload/start' && method === 'POST') {
+      const body = await readBody(req);
+      const data = handleUploadStart(body.artifactPath, body.github);
+      return sendJson(res, 200, data);
+    }
+    if (pathname === '/api/github/config' && method === 'GET') {
+      const data = await getGitHubRepoInfo();
+      return sendJson(res, 200, data);
+    }
+    if (pathname === '/api/github/release/create' && method === 'POST') {
+      const body = await readBody(req);
+      const data = await handleGitHubReleaseCreate(body.token, body.owner, body.repo, body.tagName, body.releaseName, body.body, body.prerelease, body.draft);
+      return sendJson(res, 200, data);
+    }
+    if (pathname === '/api/commit' && method === 'POST') {
+      const body = await readBody(req);
+      const data = await handleCommit(body.message, body.changelogContent, body.version);
+      return sendJson(res, 200, data);
+    }
+    if (pathname === '/api/repo/diff' && method === 'GET') {
+      const data = await handleRepoDiff();
+      return sendJson(res, 200, data);
+    }
+    if (pathname === '/api/release/full' && method === 'POST') {
+      const body = await readBody(req);
+      const data = await handleFullRelease(body.type, body);
       return sendJson(res, 200, data);
     }
 
@@ -716,6 +1176,125 @@ body {
 .spinner-box .loading { width: 36px; height: 36px; border-width: 3px; }
 .spinner-text { margin-top: 12px; color: var(--text-secondary); font-size: 13px; }
 
+/* 进度条 */
+.progress-bar-container {
+  width: 100%; height: 24px; background: var(--bg-elevated);
+  border-radius: var(--radius-sm); overflow: hidden;
+  border: 1px solid var(--border-default); position: relative;
+}
+.progress-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent) 0%, var(--accent-bright) 100%);
+  transition: width 0.3s ease; border-radius: var(--radius-sm);
+}
+.progress-bar-text {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 11px; font-weight: 600; color: var(--text-primary);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.upload-status { margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+.upload-status.success { color: var(--success); }
+.upload-status.error { color: var(--danger); }
+
+/* 构建产物列表 */
+.artifact-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.artifact-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; background: var(--bg-elevated);
+  border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);
+  font-size: 12px;
+}
+.artifact-name { font-family: 'Consolas', monospace; color: var(--accent); }
+.artifact-size { color: var(--text-muted); font-size: 11px; }
+.artifact-upload-btn { padding: 4px 10px; font-size: 11px; }
+
+/* 变更日志编辑器 */
+.changelog-editor { display: flex; flex-direction: column; gap: 12px; }
+.changelog-cat-row { display: flex; flex-direction: column; gap: 4px; }
+.changelog-cat-label {
+  font-size: 11px; font-weight: 600; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.changelog-cat-input {
+  width: 100%; padding: 8px 12px; background: var(--bg-elevated);
+  border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  color: var(--text-primary); font-size: 12px; font-family: inherit;
+  resize: vertical; min-height: 60px; transition: border-color var(--transition-fast);
+}
+.changelog-cat-input:focus { outline: none; border-color: var(--accent); }
+.changelog-cat-input::placeholder { color: var(--text-dim); }
+.changelog-hint { font-size: 11px; color: var(--text-muted); margin-top: -4px; }
+
+/* 仓库状态对比 */
+.repo-diff-section { margin-bottom: 16px; }
+.repo-diff-title {
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+}
+.repo-diff-stats { display: flex; gap: 12px; margin-bottom: 10px; }
+.repo-diff-stat {
+  flex: 1; padding: 10px; background: var(--bg-elevated);
+  border-radius: var(--radius-sm); text-align: center;
+  border: 1px solid var(--border-subtle);
+}
+.repo-diff-stat-value { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.repo-diff-stat-value.ahead { color: var(--success); }
+.repo-diff-stat-value.behind { color: var(--danger); }
+.repo-diff-stat-value.clean { color: var(--accent); }
+.repo-diff-stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+.repo-commit-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
+.repo-commit-list::-webkit-scrollbar { width: 6px; }
+.repo-commit-list::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+.repo-commit-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; background: var(--bg-elevated);
+  border-radius: var(--radius-sm); font-size: 12px;
+}
+.repo-commit-hash { font-family: 'Consolas', monospace; color: var(--accent); font-size: 11px; flex-shrink: 0; }
+.repo-commit-msg { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repo-file-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
+.repo-file-list::-webkit-scrollbar { width: 6px; }
+.repo-file-list::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+.repo-file-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; background: var(--bg-elevated);
+  border-radius: var(--radius-sm); font-size: 12px;
+}
+.repo-file-status {
+  font-family: 'Consolas', monospace; font-size: 10px; font-weight: 700;
+  padding: 1px 5px; border-radius: 3px; flex-shrink: 0; min-width: 28px; text-align: center;
+}
+.repo-file-status.modified { background: rgba(220,220,170,0.15); color: var(--warning); }
+.repo-file-status.added { background: rgba(76,175,80,0.15); color: var(--success); }
+.repo-file-status.deleted { background: var(--danger-ghost); color: var(--danger); }
+.repo-file-status.untracked { background: rgba(0,212,170,0.15); color: var(--accent); }
+.repo-file-name { font-family: 'Consolas', monospace; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repo-branch-info { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 12px; }
+.repo-branch-name { color: var(--accent); font-family: 'Consolas', monospace; font-weight: 600; }
+.repo-arrow { color: var(--text-muted); }
+.repo-remote-name { color: var(--text-secondary); font-family: 'Consolas', monospace; }
+
+/* 步骤列表（完整发布流程） */
+.release-steps { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.release-step {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; background: var(--bg-elevated);
+  border-radius: var(--radius-sm); font-size: 12px;
+}
+.release-step-icon {
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: bold; flex-shrink: 0;
+}
+.release-step-icon.ok { background: rgba(76,175,80,0.15); color: var(--success); }
+.release-step-icon.fail { background: var(--danger-ghost); color: var(--danger); }
+.release-step-icon.pending { background: var(--bg-surface); color: var(--text-muted); }
+.release-step-name { color: var(--text-secondary); flex: 1; }
+.release-step-status { font-size: 11px; color: var(--text-muted); }
+
+/* 标签创建区域 */
+.tag-create-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tag-message-input { flex: 1; min-width: 200px; }
+
 /* Responsive */
 @media (max-width: 900px) {
   .grid { grid-template-columns: 1fr; }
@@ -764,9 +1343,9 @@ body {
         <div class="action-group">
           <div class="action-group-label">版本递增 (调用 version-bump.js)</div>
           <div class="btn-row">
-            <button class="btn" onclick="doBump('patch')" id="btn-patch">Patch +</button>
-            <button class="btn" onclick="doBump('minor')" id="btn-minor">Minor +</button>
-            <button class="btn" onclick="doBump('major')" id="btn-major">Major +</button>
+            <button class="btn" onclick="doBump('patch')" id="btn-patch">补丁 +</button>
+            <button class="btn" onclick="doBump('minor')" id="btn-minor">次版本 +</button>
+            <button class="btn" onclick="doBump('major')" id="btn-major">主版本 +</button>
           </div>
         </div>
 
@@ -787,10 +1366,27 @@ body {
         <div class="action-group">
           <div class="action-group-label">完整发布流程 (调用 release.js)</div>
           <div class="btn-row">
-            <button class="btn btn-primary" onclick="doRelease('patch')">发布 Patch</button>
-            <button class="btn btn-primary" onclick="doRelease('minor')">发布 Minor</button>
-            <button class="btn btn-primary" onclick="doRelease('major')">发布 Major</button>
+            <button class="btn btn-primary" onclick="doRelease('patch')">发布补丁版本</button>
+            <button class="btn btn-primary" onclick="doRelease('minor')">发布次版本</button>
+            <button class="btn btn-primary" onclick="doRelease('major')">发布主版本</button>
             <button class="btn btn-warning" onclick="doRelease('')">交互式发布</button>
+          </div>
+        </div>
+
+        <div class="action-group">
+          <div class="action-group-label">一键发布 (检查→递增→提交→标签→构建→上传)</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="doFullRelease('patch')">一键发布补丁</button>
+            <button class="btn btn-primary" onclick="doFullRelease('minor')">一键发布次版本</button>
+            <button class="btn btn-primary" onclick="doFullRelease('major')">一键发布主版本</button>
+          </div>
+          <div style="margin-top: 8px;">
+            <label style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <input type="checkbox" id="full-release-build" checked> 构建安装包
+            </label>
+            <label style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+              <input type="checkbox" id="full-release-upload"> 上传安装包
+            </label>
           </div>
         </div>
 
@@ -813,6 +1409,92 @@ body {
       <div class="tags-list" id="tags-list">
         <div style="color: var(--text-dim); text-align: center; padding: 20px;">加载中...</div>
       </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Git 标签管理 -->
+    <div class="card">
+      <div class="card-title">Git 标签管理</div>
+      <div class="action-group">
+        <div class="action-group-label">创建版本标签 (git tag -a)</div>
+        <div class="input-group">
+          <input type="text" class="input" id="tag-version" placeholder="版本号, 例如: 5.4.0">
+          <input type="text" class="input tag-message-input" id="tag-message" placeholder="标签信息 (可选)">
+          <button class="btn btn-primary" onclick="doTagCreate()">创建标签</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 构建与 GitHub Release 上传 -->
+    <div class="card">
+      <div class="card-title">构建与 GitHub Release 上传</div>
+      <div class="action-group">
+        <div class="action-group-label">构建安装包 (npm run build:win)</div>
+        <button class="btn btn-primary" onclick="doBuild()" id="btn-build">开始构建</button>
+      </div>
+      <div class="artifact-list" id="artifact-list" style="display:none;"></div>
+      <div class="action-group" style="margin-top: 14px;">
+        <div class="action-group-label">GitHub 配置</div>
+        <input type="password" class="input" id="github-token" placeholder="GitHub Personal Access Token (需要 repo 权限)" style="margin-bottom: 8px;">
+        <div class="input-group">
+          <input type="text" class="input" id="github-owner" placeholder="仓库 Owner">
+          <input type="text" class="input" id="github-repo" placeholder="仓库名">
+          <button class="btn" onclick="loadGitHubConfig()">自动获取</button>
+        </div>
+      </div>
+      <div class="action-group" style="margin-top: 14px;">
+        <div class="action-group-label">创建 GitHub Release</div>
+        <div class="input-group">
+          <input type="text" class="input" id="release-tag" placeholder="标签名, 例如: v5.4.0">
+          <input type="text" class="input" id="release-name" placeholder="Release 名称 (可选)">
+          <button class="btn btn-primary" onclick="doCreateRelease()">创建 Release</button>
+        </div>
+        <textarea class="input" id="release-body" placeholder="Release 说明 (可选, 支持 Markdown)" style="margin-top: 8px; min-height: 60px; resize: vertical; font-family: inherit;"></textarea>
+        <div style="margin-top: 8px; display: flex; gap: 16px;">
+          <label style="font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+            <input type="checkbox" id="release-prerelease"> 预发布
+          </label>
+          <label style="font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+            <input type="checkbox" id="release-draft"> 草稿
+          </label>
+        </div>
+      </div>
+      <div id="release-info" style="display:none; margin-top: 14px; padding: 10px; background: var(--accent-ghost); border-radius: var(--radius-sm); font-size: 12px;">
+      </div>
+      <div id="upload-progress-container" style="display:none; margin-top: 14px;">
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="upload-progress-fill" style="width: 0%;"></div>
+          <span class="progress-bar-text" id="upload-progress-text">0%</span>
+        </div>
+        <div class="upload-status" id="upload-status"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 提交管理 -->
+    <div class="card">
+      <div class="card-title">提交管理</div>
+      <div class="action-group">
+        <div class="action-group-label">提交信息</div>
+        <input type="text" class="input" id="commit-message" placeholder="例如: release: v5.4.0" style="margin-bottom: 12px;">
+      </div>
+      <div class="action-group">
+        <div class="action-group-label">变更日志内容 (自动更新 CHANGELOG.md)</div>
+        <textarea class="changelog-cat-input" id="cl-content" placeholder="输入所有提交信息，将合并为一个完整整体写入 CHANGELOG.md&#10;支持多行，保持原始内容的完整性和逻辑连贯性" style="min-height: 120px;"></textarea>
+        <div class="changelog-hint">所有内容将合并为一个完整整体写入 CHANGELOG，不分类不分组。</div>
+      </div>
+      <button class="btn btn-primary" onclick="doCommit()" style="margin-top: 12px;">提交并更新日志</button>
+    </div>
+
+    <!-- 仓库状态对比 -->
+    <div class="card">
+      <div class="card-title">仓库状态对比 (本地 ↔ 远程)</div>
+      <div id="repo-diff-container">
+        <div style="color: var(--text-dim); text-align: center; padding: 20px;">点击下方按钮获取状态</div>
+      </div>
+      <button class="btn" onclick="loadRepoDiff()" style="margin-top: 12px;">刷新仓库状态</button>
     </div>
   </div>
 
@@ -868,6 +1550,14 @@ const API = {
   rollbackList: () => fetch('/api/rollback/list').then(r => r.json()),
   rollbackDryRun: (version) => fetch('/api/rollback/dry-run', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({version}) }).then(r => r.json()),
   release: (type) => fetch('/api/release', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({type}) }).then(r => r.json()),
+  tagCreate: (version, message) => fetch('/api/tag/create', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({version, message}) }).then(r => r.json()),
+  build: () => fetch('/api/build', { method: 'POST' }).then(r => r.json()),
+  uploadStart: (artifactPath, github) => fetch('/api/upload/start', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({artifactPath, github}) }).then(r => r.json()),
+  githubConfig: () => fetch('/api/github/config').then(r => r.json()),
+  githubReleaseCreate: (token, owner, repo, tagName, releaseName, body, prerelease, draft) => fetch('/api/github/release/create', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token, owner, repo, tagName, releaseName, body, prerelease, draft}) }).then(r => r.json()),
+  commit: (message, changelogContent, version) => fetch('/api/commit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({message, changelogContent, version}) }).then(r => r.json()),
+  repoDiff: () => fetch('/api/repo/diff').then(r => r.json()),
+  fullRelease: (type, options) => fetch('/api/release/full', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({type, ...options}) }).then(r => r.json()),
 };
 
 let currentState = null;
@@ -1118,13 +1808,13 @@ async function doBump(type) {
     '确认版本递增',
     '即将执行 <code>version-bump.js ' + type + '</code><br><br>' +
     '当前版本: <code>' + current + '</code><br>' +
-    '递增类型: <code>' + type + '</code><br><br>' +
+    '递增类型: <code>' + versionTypeLabel(type) + '版本</code><br><br>' +
     '此操作将同步修改所有版本文件。',
     null,
     '执行递增',
     async () => {
       setButtonsDisabled(true);
-      showSpinner('递增 ' + type + ' 版本...');
+      showSpinner('递增' + versionTypeLabel(type) + '版本...');
       log('执行: version-bump.js ' + type, 'info');
       try {
         const result = await API.bump(type);
@@ -1297,7 +1987,7 @@ function doRollback() {
 }
 
 async function doRelease(type) {
-  const label = type ? ('--' + type) : '交互式';
+  const label = type ? versionTypeLabel(type) + '版本' : '交互式';
   const current = currentState ? currentState.currentVersion : '当前版本';
   const gitClean = currentState && currentState.gitStatus && currentState.gitStatus.clean;
 
@@ -1345,6 +2035,478 @@ async function doRelease(type) {
   );
 }
 
+function versionTypeLabel(type) {
+  const labels = { patch: '补丁', minor: '次版本', major: '主版本' };
+  return labels[type] || type;
+}
+
+// Git 标签创建
+async function doTagCreate() {
+  const version = document.getElementById('tag-version').value.trim();
+  const message = document.getElementById('tag-message').value.trim();
+  if (!version) { showToast('请输入版本号', 'error'); return; }
+  const current = currentState ? currentState.currentVersion : '';
+  showModal(
+    '确认创建 Git 标签',
+    '即将执行 <code>git tag -a v' + version + '</code><br><br>' +
+    '当前版本: <code>' + current + '</code><br>' +
+    '标签版本: <code>v' + version + '</code><br>' +
+    '标签信息: <code>' + (message || 'Release v' + version) + '</code>',
+    null, '创建标签',
+    async () => {
+      setButtonsDisabled(true);
+      showSpinner('创建 Git 标签 v' + version + '...');
+      log('执行: git tag -a v' + version, 'info');
+      try {
+        const result = await API.tagCreate(version, message);
+        log(result.output || result.error, result.exitCode === 0 ? 'success' : 'error');
+        if (result.exitCode === 0) {
+          showToast('标签 v' + version + ' 已创建', 'success');
+          document.getElementById('tag-version').value = '';
+          document.getElementById('tag-message').value = '';
+        } else {
+          showToast('创建标签失败', 'error');
+        }
+        await loadState();
+      } catch (e) {
+        log('创建标签失败: ' + e.message, 'error');
+        showToast('创建标签失败', 'error');
+      } finally {
+        hideSpinner(); setButtonsDisabled(false);
+      }
+    }
+  );
+}
+
+// 构建
+async function doBuild() {
+  showModal(
+    '确认构建',
+    '即将执行 <code>npm run build:win</code><br><br>' +
+    '构建目录: <code>app/gui-js</code><br>' +
+    '产物目录: <code>app/gui-js/dist</code><br><br>' +
+    '构建可能需要数分钟，请耐心等待。',
+    null, '开始构建',
+    async () => {
+      setButtonsDisabled(true);
+      showSpinner('构建安装包中... (可能需要数分钟)');
+      log('执行: npm run build:win', 'info');
+      try {
+        const result = await API.build();
+        log('构建' + (result.exitCode === 0 ? '成功' : '失败'), result.exitCode === 0 ? 'success' : 'error');
+        if (result.stdout) log(result.stdout.slice(-500), 'info');
+        if (result.stderr) log(result.stderr.slice(-500), 'error');
+        if (result.exitCode === 0) {
+          showToast('构建完成，共 ' + result.artifacts.length + ' 个产物', 'success');
+          renderArtifacts(result.artifacts);
+        } else {
+          showToast('构建失败', 'error');
+        }
+      } catch (e) {
+        log('构建失败: ' + e.message, 'error');
+        showToast('构建失败', 'error');
+      } finally {
+        hideSpinner(); setButtonsDisabled(false);
+      }
+    }
+  );
+}
+
+function renderArtifacts(artifacts) {
+  const el = document.getElementById('artifact-list');
+  if (!artifacts || artifacts.length === 0) {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = 'flex';
+  el.innerHTML = artifacts.map(a => {
+    const sizeMB = (a.size / 1024 / 1024).toFixed(2);
+    return '<div class="artifact-item">' +
+      '<div>' +
+        '<span class="artifact-name">' + escapeHtml(a.name) + '</span>' +
+        ' <span class="artifact-size">' + sizeMB + ' MB</span>' +
+      '</div>' +
+      '<button class="btn artifact-upload-btn" onclick="uploadArtifact(\\'' + escapeHtml(a.path) + '\\', \\'' + escapeHtml(a.name) + '\\')">上传到 Release</button>' +
+    '</div>';
+  }).join('');
+}
+
+function uploadArtifact(artifactPath, artifactName) {
+  doUpload(artifactPath, artifactName);
+}
+
+function getGitHubConfig() {
+  return {
+    token: document.getElementById('github-token').value.trim(),
+    owner: document.getElementById('github-owner').value.trim(),
+    repo: document.getElementById('github-repo').value.trim(),
+    releaseId: window.currentReleaseId || null,
+  };
+}
+
+async function loadGitHubConfig() {
+  try {
+    const config = await API.githubConfig();
+    if (config.hasRemote) {
+      document.getElementById('github-owner').value = config.owner;
+      document.getElementById('github-repo').value = config.repo;
+      showToast('已从 Git Remote 获取: ' + config.owner + '/' + config.repo, 'success');
+    } else {
+      showToast('未检测到 GitHub 远程仓库', 'error');
+    }
+  } catch (e) {
+    showToast('获取失败: ' + e.message, 'error');
+  }
+}
+
+async function doCreateRelease() {
+  const token = document.getElementById('github-token').value.trim();
+  const owner = document.getElementById('github-owner').value.trim();
+  const repo = document.getElementById('github-repo').value.trim();
+  const tagName = document.getElementById('release-tag').value.trim();
+  const releaseName = document.getElementById('release-name').value.trim();
+  const body = document.getElementById('release-body').value.trim();
+  const prerelease = document.getElementById('release-prerelease').checked;
+  const draft = document.getElementById('release-draft').checked;
+  if (!token) { showToast('请输入 GitHub Token', 'error'); return; }
+  if (!owner || !repo) { showToast('请输入仓库 Owner 和名称', 'error'); return; }
+  if (!tagName) { showToast('请输入标签名', 'error'); return; }
+  setButtonsDisabled(true);
+  showSpinner('创建 GitHub Release...');
+  log('创建 GitHub Release: ' + owner + '/' + repo + ' tag=' + tagName, 'info');
+  try {
+    const result = await API.githubReleaseCreate(token, owner, repo, tagName, releaseName, body, prerelease, draft);
+    if (result.exitCode === 0) {
+      window.currentReleaseId = result.releaseId;
+      log('GitHub Release 已创建: ' + (result.htmlUrl || ''), 'success');
+      showToast('Release 已创建', 'success');
+      const infoEl = document.getElementById('release-info');
+      infoEl.style.display = 'block';
+      infoEl.innerHTML = '✓ Release ID: ' + result.releaseId + '<br>✓ 链接: <a href="' + result.htmlUrl + '" target="_blank" style="color: var(--accent);">' + result.htmlUrl + '</a><br>现在可以上传安装包到此 Release';
+    } else {
+      log('创建 Release 失败: ' + (result.error || ''), 'error');
+      showToast('创建 Release 失败', 'error');
+    }
+  } catch (e) {
+    log('创建 Release 失败: ' + e.message, 'error');
+    showToast('创建 Release 失败', 'error');
+  } finally {
+    hideSpinner(); setButtonsDisabled(false);
+  }
+}
+
+async function doUpload(artifactPath, artifactName) {
+  if (!artifactPath) { showToast('请先构建以获取安装包', 'error'); return; }
+  const github = getGitHubConfig();
+  if (!github.token) { showToast('请输入 GitHub Token', 'error'); return; }
+  if (!github.owner || !github.repo) { showToast('请输入仓库 Owner 和名称', 'error'); return; }
+  if (!github.releaseId) { showToast('请先创建 GitHub Release', 'error'); return; }
+  setButtonsDisabled(true);
+  log('开始上传到 GitHub Release: ' + (artifactName || artifactPath), 'info');
+  try {
+    const startResult = await API.uploadStart(artifactPath, github);
+    if (startResult.exitCode !== 0) {
+      log('上传启动失败: ' + (startResult.error || ''), 'error');
+      showToast('上传启动失败', 'error');
+      setButtonsDisabled(false);
+      return;
+    }
+    log('上传已启动, ID: ' + startResult.uploadId, 'info');
+    const container = document.getElementById('upload-progress-container');
+    const fill = document.getElementById('upload-progress-fill');
+    const text = document.getElementById('upload-progress-text');
+    const status = document.getElementById('upload-status');
+    container.style.display = 'block';
+    fill.style.width = '0%';
+    text.textContent = '0%';
+    status.className = 'upload-status';
+    status.textContent = '上传中: ' + startResult.fileName + ' (' + (startResult.fileSize / 1024 / 1024).toFixed(2) + ' MB)';
+    const evtSource = new EventSource('/api/upload/progress?id=' + startResult.uploadId);
+    evtSource.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      if (data.error) {
+        status.className = 'upload-status error';
+        status.textContent = '错误: ' + data.error;
+        evtSource.close();
+        setButtonsDisabled(false);
+        return;
+      }
+      fill.style.width = data.progress + '%';
+      text.textContent = data.progress + '%';
+      if (data.status === 'completed') {
+        status.className = 'upload-status success';
+        status.textContent = '✓ 上传完成: ' + data.fileName;
+        log('上传完成: ' + data.fileName, 'success');
+        showToast('上传完成', 'success');
+        evtSource.close();
+        setButtonsDisabled(false);
+      } else if (data.status === 'failed') {
+        status.className = 'upload-status error';
+        status.textContent = '✗ 上传失败: ' + (data.error || '未知错误');
+        log('上传失败: ' + (data.error || ''), 'error');
+        showToast('上传失败', 'error');
+        evtSource.close();
+        setButtonsDisabled(false);
+      }
+    };
+    evtSource.onerror = function() {
+      status.className = 'upload-status error';
+      status.textContent = '连接中断';
+      evtSource.close();
+      setButtonsDisabled(false);
+    };
+  } catch (e) {
+    log('上传失败: ' + e.message, 'error');
+    showToast('上传失败', 'error');
+    setButtonsDisabled(false);
+  }
+}
+
+// 提交管理
+async function doCommit() {
+  const message = document.getElementById('commit-message').value.trim();
+  if (!message) { showToast('请输入提交信息', 'error'); return; }
+  const changelogContent = document.getElementById('cl-content').value.trim();
+  const hasChangelog = changelogContent.length > 0;
+  const version = currentState ? currentState.currentVersion : '';
+  let body = '即将执行:<br>' +
+    '<code>git add -A && git commit -m "' + escapeHtml(message) + '"</code><br><br>';
+  if (hasChangelog) {
+    body += '将自动更新 <code>CHANGELOG.md</code>，新增 <code>v' + version + '</code> 版本条目<br>';
+    body += '合并内容预览 (' + changelogContent.length + ' 字符):<br>';
+    body += '<div style="margin-top: 6px; padding: 8px; background: var(--bg-elevated); border-radius: 4px; max-height: 120px; overflow-y: auto; font-size: 11px; white-space: pre-wrap;">' + escapeHtml(changelogContent.slice(0, 500)) + (changelogContent.length > 500 ? '\\n...' : '') + '</div>';
+  }
+  showModal('确认提交', body, null, '执行提交', async () => {
+    setButtonsDisabled(true);
+    showSpinner('提交代码...');
+    log('执行: git commit -m "' + message + '"', 'info');
+    try {
+      const result = await API.commit(message, hasChangelog ? changelogContent : null, version);
+      if (result.changelog) {
+        if (result.changelog.success) {
+          log('CHANGELOG.md 已更新 (v' + result.changelog.version + ')', 'success');
+        } else {
+          log('CHANGELOG 更新失败: ' + result.changelog.error, 'error');
+        }
+      }
+      if (result.commit) {
+        log(result.commit.output || result.commit.error, result.commit.exitCode === 0 ? 'success' : 'error');
+        if (result.commit.exitCode === 0) {
+          showToast('提交成功', 'success');
+          document.getElementById('commit-message').value = '';
+          document.getElementById('cl-content').value = '';
+        } else {
+          showToast('提交失败', 'error');
+        }
+      }
+      await loadState();
+    } catch (e) {
+      log('提交失败: ' + e.message, 'error');
+      showToast('提交失败', 'error');
+    } finally {
+      hideSpinner(); setButtonsDisabled(false);
+    }
+  });
+}
+
+// 仓库状态对比
+async function loadRepoDiff() {
+  const container = document.getElementById('repo-diff-container');
+  container.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 20px;"><div class="loading" style="margin: 0 auto;"></div><div style="margin-top: 8px;">获取仓库状态中...</div></div>';
+  try {
+    const diff = await API.repoDiff();
+    renderRepoDiff(diff);
+  } catch (e) {
+    container.innerHTML = '<div style="color: var(--danger); text-align: center; padding: 20px;">获取失败: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function renderRepoDiff(diff) {
+  const container = document.getElementById('repo-diff-container');
+  if (!diff.isRepo) {
+    container.innerHTML = '<div class="git-status not-repo">⚠ 非 Git 仓库</div>';
+    return;
+  }
+  let html = '';
+  // 分支信息
+  html += '<div class="repo-branch-info">';
+  html += '<span class="repo-branch-name">' + escapeHtml(diff.branch || 'HEAD') + '</span>';
+  if (diff.remote) {
+    html += '<span class="repo-arrow">↔</span>';
+    html += '<span class="repo-remote-name">' + escapeHtml(diff.remote) + '/' + escapeHtml(diff.branch || '') + '</span>';
+  } else {
+    html += '<span class="repo-arrow">—</span>';
+    html += '<span class="repo-remote-name">无远程仓库</span>';
+  }
+  html += '</div>';
+
+  if (diff.fetchError) {
+    html += '<div class="git-status dirty" style="margin-bottom: 12px;">⚠ Fetch 失败: ' + escapeHtml(diff.fetchError) + '</div>';
+  }
+
+  // 统计
+  html += '<div class="repo-diff-stats">';
+  html += '<div class="repo-diff-stat"><div class="repo-diff-stat-value ahead">' + diff.ahead + '</div><div class="repo-diff-stat-label">领先远程</div></div>';
+  html += '<div class="repo-diff-stat"><div class="repo-diff-stat-value behind">' + diff.behind + '</div><div class="repo-diff-stat-label">落后远程</div></div>';
+  html += '<div class="repo-diff-stat"><div class="repo-diff-stat-value clean">' + diff.localChanges.length + '</div><div class="repo-diff-stat-label">本地变更</div></div>';
+  html += '</div>';
+
+  // 领先的提交
+  if (diff.aheadCommits && diff.aheadCommits.length > 0) {
+    html += '<div class="repo-diff-section">';
+    html += '<div class="repo-diff-title">本地领先提交 (↑ ' + diff.aheadCommits.length + ')</div>';
+    html += '<div class="repo-commit-list">';
+    for (const c of diff.aheadCommits) {
+      html += '<div class="repo-commit-item"><span class="repo-commit-hash">' + escapeHtml(c.hash.slice(0, 7)) + '</span><span class="repo-commit-msg">' + escapeHtml(c.message) + '</span></div>';
+    }
+    html += '</div></div>';
+  }
+
+  // 落后的提交
+  if (diff.behindCommits && diff.behindCommits.length > 0) {
+    html += '<div class="repo-diff-section">';
+    html += '<div class="repo-diff-title">远程新提交 (↓ ' + diff.behindCommits.length + ')</div>';
+    html += '<div class="repo-commit-list">';
+    for (const c of diff.behindCommits) {
+      html += '<div class="repo-commit-item"><span class="repo-commit-hash">' + escapeHtml(c.hash.slice(0, 7)) + '</span><span class="repo-commit-msg">' + escapeHtml(c.message) + '</span></div>';
+    }
+    html += '</div></div>';
+  }
+
+  // 本地文件变更
+  if (diff.localChanges && diff.localChanges.length > 0) {
+    html += '<div class="repo-diff-section">';
+    html += '<div class="repo-diff-title">工作区文件变更 (' + diff.localChanges.length + ')</div>';
+    html += '<div class="repo-file-list">';
+    for (const f of diff.localChanges) {
+      const st = f.status.trim();
+      let cls = 'modified', label = 'M';
+      if (st === '??') { cls = 'untracked'; label = '?'; }
+      else if (st.includes('A') || st === 'A') { cls = 'added'; label = 'A'; }
+      else if (st.includes('D') || st === 'D') { cls = 'deleted'; label = 'D'; }
+      html += '<div class="repo-file-item"><span class="repo-file-status ' + cls + '">' + label + '</span><span class="repo-file-name">' + escapeHtml(f.file) + '</span></div>';
+    }
+    html += '</div></div>';
+  }
+
+  if (diff.ahead === 0 && diff.behind === 0 && diff.localChanges.length === 0) {
+    html += '<div class="git-status clean" style="margin-top: 12px;">✓ 本地与远程同步，工作区干净</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+// 完整发布流程
+async function doFullRelease(type) {
+  const label = versionTypeLabel(type);
+  const current = currentState ? currentState.currentVersion : '当前版本';
+  const build = document.getElementById('full-release-build').checked;
+  const upload = document.getElementById('full-release-upload').checked;
+  const githubToken = document.getElementById('github-token').value.trim();
+  const githubOwner = document.getElementById('github-owner').value.trim();
+  const githubRepo = document.getElementById('github-repo').value.trim();
+
+  // 收集 changelog 内容（合并为完整整体）
+  const changelogContent = document.getElementById('cl-content').value.trim();
+
+  let steps = '1. 版本一致性检查<br>2. 递增' + label + '版本<br>3. 更新 CHANGELOG.md<br>4. Git 提交<br>5. 创建 Git 标签';
+  if (build) steps += '<br>6. 构建安装包';
+  if (upload) steps += '<br>7. 创建 GitHub Release 并上传安装包';
+
+  showModal(
+    '确认一键发布 (' + label + '版本)',
+    '即将执行完整发布流程:<br><br>' +
+    '当前版本: <code>' + current + '</code><br>' +
+    '发布类型: <code>' + label + '版本</code><br><br>' +
+    steps + '<br><br>' +
+    (build ? '⚠ 构建可能需要数分钟<br>' : '') +
+    (upload && (!githubToken || !githubOwner || !githubRepo) ? '⚠ 未配置 GitHub Token/Owner/Repo，上传将失败<br>' : ''),
+    null, '执行发布',
+    async () => {
+      setButtonsDisabled(true);
+      showSpinner('执行一键发布 (' + label + ')...');
+      log('执行完整发布流程: ' + label, 'info');
+      try {
+        const result = await API.fullRelease(type, {
+          build: build,
+          upload: upload,
+          githubToken: githubToken,
+          githubOwner: githubOwner,
+          githubRepo: githubRepo,
+          changelogContent: changelogContent.length > 0 ? changelogContent : null,
+          commitMessage: 'release: v' + (type ? '' : current),
+        });
+        // 渲染步骤结果
+        if (result.steps) {
+          for (const s of result.steps) {
+            const icon = s.exitCode === 0 ? '✓' : '✗';
+            log(icon + ' [' + (s.name || s.step) + '] ' + (s.output || '').slice(0, 200), s.exitCode === 0 ? 'success' : 'error');
+          }
+        }
+        if (result.error) {
+          log('发布中断: ' + result.error, 'error');
+          showToast('发布中断: ' + result.error, 'error');
+        } else if (result.newVersion) {
+          log('发布完成: ' + result.currentVersion + ' → ' + result.newVersion, 'success');
+          showToast('发布完成: v' + result.newVersion, 'success');
+          // 如果有上传步骤，显示进度
+          const uploadStep = result.steps.find(s => s.step === 'upload');
+          if (uploadStep && uploadStep.uploadId) {
+            monitorUpload(uploadStep.uploadId);
+          }
+          // 如果有构建产物
+          const buildStep = result.steps.find(s => s.step === 'build');
+          if (buildStep && buildStep.artifacts) {
+            renderArtifacts(buildStep.artifacts);
+          }
+        }
+        await loadState();
+      } catch (e) {
+        log('发布失败: ' + e.message, 'error');
+        showToast('发布失败', 'error');
+      } finally {
+        hideSpinner(); setButtonsDisabled(false);
+      }
+    }
+  );
+}
+
+function monitorUpload(uploadId) {
+  const container = document.getElementById('upload-progress-container');
+  const fill = document.getElementById('upload-progress-fill');
+  const text = document.getElementById('upload-progress-text');
+  const status = document.getElementById('upload-status');
+  container.style.display = 'block';
+  fill.style.width = '0%';
+  text.textContent = '0%';
+  status.className = 'upload-status';
+  status.textContent = '上传中...';
+  const evtSource = new EventSource('/api/upload/progress?id=' + uploadId);
+  evtSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    if (data.error) {
+      status.className = 'upload-status error';
+      status.textContent = '错误: ' + data.error;
+      evtSource.close();
+      return;
+    }
+    fill.style.width = data.progress + '%';
+    text.textContent = data.progress + '%';
+    if (data.status === 'completed') {
+      status.className = 'upload-status success';
+      status.textContent = '✓ 上传完成: ' + data.fileName;
+      log('上传完成: ' + data.fileName, 'success');
+      showToast('上传完成', 'success');
+      evtSource.close();
+    } else if (data.status === 'failed') {
+      status.className = 'upload-status error';
+      status.textContent = '✗ 上传失败: ' + (data.error || '');
+      log('上传失败: ' + (data.error || ''), 'error');
+      evtSource.close();
+    }
+  };
+}
+
 function escapeHtml(str) {
   if (str == null) return '';
   return String(str)
@@ -1372,6 +2534,37 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/' || pathname === '/index.html') {
     sendHtml(res, getHtml());
+    return;
+  }
+
+  // SSE 上传进度
+  if (pathname === '/api/upload/progress' && req.method === 'GET') {
+    const parsedUrl = new URL(req.url, 'http://localhost');
+    const uploadId = parsedUrl.searchParams.get('id');
+    if (!uploadId) {
+      sendJson(res, 400, { error: 'Missing upload id' });
+      return;
+    }
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+    const sendProgress = () => {
+      const progress = handleUploadProgress(uploadId);
+      if (!progress) {
+        res.write('data: ' + JSON.stringify({ error: 'Upload session not found' }) + '\n\n');
+        res.end();
+        return;
+      }
+      res.write('data: ' + JSON.stringify(progress) + '\n\n');
+      if (progress.status === 'completed' || progress.status === 'failed') {
+        res.end();
+      }
+    };
+    const interval = setInterval(sendProgress, 300);
+    sendProgress();
+    req.on('close', () => { clearInterval(interval); });
     return;
   }
 

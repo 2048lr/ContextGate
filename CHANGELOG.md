@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/
 See [docs/VERSIONING.md](docs/VERSIONING.md) for the versioning policy and
 [docs/RELEASE.md](docs/RELEASE.md) for the release procedure.
 
+## [5.4.0] - 2026-06-19
+
+1. 新增新增提供商弹窗UI，替换原prompt方式添加提供商
+2. 优化代理端口显示逻辑，未运行时使用配置端口
+3. 修复代理状态更新相关问题
+4. 新增提供商模型本地保存与加载功能
+5. 更新版本号与更新日志
 ## [5.3.0] - 2026-06-18
 
 ### Added

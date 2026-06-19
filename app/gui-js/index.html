@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="version" content="5.3.1">
+  <meta name="version" content="5.4.0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: file: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https: http:">
   <title>ContextGate</title>
@@ -317,6 +317,26 @@
       <div class="modal-footer">
         <button id="btn-save-settings" class="primary-btn">保存</button>
         <button id="btn-cancel-settings" class="secondary-btn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="provider-name-modal" class="modal hidden">
+    <div class="modal-content" style="width: 420px; max-width: 90%;">
+      <div class="modal-header">
+        <h2>新增提供商</h2>
+        <button id="btn-close-provider-modal" class="close-btn">×</button>
+      </div>
+      <div class="tab-content">
+        <div class="form-group">
+          <label>提供商名称:</label>
+          <input type="text" id="provider-name-input" placeholder="例如: openai, anthropic, deepseek" autocomplete="off">
+          <small class="form-hint">使用小写字母和数字，将作为唯一标识符</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-add-provider" class="primary-btn">确认</button>
+        <button id="btn-cancel-add-provider" class="secondary-btn">取消</button>
       </div>
     </div>
   </div>

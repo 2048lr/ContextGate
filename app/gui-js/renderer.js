@@ -15,6 +15,8 @@ function toast(msg, type = 'info') {
 async function init() {
   try { const url = await window.electronAPI.getBackgroundUrl(); document.getElementById('background-container').style.backgroundImage = `url('${url}')` } catch {}
   try { config = await window.electronAPI.getConfig(); if (config.workspace) { currentProject = config.workspace; updateProjectUI() }; updateCurrency() } catch {}
+  // 代理未运行时，显示端口/地址端口应与配置端口保持一致
+  if (config.proxy?.port) proxyPort = config.proxy.port
   await loadStats()
   setupEventListeners(); setupProxyListeners(); await checkProxyStatus(); updateMemoryUsage(); setInterval(updateMemoryUsage, 5000)
 }
@@ -65,9 +67,14 @@ function setupEventListeners() {
   document.querySelectorAll('#card-log .filter-btn').forEach(b => b.onclick = () => filterLogs(b.dataset.filter))
   document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => switchTab(b.dataset.tab))
   document.getElementById('settings-modal').onclick = e => { if (e.target.id === 'settings-modal') closeSettings() }
-  document.getElementById('btn-add-provider').onclick = addProvider
+  document.getElementById('btn-add-provider').onclick = openAddProviderModal
   document.getElementById('btn-remove-provider').onclick = removeProvider
   document.getElementById('btn-fetch-models').onclick = fetchModels
+  document.getElementById('btn-confirm-add-provider').onclick = confirmAddProvider
+  document.getElementById('btn-cancel-add-provider').onclick = closeAddProviderModal
+  document.getElementById('btn-close-provider-modal').onclick = closeAddProviderModal
+  document.getElementById('provider-name-modal').onclick = e => { if (e.target.id === 'provider-name-modal') closeAddProviderModal() }
+  document.getElementById('provider-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); confirmAddProvider() } })
 }
 
 function filterLogs(f) {
@@ -117,16 +124,28 @@ function updateProxyUI() {
   document.getElementById('proxy-address').textContent = `http://127.0.0.1:${proxyPort || DEFAULT_PROXY_PORT}`
 }
 
-async function checkProxyStatus() { try { const s = await window.electronAPI.proxyStatus(); proxyRunning = s.running; proxyPort = s.port || DEFAULT_PROXY_PORT; updateProxyUI() } catch { proxyRunning = false; updateProxyUI() } }
+async function checkProxyStatus() { try { const s = await window.electronAPI.proxyStatus(); proxyRunning = s.running; if (s.running) { proxyPort = s.port || DEFAULT_PROXY_PORT } else if (config.proxy?.port) { proxyPort = config.proxy.port }; updateProxyUI() } catch { proxyRunning = false; if (config.proxy?.port) proxyPort = config.proxy.port; updateProxyUI() } }
 
-function addProvider() {
-  const name = prompt('输入提供商名称 (例如: openai, anthropic, deepseek):')
-  if (!name?.trim()) return
-  if (!config.providers) config.providers = {}
-  if (!config.providers[name.trim()]) config.providers[name.trim()] = { api_key: '', base_url: '', models: [] }
-  populateProviderSelect(); document.getElementById('provider-select').value = name.trim(); selectProvider()
+function openAddProviderModal() {
+  const input = document.getElementById('provider-name-input')
+  input.value = ''
+  document.getElementById('provider-name-modal').classList.remove('hidden')
+  setTimeout(() => input.focus(), 50)
 }
-function removeProvider() { const n = document.getElementById('provider-select').value; if (!n || !confirm(`确认删除 "${n}"?`)) return; delete config.providers[n]; populateProviderSelect() }
+function closeAddProviderModal() {
+  document.getElementById('provider-name-modal').classList.add('hidden')
+}
+function confirmAddProvider() {
+  const name = document.getElementById('provider-name-input').value.trim()
+  if (!name) { toast('请输入提供商名称', 'warn'); return }
+  if (!/^[a-z0-9_-]+$/i.test(name)) { toast('名称只能包含字母、数字、下划线和连字符', 'warn'); return }
+  if (!config.providers) config.providers = {}
+  if (config.providers[name]) { toast('该提供商已存在', 'warn'); return }
+  config.providers[name] = { api_key: '', base_url: '', models: [] }
+  populateProviderSelect(); document.getElementById('provider-select').value = name; selectProvider()
+  closeAddProviderModal(); toast(`已新增提供商: ${name}`, 'success')
+}
+function removeProvider() { const n = document.getElementById('provider-select').value; if (!n || !confirm(`确认删除 "${n}"?`)) return; delete config.providers[n]; populateProviderSelect(); selectProvider() }
 
 function populateProviderSelect() {
   const sel = document.getElementById('provider-select'); sel.innerHTML = ''
@@ -141,6 +160,15 @@ function selectProvider() {
   const p = (config.providers || {})[n]; if (!p) return
   document.getElementById('provider-api-key').value = p.api_key || ''
   document.getElementById('provider-base-url').value = p.base_url || ''
+  // 加载已保存的模型列表到复选框，避免切换提供商时模型丢失
+  const container = document.getElementById('provider-models-checkboxes'); container.innerHTML = ''
+  const savedModels = p.models || []
+  for (const m of savedModels) {
+    const l = document.createElement('label'); l.className = 'model-chip'
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = m; cb.checked = true; l.appendChild(cb)
+    const s = document.createElement('span'); s.className = 'model-chip-name'; s.textContent = m; l.appendChild(s); container.appendChild(l)
+  }
+  document.getElementById('models-count').textContent = savedModels.length ? `共 ${savedModels.length} 个模型` : ''
 }
 
 async function fetchModels() {
@@ -199,7 +227,11 @@ async function saveSettings() {
   if (fc) config.currency.fixed_currency = fc; if (fr) config.currency.fixed_rate = parseFloat(fr)
   saveCurrentProvider()
   const ok = await window.electronAPI.saveConfig(config)
-  if (ok) { closeSettings(); toast('设置已保存', 'success') } else toast('保存失败', 'error')
+  if (ok) {
+    // 代理未运行时，同步显示端口/地址端口与设置端口保持一致
+    if (!proxyRunning && config.proxy?.port) { proxyPort = config.proxy.port; updateProxyUI() }
+    closeSettings(); toast('设置已保存', 'success')
+  } else toast('保存失败', 'error')
 }
 function saveCurrentProvider() {
   const n = document.getElementById('provider-select').value; if (!n || !config.providers) return
