@@ -15,16 +15,7 @@
     "build:win": "electron-builder --win",
     "build:win:x64": "electron-builder --win --x64",
     "build:win:ia32": "electron-builder --win --ia32",
-    "build:win:arm64": "electron-builder --win --arm64",
-    "version:sync": "node ../../scripts/version-sync.js",
-    "version:check": "node ../../scripts/version-sync.js --check",
-    "version:current": "node ../../scripts/version-sync.js --current",
-    "version:rollback": "node ../../scripts/version-rollback.js",
-    "version:gui": "node ../../scripts/version-gui.js",
-    "version:patch": "node ../../scripts/version-bump.js patch",
-    "version:minor": "node ../../scripts/version-bump.js minor",
-    "version:major": "node ../../scripts/version-bump.js major",
-    "release": "node ../../scripts/release.js"
+    "build:win:arm64": "electron-builder --win --arm64"
   },
   "author": "JerryLiu",
   "homepage": "https://github.com/2048lr/ContextGate",
