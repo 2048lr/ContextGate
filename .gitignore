@@ -88,3 +88,4 @@ build/
 *.rpm
 *.AppImage
 full_context.txt
+app/gui-js/.version-history.json
