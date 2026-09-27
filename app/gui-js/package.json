@@ -9,33 +9,37 @@
     "lint": "eslint lib/ cli.js main.js preload.js",
     "lint:fix": "eslint lib/ cli.js main.js preload.js --fix",
     "test": "node --test test/*.test.js",
+    "test:single-process": "node --test --test-isolation=none test/*.test.js",
+    "verify:sandbox": "node scripts/verify-sandbox.js",
     "test:monitor": "node --test test/monitor.test.js",
     "test:proxy": "node --test test/proxy.test.js",
     "build": "electron-builder",
+    "prebuild:win": "node scripts/preflight-build.js",
     "build:win": "electron-builder --win",
+    "prebuild:win:x64": "node scripts/preflight-build.js",
     "build:win:x64": "electron-builder --win --x64",
-    "build:win:ia32": "electron-builder --win --ia32",
+    "prebuild:win:arm64": "node scripts/preflight-build.js",
     "build:win:arm64": "electron-builder --win --arm64"
   },
   "author": "JerryLiu",
   "homepage": "https://github.com/2048lr/ContextGate",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^28.0.0",
-    "electron-builder": "^25.1.8",
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.0.0"
   },
   "dependencies": {
-    "js-yaml": "^4.1.0",
-    "express": "^4.18.2",
     "axios": "^1.6.0",
-    "sql.js": "^1.9.0",
-    "chokidar": "^3.5.3",
-    "commander": "^12.0.0",
     "chalk": "^4.1.2",
-    "ignore": "^5.3.0",
+    "chokidar": "^3.5.3",
     "cli-table3": "^0.6.3",
-    "ora": "^5.4.1"
+    "commander": "^12.0.0",
+    "express": "^4.18.2",
+    "ignore": "^5.3.0",
+    "js-yaml": "^4.1.0",
+    "ora": "^5.4.1",
+    "sql.js": "^1.9.0"
   },
   "build": {
     "appId": "com.contextgate.app",
@@ -77,8 +81,7 @@
         {
           "target": "nsis",
           "arch": [
-            "x64",
-            "ia32"
+            "x64"
           ]
         },
         {
@@ -89,12 +92,7 @@
         }
       ],
       "icon": "build/icon.png",
-      "signAndEditExecutable": true,
-      "signingHashAlgorithms": [
-        "sha256"
-      ],
-      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
-      "timeStampServer": "http://timestamp.digicert.com"
+      "signAndEditExecutable": true
     },
     "nsis": {
       "oneClick": false,

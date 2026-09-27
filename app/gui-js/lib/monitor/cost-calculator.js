@@ -1,45 +1,83 @@
-const MODEL_PRICING = {
-  'gpt-4o-mini': { input: 0.15 / 1000000, output: 0.6 / 1000000 },
-  'gpt-4o': { input: 2.5 / 1000000, output: 10 / 1000000 },
-  'gpt-4-turbo': { input: 10 / 1000000, output: 30 / 1000000 },
-  'gpt-4': { input: 30 / 1000000, output: 60 / 1000000 },
-  'gpt-3.5-turbo': { input: 0.5 / 1000000, output: 1.5 / 1000000 },
-  'o1': { input: 15 / 1000000, output: 60 / 1000000 },
-  'o1-mini': { input: 3 / 1000000, output: 12 / 1000000 },
-  'o3-mini': { input: 1.1 / 1000000, output: 4.4 / 1000000 },
-  'claude-3.5-sonnet': { input: 3 / 1000000, output: 15 / 1000000 },
-  'claude-3.5-haiku': { input: 0.8 / 1000000, output: 4 / 1000000 },
-  'claude-3-opus': { input: 15 / 1000000, output: 75 / 1000000 },
-  'claude-3-haiku': { input: 0.25 / 1000000, output: 1.25 / 1000000 },
-  'deepseek-chat': { input: 0.27 / 1000000, output: 1.1 / 1000000 },
-  'deepseek-reasoner': { input: 0.55 / 1000000, output: 2.19 / 1000000 },
-  'glm-4': { input: 0.1 / 1000000, output: 0.1 / 1000000 },
-  'glm-4-flash': { input: 0.01 / 1000000, output: 0.01 / 1000000 },
-  'qwen-turbo': { input: 0.3 / 1000000, output: 0.6 / 1000000 },
-  'qwen-plus': { input: 0.8 / 1000000, output: 2 / 1000000 },
-  'qwen-max': { input: 2.4 / 1000000, output: 9.6 / 1000000 },
-  'gemini-1.5-pro': { input: 1.25 / 1000000, output: 5 / 1000000 },
-  'gemini-1.5-flash': { input: 0.075 / 1000000, output: 0.3 / 1000000 },
-  'gemini-2.0-flash': { input: 0.1 / 1000000, output: 0.4 / 1000000 },
+const {
+  LOCAL_PRICING_PER_MILLION,
+  resolvePricing,
+  normalizeModelId,
+  buildCatalog,
+  perMillionToPerToken,
+} = require('./pricing')
+
+// 向后兼容导出：每 token 的本地兜底价格表
+const MODEL_PRICING = {}
+for (const [id, pricing] of Object.entries(LOCAL_PRICING_PER_MILLION)) {
+  MODEL_PRICING[id] = { input: pricing.input / 1e6, output: pricing.output / 1e6 }
 }
 
-function calculateCost(model, inputTokens, outputTokens) {
-  if (!model) return 0
-  const lower = model.toLowerCase()
-  // 精确匹配优先（避免 'o1' 前缀误匹配 'o1-mini' 等情况）
-  if (MODEL_PRICING[lower]) {
-    const p = MODEL_PRICING[lower]
-    return (inputTokens || 0) * p.input + (outputTokens || 0) * p.output
-  }
-  // 降级：按前缀长度降序匹配最长的前缀（保证 o1-mini 先于 o1 匹配）
-  const prefixes = Object.keys(MODEL_PRICING).sort((a, b) => b.length - a.length)
-  for (const prefix of prefixes) {
-    if (lower.startsWith(prefix)) {
-      const p = MODEL_PRICING[prefix]
-      return (inputTokens || 0) * p.input + (outputTokens || 0) * p.output
-    }
-  }
-  return 0
+/**
+ * 计算一次请求的成本（FIX-04）。
+ *
+ * 与旧版的关键区别：
+ *  - 价格来自 models.dev 目录优先 + 本地表兜底，模型 ID 会做归一化
+ *    （claude-3-5-sonnet-20241022 现在可以算出价格，而不是记 0）；
+ *  - 建模缓存读/写折扣（OpenAI 口径：读 ≈ 0.1x、写 ≈ 1.25x 输入价）；
+ *  - 价格未知时 known=false，调用方必须显式区分「未知」与「0 成本」。
+ *
+ * @param {string} model
+ * @param {object} usage normalizeUsage() 的输出（或 {prompt_tokens, completion_tokens}）
+ * @param {object} [opts] { providerId, modelsDevData, catalog }
+ * @returns {{cost:number, known:boolean, source:string|null, pricing:object|null, savedCost:number}}
+ */
+function computeUsageCost(model, usage, opts = {}) {
+  if (!model) return { cost: 0, known: false, source: null, pricing: null, savedCost: 0 }
+  const pricing = resolvePricing(model, opts)
+  if (!pricing) return { cost: 0, known: false, source: null, pricing: null, savedCost: 0 }
+
+  const u = usage || {}
+  const prompt = Number(u.prompt_tokens) || 0
+  const completion = Number(u.completion_tokens) || 0
+  const cached = Number(u.cached_tokens) || 0
+  const cacheWrite = Number(u.cache_write_tokens) || 0
+  const inclusive = u.cached_inclusive !== false
+
+  // OpenAI 的 prompt_tokens 含缓存命中；Anthropic 原生 usage 不含
+  const uncachedInput = inclusive ? Math.max(0, prompt - cached - cacheWrite) : prompt
+
+  const cost =
+    uncachedInput * pricing.input +
+    cached * pricing.cacheRead +
+    cacheWrite * pricing.cacheWrite +
+    completion * pricing.output
+
+  const savedCost = cached * Math.max(0, pricing.input - pricing.cacheRead)
+
+  return { cost, known: true, source: pricing.source, pricing, savedCost }
 }
 
-module.exports = { calculateCost, MODEL_PRICING }
+/**
+ * 兼容旧签名的成本计算。
+ * @returns {number} 美元；模型价格未知时返回 0（用 computeUsageCost 区分）
+ */
+function calculateCost(model, inputTokens, outputTokens, opts = {}) {
+  const result = computeUsageCost(model, {
+    prompt_tokens: inputTokens || 0,
+    completion_tokens: outputTokens || 0,
+    cached_tokens: 0,
+    cache_write_tokens: 0,
+    cached_inclusive: true,
+  }, opts)
+  return result.cost
+}
+
+function isPricingKnown(model, opts = {}) {
+  return resolvePricing(model, opts) !== null
+}
+
+module.exports = {
+  calculateCost,
+  computeUsageCost,
+  isPricingKnown,
+  MODEL_PRICING,
+  normalizeModelId,
+  resolvePricing,
+  buildCatalog,
+  perMillionToPerToken,
+}

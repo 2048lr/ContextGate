@@ -89,3 +89,12 @@ build/
 *.AppImage
 full_context.txt
 app/gui-js/.version-history.json
+
+# P0+ 沙箱验收脚本产物与本地安装缓存
+app/gui-js/.sandbox-report.json
+app/gui-js/.npm-cache/
+app/gui-js/.electron-cache/
+app/gui-js/.electron-builder-cache/
+
+# 打包所需的图标资源（上面的 *.png 会误伤它；electron-builder 默认在 build/ 查找）
+!app/gui-js/build/icon.png

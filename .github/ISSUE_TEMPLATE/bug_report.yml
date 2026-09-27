@@ -1,0 +1,67 @@
+name: Bug report
+description: Something is broken or behaves differently from the documentation
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Security problems must **not** be filed here — see [SECURITY.md](../SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: ContextGate version
+      description: Shown in the app, or the `version` field in app/gui-js/package.json
+      placeholder: "5.5.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where does it happen?
+      options:
+        - Desktop GUI
+        - Proxy endpoint (/v1/... or /proxy/chat)
+        - CLI (build / serve / stats / mcp)
+        - Context artifact (full_context.txt)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and how you run it
+      placeholder: "Windows 11, installed build / from source"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include the exact error text or HTTP status. Redact API keys.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Proxy log lines, CLI output, or the app's Security panel contents. Redact API keys and tokens.
+      render: text
+    validations:
+      required: false

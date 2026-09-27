@@ -47,6 +47,10 @@
             <div class="stat-label">今日 Token</div>
             <div class="stat-value" id="stat-today-tokens">0</div>
           </div>
+          <div class="stat-card">
+            <div class="stat-label">今日成本</div>
+            <div class="stat-value" id="stat-today-cost">$0.00</div>
+          </div>
           <div class="stat-card highlight">
             <div class="stat-label">今日节省</div>
             <div class="stat-value" id="stat-today-savings">$0.00</div>
@@ -54,6 +58,10 @@
           <div class="stat-card">
             <div class="stat-label">缓存命中</div>
             <div class="stat-value" id="stat-cache-hit">0%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">预算使用</div>
+            <div class="stat-value" id="stat-budget">--</div>
           </div>
         </div>
         
@@ -102,6 +110,8 @@
             <div class="card-footer">
               <button id="btn-select-project" class="card-btn primary">选择项目</button>
               <button id="btn-build-context" class="card-btn">构建上下文</button>
+              <button id="btn-copy-context" class="card-btn">复制上下文</button>
+              <button id="btn-reveal-context" class="card-btn">产物目录</button>
             </div>
           </div>
           
@@ -124,6 +134,12 @@
                 <div class="info-row">
                   <span class="info-label">缓存:</span>
                   <span class="info-value" id="proxy-cache-status">未启用</span>
+                </div>
+                <div class="info-row token-row">
+                  <span class="info-label">本地令牌:</span>
+                  <span class="info-value token-value" id="proxy-token">未生成</span>
+                  <button class="tiny-btn" id="btn-copy-token" title="复制令牌">复制</button>
+                  <button class="tiny-btn" id="btn-rotate-token" title="重新签发令牌">重置</button>
                 </div>
               </div>
             </div>
@@ -172,6 +188,7 @@
         <button class="tab-btn" data-tab="monitor">监控</button>
         <button class="tab-btn" data-tab="scanner">扫描器</button>
         <button class="tab-btn" data-tab="context">上下文</button>
+        <button class="tab-btn" data-tab="security">安全</button>
         <button class="tab-btn" data-tab="currency">货币</button>
       </div>
       
@@ -230,6 +247,18 @@
             <label>默认提供商:</label>
             <select id="default-provider"></select>
           </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="proxy-auth-enabled" checked>
+              启用本地令牌鉴权（强烈建议保持开启）
+            </label>
+            <small class="form-hint">关闭后，本机任何进程都能直接使用该代理并消耗你的 API 额度</small>
+          </div>
+          <div class="form-group">
+            <label>请求体上限:</label>
+            <input type="text" id="proxy-max-body" placeholder="32mb">
+            <small class="form-hint">Express 默认 100KB，会让带上下文的请求直接 413</small>
+          </div>
         </div>
         
         <div id="tab-monitor" class="tab-pane">
@@ -273,9 +302,16 @@
             <input type="text" id="output-file" value="full_context.txt">
           </div>
           <div class="form-group">
-            <label>智能上下文最大 Token:</label>
-            <input type="number" id="context-max-tokens" value="8000" min="512" max="200000" step="512">
-            <small class="form-hint">获取模型列表后自动填写</small>
+            <label>上下文 Token 预算:</label>
+            <input type="number" id="context-max-tokens" value="8000" min="0" max="200000" step="512">
+            <small class="form-hint">超过预算的文件会降级为摘要或略过（0 = 不裁剪，输出全量）</small>
+          </div>
+          <div class="form-group">
+            <label>输出格式:</label>
+            <select id="context-format">
+              <option value="markdown">Markdown</option>
+              <option value="xml">XML</option>
+            </select>
           </div>
           <div class="form-group">
             <label class="checkbox-label">
@@ -287,8 +323,35 @@
             <label>防抖延迟 (秒):</label>
             <input type="number" id="debounce-seconds" value="1" min="0.1" max="10" step="0.1">
           </div>
+          <div class="form-group">
+            <label>额外忽略模式 (每行一个):</label>
+            <textarea id="context-extra-ignore" rows="3" placeholder="*.generated.ts&#10;fixtures/**"></textarea>
+            <small class="form-hint">默认已忽略 .env*、锁文件、压缩产物；可在项目根放置 .contextgateignore</small>
+          </div>
         </div>
         
+        <div id="tab-security" class="tab-pane">
+          <div class="security-status" id="security-status">
+            <div class="security-row"><span class="security-label">加载中…</span></div>
+          </div>
+          <div class="form-group">
+            <label>额外允许用系统浏览器打开的域名 (每行一个):</label>
+            <textarea id="security-external-hosts" rows="3" placeholder="github.com"></textarea>
+            <small class="form-hint">应用窗口内的其它导航与 window.open 一律拒绝</small>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="security-allow-insecure-tls">
+              允许 provider 关闭 TLS 证书校验（危险，需重启代理）
+            </label>
+            <small class="form-hint">开启后，声明了 tls.reject_unauthorized: false 的 provider 将不校验证书，API Key 与对话内容可能被中间人截获</small>
+          </div>
+          <div class="form-group">
+            <label>遥测与崩溃上报:</label>
+            <div class="info-value">未启用（应用不发送任何遥测；仅在你配置 provider 时才会发起外部请求）</div>
+          </div>
+        </div>
+
         <div id="tab-currency" class="tab-pane">
           <div class="form-group">
             <label>固定货币:</label>

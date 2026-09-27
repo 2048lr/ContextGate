@@ -8,11 +8,40 @@ const sharedHttpsAgent = new https.Agent({
   rejectUnauthorized: true, minVersion: 'TLSv1.2',
 })
 
+// FIX-S2：TLS 校验降级开关默认不可达。
+// 原实现只要 provider 配置里写 tls.reject_unauthorized: false 就会生效，
+// 那样 API Key 与全部对话内容都可能被中间人截获。
+// 现在需要「全局 security.allow_insecure_tls: true」+「provider 显式选择」双重条件。
 const insecureHttpsAgent = new https.Agent({
   keepAlive: true, keepAliveMsecs: 30000,
   maxSockets: 50, maxFreeSockets: 10, timeout: 30000,
   rejectUnauthorized: false, minVersion: 'TLSv1.2',
 })
+
+const INSECURE_TLS_WARNING = '⚠ 不安全连接：该 provider 关闭了 TLS 证书校验（tls.reject_unauthorized: false），' +
+  'API Key 与对话内容可能被中间人截获。请仅在完全可控的自签名内网环境下使用。'
+
+let securityPolicy = { allowInsecureTls: false }
+let _insecureTlsWarned = false
+
+/** 由 ProxyServer 在初始化时按配置写入（进程级安全姿态） */
+function setSecurityPolicy(policy = {}) {
+  securityPolicy = { allowInsecureTls: policy.allowInsecureTls === true }
+  return getSecurityPolicy()
+}
+
+function getSecurityPolicy() { return { ...securityPolicy } }
+
+/** provider 是否会被允许使用「不校验证书」的 agent */
+function isInsecureTlsEnabled(providerConfig) {
+  if (providerConfig?.tls?.reject_unauthorized !== false) return false
+  return securityPolicy.allowInsecureTls === true
+}
+
+/** provider 请求了降级但被全局策略拒绝（UI/日志需要提示） */
+function isInsecureTlsRequestedButBlocked(providerConfig) {
+  return providerConfig?.tls?.reject_unauthorized === false && securityPolicy.allowInsecureTls !== true
+}
 
 const sharedHttpAgent = new http.Agent({
   keepAlive: true, keepAliveMsecs: 30000,
@@ -55,7 +84,17 @@ function resolveApiKey(providerConfig, clientAuthHeader) {
 
 function getAgent(providerConfig) {
   const url = (providerConfig.base_url || '').toLowerCase()
-  if (providerConfig.tls?.reject_unauthorized === false) return insecureHttpsAgent
+  if (isInsecureTlsEnabled(providerConfig)) {
+    if (!_insecureTlsWarned) {
+      _insecureTlsWarned = true
+      console.warn(INSECURE_TLS_WARNING)
+    }
+    return insecureHttpsAgent
+  }
+  if (isInsecureTlsRequestedButBlocked(providerConfig) && !_insecureTlsWarned) {
+    _insecureTlsWarned = true
+    console.warn('[security] provider 请求关闭 TLS 校验，但 security.allow_insecure_tls 未开启，已按安全默认值继续校验证书。')
+  }
   if (url.startsWith('https://')) return sharedHttpsAgent
   return sharedHttpAgent
 }
@@ -127,4 +166,7 @@ module.exports = {
   axiosInstance, axiosRetry, getAgent, buildAxiosConfig,
   forwardRequest, forwardChatRequest, joinUrl,
   isPlaceholderKey, resolveApiKey,
+  setSecurityPolicy, getSecurityPolicy,
+  isInsecureTlsEnabled, isInsecureTlsRequestedButBlocked,
+  INSECURE_TLS_WARNING,
 }

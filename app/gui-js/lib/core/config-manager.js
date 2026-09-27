@@ -1,6 +1,6 @@
 const fs = require('fs')
 const yaml = require('js-yaml')
-const { DEFAULT_PROXY_HOST, DEFAULT_PROXY_PORT } = require('./constants')
+const { DEFAULT_PROXY_HOST, DEFAULT_PROXY_PORT, DEFAULT_MAX_BODY_SIZE } = require('./constants')
 
 class ConfigManager {
   constructor(configPath) {
@@ -67,11 +67,38 @@ class ConfigManager {
   getDefaultProvider() { return this.config.default_provider || null }
   setDefaultProvider(name) { this.config.default_provider = name }
 
-  getProxyConfig() { return this.config.proxy || { host: DEFAULT_PROXY_HOST, port: DEFAULT_PROXY_PORT } }
-  getMonitorConfig() { return this.config.monitor || { budget_limit: 10 } }
+  getProxyConfig() {
+    return { host: DEFAULT_PROXY_HOST, port: DEFAULT_PROXY_PORT, max_body_size: DEFAULT_MAX_BODY_SIZE, ...(this.config.proxy || {}) }
+  }
+
+  getAuthConfig() {
+    return { enabled: true, host_check: true, allowed_hosts: [], allow_target_base_url: true, ...(this.config.proxy?.auth || {}) }
+  }
+
+  getMonitorConfig() {
+    return { budget_limit: 10, warning_threshold: 75, critical_threshold: 90, enforce_budget: false, ...(this.config.monitor || {}) }
+  }
+
   getCurrencyConfig() { return this.config.currency || {} }
-  getContextConfig() { return this.config.context || { output_file: 'full_context.txt', max_tokens: 8000, watch_enabled: true, debounce_seconds: 1 } }
-  getScannerConfig() { return this.config.scanner || { max_file_size: 1048576 } }
+
+  getContextConfig() {
+    return {
+      output_file: 'full_context.txt',
+      format: 'markdown',
+      max_tokens: 8000,
+      enforce_budget: true,
+      summarize_skipped: true,
+      summary_lines: 12,
+      watch_enabled: true,
+      debounce_seconds: 1,
+      secret_scan: true,
+      ...(this.config.context || {}),
+    }
+  }
+
+  getScannerConfig() { return { max_file_size: 1048576, ...(this.config.scanner || {}) } }
+
+  getCacheConfig() { return { ttl_seconds: 3600, ...(this.config.cache || {}) } }
 }
 
 module.exports = { ConfigManager }

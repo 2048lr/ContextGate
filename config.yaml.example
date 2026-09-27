@@ -27,6 +27,8 @@ currency:
 #   3. 占位符包括：sk-xxx, sk-your-*, your-*, placeholder, 空字符串等
 #   4. 设置 passthrough_auth: true 时，始终优先使用客户端传来的 key
 #      （适用于 Cursor、Continue、Cline 等强制要求 API Key 的客户端）
+#      注意：passthrough_auth 场景下 Authorization 头被用作上游 Key，
+#      本地鉴权必须改用 X-ContextGate-Token 头。
 providers:
   # OpenAI 配置
   openai:
@@ -66,25 +68,76 @@ proxy:
   host: "127.0.0.1"
   port: 12306
   sanitize_requests: true
+  # 请求体上限。Express 默认 100KB，会让任何"把上下文贴进请求"的调用直接 413。
+  # 支持 B/KB/MB/GB 后缀。
+  max_body_size: "32mb"
+  # 为流式请求注入 stream_options.include_usage，让上游回传 usage。
+  # 不注入时流式请求的代币与成本会恒为 0。
+  inject_stream_usage: true
+  # 本地令牌鉴权与来源校验（DNS rebinding / 本机其他进程）
+  auth:
+    # 强烈建议保持 true。设为 false 时本机任何进程都能白嫖你的 API Key。
+    enabled: true
+    # Host 头白名单校验（只接受 127.0.0.1 / localhost / [::1]）
+    host_check: true
+    # 额外允许的 Host 主机名（例如把代理绑定到局域网地址后需要放行）
+    allowed_hosts: []
+    # 是否允许客户端用 X-Target-Base-Url 指定转发目标（用于获取模型列表）
+    allow_target_base_url: true
+  # 代理鉴权令牌。首次启动自动生成，也可在 UI 里查看/复制/重置。
+  # 客户端用法：Authorization: Bearer <local_token> 或 X-ContextGate-Token: <local_token>
+  local_token: ""
+
+# 安全配置
+security:
+  # 是否允许 provider 用 tls.reject_unauthorized: false 关闭 TLS 证书校验。
+  # 默认 false = 即使 provider 这么写也会继续校验证书（避免 Key 被中间人截获）。
+  allow_insecure_tls: false
+  # 允许交给系统浏览器打开的域名白名单（应用窗口内的其它导航与 window.open 一律拒绝）
+  allowed_external_hosts:
+    - "github.com"
+
+# 响应缓存配置
+cache:
+  # 缓存条目 TTL（秒）。0 表示不过期。缓存 key 覆盖全部影响输出的参数。
+  ttl_seconds: 3600
 
 # Token 监控配置
 monitor:
+  # 预算上限（美元）。0 表示不限制。
   budget_limit: 10.00
+  # 使用率达到该百分比时告警
   warning_threshold: 75
+  # 使用率达到该百分比时严重告警
   critical_threshold: 90
+  # 设为 true 时，达到 budget_limit 后新请求会被拒绝（402），即"到额即拒"
+  enforce_budget: false
   db_path: "contextgate.db"
 
 # 上下文配置
 context:
   output_file: "full_context.txt"
+  # 输出格式：markdown | xml
+  format: "markdown"
+  # Token 预算。0 表示不裁剪（输出全量）。
   max_tokens: 8000
+  # 是否按预算裁剪
+  enforce_budget: true
+  # 预算外文件是否降级为摘要（前 N 行）
+  summarize_skipped: true
+  summary_lines: 12
+  # 文件监视：源码变化后自动按防抖延迟重建上下文
   watch_enabled: true
   debounce_seconds: 1.0
+  # 对产物做凭据扫描（命中只告警并记入 manifest，不剔除文件）
+  secret_scan: true
   dynamic_enabled: false
 
 # 扫描配置
 scanner:
   max_file_size: 1048576
+  # 额外忽略模式（与 .gitignore / .contextgateignore 叠加）
+  exclude: []
   include_extensions:
     - ".py"
     - ".js"

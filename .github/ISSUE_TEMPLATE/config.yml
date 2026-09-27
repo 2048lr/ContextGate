@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/2048lr/ContextGate/security/advisories/new
+    about: Do not report security problems in public issues — use private vulnerability reporting (see SECURITY.md).
+  - name: Documentation
+    url: https://github.com/2048lr/ContextGate#readme
+    about: Setup, configuration, authentication and MCP integration.

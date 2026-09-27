@@ -2,6 +2,8 @@ const { version: VERSION } = require('../../package.json')
 
 const DEFAULT_PROXY_HOST = '127.0.0.1'
 const DEFAULT_PROXY_PORT = 12306
+// 请求体上限：Express 默认 100KB 会让带上下文的请求直接 413
+const DEFAULT_MAX_BODY_SIZE = '32mb'
 
 const DEFAULT_EXTENSIONS = [
   '.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.go', '.rs',
@@ -33,4 +35,4 @@ const EXCLUDE_DIRS = new Set([
   '.turbo', '.cache', 'tmp', 'temp'
 ])
 
-module.exports = { VERSION, DEFAULT_PROXY_HOST, DEFAULT_PROXY_PORT, DEFAULT_EXTENSIONS, BINARY_EXTENSIONS, EXCLUDE_DIRS }
+module.exports = { VERSION, DEFAULT_PROXY_HOST, DEFAULT_PROXY_PORT, DEFAULT_MAX_BODY_SIZE, DEFAULT_EXTENSIONS, BINARY_EXTENSIONS, EXCLUDE_DIRS }
