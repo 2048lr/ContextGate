@@ -1,9 +1,12 @@
 const ModelsDev = require('./models-dev')
+const { normalizeGeminiBaseUrl } = require('./protocol')
 
 const BUILTIN_PROVIDERS = {
   openai:       { name: 'OpenAI',        base_url: 'https://api.openai.com/v1',                         env: ['OPENAI_API_KEY'],             npm: '@ai-sdk/openai',              format: 'openai' },
   anthropic:    { name: 'Anthropic',     base_url: 'https://api.anthropic.com/v1',                      env: ['ANTHROPIC_API_KEY'],          npm: '@ai-sdk/anthropic',           format: 'openai' },
-  google:       { name: 'Google',        base_url: 'https://generativelanguage.googleapis.com/v1beta',  env: ['GOOGLE_GENERATIVE_AI_API_KEY'], npm: '@ai-sdk/google',            format: 'gemini' },
+  // FIX-11：Google 原先停在 .../v1beta（缺 OpenAI 兼容段），router 又从不读 format，
+  // 导致 Google 用户实际不可用。这里补上 /openai，让 /v1/chat/completions 能直接透传。
+  google:       { name: 'Google',        base_url: 'https://generativelanguage.googleapis.com/v1beta/openai', env: ['GOOGLE_GENERATIVE_AI_API_KEY'], npm: '@ai-sdk/google',            format: 'gemini' },
   deepseek:     { name: 'DeepSeek',      base_url: 'https://api.deepseek.com/v1',                      env: ['DEEPSEEK_API_KEY'],           npm: '@ai-sdk/openai-compatible',   format: 'openai' },
   xai:          { name: 'xAI',           base_url: 'https://api.x.ai/v1',                              env: ['XAI_API_KEY'],                npm: '@ai-sdk/xai',                 format: 'openai' },
   mistral:      { name: 'Mistral',       base_url: 'https://api.mistral.ai/v1',                        env: ['MISTRAL_API_KEY'],            npm: '@ai-sdk/mistral',             format: 'openai' },
@@ -29,7 +32,8 @@ class ProviderRegistry {
   resolveProvider(providerId, userConfig = {}) {
     const builtin = BUILTIN_PROVIDERS[providerId]
     const md = (this._modelsDev || {})[providerId]
-    const base_url = userConfig.base_url || builtin?.base_url || md?.api || ''
+    // 用户自填的 Google base_url 可能仍停在 /v1beta，这里统一补齐兼容段
+    const base_url = normalizeGeminiBaseUrl(userConfig.base_url || builtin?.base_url || md?.api || '')
     return {
       id: providerId,
       name: builtin?.name || md?.name || providerId,

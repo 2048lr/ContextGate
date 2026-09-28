@@ -1,6 +1,7 @@
 const axios = require('axios')
 const https = require('https')
 const http = require('http')
+const { buildUpstreamAuthHeaders } = require('./protocol')
 
 const sharedHttpsAgent = new https.Agent({
   keepAlive: true, keepAliveMsecs: 30000,
@@ -69,14 +70,31 @@ function isPlaceholderKey(key) {
   return PLACEHOLDER_PATTERNS.some(p => p.test(trimmed))
 }
 
-function resolveApiKey(providerConfig, clientAuthHeader) {
-  const proxyKey = (providerConfig.api_key || '').trim()
-  let clientKey = ''
-  if (clientAuthHeader && typeof clientAuthHeader === 'string') {
-    clientKey = clientAuthHeader.replace(/^Bearer\s+/i, '').trim()
+/**
+ * 解析实际使用的上游 Key。
+ * FIX-11：Anthropic 原生客户端把 key 放在 x-api-key 里，因此除了 Authorization
+ * 之外还要接受 x-api-key 作为 passthrough 来源。
+ */
+/** FIX-13：配置里不再留明文时，允许从环境变量取 Key（CLI/无 GUI 场景也就能用） */
+function resolveEnvApiKey(providerConfig) {
+  const names = Array.isArray(providerConfig?.env) ? providerConfig.env : []
+  for (const name of names) {
+    const value = process.env?.[name]
+    if (typeof value === 'string' && !isPlaceholderKey(value)) return value.trim()
   }
+  return ''
+}
+
+function resolveApiKey(providerConfig, clientAuthHeader, clientApiKeyHeader) {
+  const proxyKey = (providerConfig.api_key || '').trim()
+  const fromAuth = typeof clientAuthHeader === 'string' ? clientAuthHeader.replace(/^Bearer\s+/i, '').trim() : ''
+  const fromApiKey = typeof clientApiKeyHeader === 'string' ? clientApiKeyHeader.trim() : ''
+  const clientKey = fromAuth || fromApiKey
   // 优先使用代理配置的 key
   if (!isPlaceholderKey(proxyKey)) return { key: proxyKey, source: 'proxy' }
+  // 其次环境变量（provider.env 由 provider-registry 从内置定义带出）
+  const envKey = resolveEnvApiKey(providerConfig)
+  if (envKey) return { key: envKey, source: 'env' }
   // 代理未配置 key 时，仅在 passthrough_auth 启用时使用客户端 key
   if (providerConfig.passthrough_auth && !isPlaceholderKey(clientKey)) return { key: clientKey, source: 'client' }
   return { key: '', source: 'none', error: 'No valid API key configured' }
@@ -100,12 +118,53 @@ function getAgent(providerConfig) {
 }
 
 function buildAxiosConfig(providerConfig, extra = {}) {
+  const { signal, ...rest } = extra
   return {
-    ...extra,
+    ...rest,
+    // FIX-07：把下游的 AbortController 一路带到 socket 层，客户端取消时上游连接立即关闭
+    signal,
     httpAgent: getAgent(providerConfig),
     httpsAgent: getAgent(providerConfig),
-    timeout: providerConfig.timeout || 60000,
+    timeout: extra.timeout || providerConfig.timeout || 60000,
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
   }
+}
+
+// 逐跳头与鉴权头不能原样转发
+const STRIPPED_REQUEST_HEADERS = new Set([
+  'host', 'connection', 'content-length', 'transfer-encoding', 'keep-alive',
+  'upgrade', 'proxy-authorization', 'proxy-connection', 'te', 'trailer',
+  'accept-encoding', 'authorization', 'x-api-key', 'x-goog-api-key',
+])
+
+/**
+ * FIX-11：构造发往上游的头。
+ *  - 保留客户端的 anthropic-version / anthropic-beta / idempotency-key 等业务头；
+ *  - 丢弃逐跳头与客户端鉴权头，改由 provider 形态决定如何带上真实 Key；
+ *  - multipart / 二进制请求必须原样保留 Content-Type（里面含 boundary）。
+ */
+function buildForwardHeaders(providerConfig, apiKey, clientHeaders = {}, options = {}) {
+  const { keepContentType = false, contentType = null, extra = {}, routeId = null } = options
+  const headers = {}
+  for (const [key, value] of Object.entries(clientHeaders || {})) {
+    const lower = key.toLowerCase()
+    if (STRIPPED_REQUEST_HEADERS.has(lower)) continue
+    if (value === undefined || value === null) continue
+    headers[key] = value
+  }
+  Object.assign(headers, buildUpstreamAuthHeaders(providerConfig, apiKey, clientHeaders, { routeId }))
+  if (contentType) headers['Content-Type'] = contentType
+  else if (keepContentType && clientHeaders['content-type']) headers['Content-Type'] = clientHeaders['content-type']
+  else if (!headers['Content-Type'] && !headers['content-type']) headers['Content-Type'] = 'application/json'
+  return Object.assign(headers, extra)
+}
+
+/** 一次不带重试的上游调用 */
+function sendUpstream({ providerConfig, method = 'POST', url, data, headers, responseType, signal, timeout }) {
+  return axiosInstance(buildAxiosConfig(providerConfig, {
+    method, url, data, headers, responseType, signal, timeout,
+  }))
 }
 
 async function axiosRetry(config, retries = 2) {
@@ -135,7 +194,7 @@ function joinUrl(base, path) {
 
 async function forwardRequest(providerConfig, backendPath, data, requestHeaders) {
   const url = joinUrl(providerConfig.base_url, backendPath)
-  const resolved = resolveApiKey(providerConfig, requestHeaders?.authorization)
+  const resolved = resolveApiKey(providerConfig, requestHeaders?.authorization, requestHeaders?.['x-api-key'])
   if (resolved.error) {
     const err = new Error(resolved.error)
     err.response = { status: 401, data: { error: resolved.error } }
@@ -149,7 +208,7 @@ async function forwardRequest(providerConfig, backendPath, data, requestHeaders)
 
 async function forwardChatRequest(providerConfig, model, messages, options, requestHeaders) {
   const url = joinUrl(providerConfig.base_url, '/chat/completions')
-  const resolved = resolveApiKey(providerConfig, requestHeaders?.authorization)
+  const resolved = resolveApiKey(providerConfig, requestHeaders?.authorization, requestHeaders?.['x-api-key'])
   if (resolved.error) {
     const err = new Error(resolved.error)
     err.response = { status: 401, data: { error: resolved.error } }
@@ -165,8 +224,10 @@ async function forwardChatRequest(providerConfig, model, messages, options, requ
 module.exports = {
   axiosInstance, axiosRetry, getAgent, buildAxiosConfig,
   forwardRequest, forwardChatRequest, joinUrl,
-  isPlaceholderKey, resolveApiKey,
+  isPlaceholderKey, resolveApiKey, resolveEnvApiKey,
   setSecurityPolicy, getSecurityPolicy,
   isInsecureTlsEnabled, isInsecureTlsRequestedButBlocked,
+  buildForwardHeaders, sendUpstream,
+  STRIPPED_REQUEST_HEADERS,
   INSECURE_TLS_WARNING,
 }

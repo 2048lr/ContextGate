@@ -67,6 +67,28 @@ program.command('build [path]')
     }
   })
 
+/**
+ * FIX-13：GUI 会把 API Key 收进 safeStorage（DPAPI）加密库，CLI 进程无法解密。
+ * 与其让用户对着 401 发懵，不如在启动时就把「哪些 provider 需要靠环境变量」说清楚。
+ */
+function reportUnreadableSecrets(configManager) {
+  const providers = configManager.getProviders() || {}
+  const { resolveEnvApiKey } = require('./lib/proxy/forwarder')
+  const needEnv = []
+  for (const [name, cfg] of Object.entries(providers)) {
+    if (!cfg || typeof cfg !== 'object') continue
+    if (cfg.api_key) continue
+    if (cfg.api_key_ref !== 'secret') continue
+    const builtin = require('./lib/proxy/provider-registry').BUILTIN_PROVIDERS[name]
+    if (resolveEnvApiKey({ env: builtin?.env || [] })) continue
+    needEnv.push(`${name}${builtin?.env?.length ? `（设置 ${builtin.env.join(' 或 ')}）` : ''}`)
+  }
+  if (needEnv.length > 0) {
+    console.log(chalk.yellow(`\n⚠ 以下 provider 的 API Key 由 GUI 加密存储，CLI 无法解密，请改用环境变量提供：`))
+    for (const item of needEnv) console.log(chalk.yellow(`  - ${item}`))
+  }
+}
+
 program.command('serve [path]').description('启动代理服务器').option('--host <host>', '监听地址', '127.0.0.1').option('--port <port>', '监听端口', v => parseInt(v, 10), DEFAULT_PROXY_PORT).option('-c, --config <path>', '配置文件路径', 'config.yaml').action(async (projectPath, options) => {
   const configManager = new ConfigManager(options.config)
   const targetPath = projectPath ? path.resolve(projectPath) : configManager.getWorkspace() || process.cwd()
@@ -77,6 +99,7 @@ program.command('serve [path]').description('启动代理服务器').option('--h
   const scanner = new CodeScanner(targetPath, { ...configManager.getScannerConfig(), ...ctxCfg })
   const built = await scanner.buildContext(contextFile, { format: ctxCfg.format, maxTokens: ctxCfg.max_tokens })
   console.log(chalk.dim(`上下文: ${built.fileCount}/${built.totalFiles} 文件, ~${built.estimatedTokens} tokens`))
+  reportUnreadableSecrets(configManager)
   const eventBus = new EventBus()
   eventBus.on('request:log', data => { if (data.type === 'response') console.log(chalk.dim(`[${data.provider}] ${data.model} ${data.tokens?.total || 0} tokens ${data.cached ? '(cached)' : ''}`)) })
   const proxy = new ProxyServer({ contextFile, configPath: options.config, projectRoot: targetPath, eventBus })

@@ -688,6 +688,10 @@ html, body {
 .provider-buttons { display: flex; gap: 8px; }
 .provider-editor { flex: 1; min-width: 0; }
 
+/* FIX-13：API 密钥输入框 + 显式删除按钮（留空表示保留，删除必须显式操作） */
+.key-input-row { display: flex; align-items: center; gap: 8px; }
+.key-input-row input { flex: 1; min-width: 0; }
+
 .models-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 .models-count { font-size: 11px; color: var(--text-dim); white-space: nowrap; font-weight: 600; }
 .models-search { display: flex; align-items: center; gap: 5px; margin-left: auto; }

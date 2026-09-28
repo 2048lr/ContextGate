@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, nativeImage, clipboard, shell, session } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, nativeImage, clipboard, shell, session, safeStorage } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const yaml = require('js-yaml')
@@ -13,6 +13,18 @@ app.enableSandbox()
 // GPU 驱动导致渲染异常时的正确做法是关掉硬件加速，而不是关沙箱：
 //   app.disableHardwareAcceleration()
 // 上面这行必须在 app ready 之前调用；如需启用，请在此处放开，不要改回 --disable-gpu-sandbox。
+
+// FIX-12（P1-5）：单实例锁。
+// 没有它时重复启动会出现两个托盘、两次抢 12306 端口、两个进程写同一个 sqlite 库。
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+if (!gotSingleInstanceLock) {
+  console.warn('[main] 已有 ContextGate 实例在运行，本次启动直接退出')
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus() }
+  })
+}
 
 const userDataPath = app.getPath('userData')
 const tmpDir = path.join(userDataPath, 'tmp')
@@ -29,6 +41,7 @@ const { EventBus } = require('./lib/core/event-bus')
 const { ConfigManager } = require('./lib/core/config-manager')
 const { DEFAULT_PROXY_HOST, DEFAULT_PROXY_PORT } = require('./lib/core/constants')
 const { createNavigationPolicy, installNavigationGuards } = require('./lib/security/navigation')
+const { createSecretStore, absorbConfigSecrets } = require('./lib/core/secret-store')
 
 const isLinux = process.platform === 'linux'
 const isMac = process.platform === 'darwin'
@@ -43,6 +56,9 @@ let contextWatcher = null
 let budgetGuard = null
 let navigationGuards = null
 let navigationPolicy = null
+// FIX-13：密钥库（safeStorage/DPAPI 加密），惰性创建
+let secretStore = null
+let maintenanceTimer = null
 const eventBus = new EventBus()
 // FIX-S1：渲染进程通过 preload 上报自身的沙箱/隔离状态，主进程据此做启动自检
 let rendererSecurityReport = null
@@ -72,7 +88,67 @@ function auditSandboxConfiguration() {
   return problems
 }
 
-function getConfigManager() { return new ConfigManager(path.join(getDataDir(), 'config.yaml')) }
+/**
+ * FIX-13：带密钥解析器的 ConfigManager。
+ * 配置文件里只留 api_key_ref: 'secret'，明文 Key 由加密库提供，
+ * 因此代理/监控读配置的代码完全不需要知道密钥存在哪里。
+ */
+function createConfigManager() {
+  const mgr = new ConfigManager(path.join(getDataDir(), 'config.yaml'))
+  mgr.setSecretResolver(id => {
+    try { return getSecretStore().getKey(id) } catch { return '' }
+  })
+  return mgr
+}
+
+function getConfigManager() { return createConfigManager() }
+
+/** FIX-13：safeStorage（Windows 走 DPAPI）加密存储 API Key */
+function getSecretStore() {
+  if (secretStore) return secretStore
+  secretStore = createSecretStore({
+    dataDir: getDataDir(),
+    configManager: createConfigManager(),
+    safeStorage,
+    allowPlaintextFallback: true,
+    logger: { log: console.log, warn: m => recordSecurityEvent('warn', m), error: m => recordSecurityEvent('error', m) },
+  })
+  return secretStore
+}
+
+/**
+ * FIX-13：交给渲染进程的配置必须脱敏。
+ * api_key 换成掩码 + has_api_key 标记，渲染层永远拿不到明文。
+ */
+function sanitizeConfigForRenderer(cfg) {
+  const clone = JSON.parse(JSON.stringify(cfg || {}))
+  const store = getSecretStore()
+  const providers = clone.providers || {}
+  for (const [id, provider] of Object.entries(providers)) {
+    if (!provider || typeof provider !== 'object') continue
+    const plain = (provider.api_key || '') || (() => { try { return store.getKey(id) } catch { return '' } })()
+    const hasKey = Boolean(plain) || (() => { try { return store.hasKey(id) } catch { return false } })()
+    delete provider.api_key
+    provider.has_api_key = hasKey
+    provider.api_key = hasKey ? store.maskKey(plain || '••••••••') : ''
+  }
+  if (clone.proxy) delete clone.proxy.local_token
+  return clone
+}
+
+/**
+ * FIX-13：保存配置时把密钥收进加密库，配置文件里不留明文。
+ *  - 输入框里还是掩码 → 视为「未修改」，保留原密钥；
+ *  - 输入框里是新明文 → 写入密钥库，配置里只写 api_key_ref: 'secret'；
+ *  - 输入框被清空 → 删除该 provider 的密钥。
+ */
+function absorbSecretsFromConfig(incoming) {
+  const result = absorbConfigSecrets(incoming, getSecretStore())
+  if (result.cleared.length > 0) {
+    recordSecurityEvent('warn', `以下 provider 的 API Key 未能加密保存，已清空以免明文落盘：${result.cleared.join(', ')}`)
+  }
+  return result.config
+}
 
 function sendToUI(channel, payload) {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -166,14 +242,20 @@ function loadConfig() {
 
 function saveConfig(newConfig) {
   const configPath = path.join(getDataDir(), 'config.yaml')
-  try { fs.writeFileSync(configPath, yaml.dump(newConfig, { lineWidth: -1 }), 'utf8'); config = newConfig; return true }
-  catch (e) { console.error('Failed to save config:', e); return false }
+  try {
+    // FIX-13：先把密钥收进加密库，再落盘，保证配置文件里永远没有明文 Key
+    const sanitized = absorbSecretsFromConfig(JSON.parse(JSON.stringify(newConfig || {})))
+    fs.writeFileSync(configPath, yaml.dump(sanitized, { lineWidth: -1 }), 'utf8')
+    config = sanitized
+    return true
+  } catch (e) { console.error('Failed to save config:', e); return false }
 }
 
 async function startProxy(port = DEFAULT_PROXY_PORT) {
   if (proxyServer) return { success: false, error: 'Proxy already running' }
   const cfgPath = path.join(getDataDir(), 'config.yaml')
-  const cfgMgr = new ConfigManager(cfgPath)
+  // FIX-13：带密钥解析器的 ConfigManager，代理无需感知密钥存放位置
+  const cfgMgr = createConfigManager()
   // FIX-02：proxy.host 原先被硬编码成回环，设置里的主机地址是死旋钮；
   // 现在按配置生效，非回环地址会在启动时返回强告警。
   proxyHost = cfgMgr.getProxyConfig().host || DEFAULT_PROXY_HOST
@@ -184,7 +266,14 @@ async function startProxy(port = DEFAULT_PROXY_PORT) {
     try { contextResult = await rebuildContext() } catch (e) { console.error('Context build failed:', e.message) }
   }
 
-  tokenMonitor = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') })
+  const monitorCfg = cfgMgr.getMonitorConfig()
+  const logCfg = cfgMgr.getRequestLogConfig()
+  // FIX-12：明细保留策略（默认 90 天），聚合数据不删
+  tokenMonitor = new TokenMonitor({
+    dbPath: path.join(getDataDir(), 'contextgate.db'),
+    retentionDays: monitorCfg.retention_days,
+    logRetentionDays: logCfg.retention_days,
+  })
   await tokenMonitor._ensureReady().catch(() => {})
   budgetGuard = new BudgetGuard({
     configManager: getConfigManager(),
@@ -200,15 +289,20 @@ async function startProxy(port = DEFAULT_PROXY_PORT) {
     eventBus.on('request:log', data => sendToUI('proxy-log', data)),
   ]
 
-  const proxy = new ProxyServer({ contextFile, configPath: cfgPath, projectRoot: workspace, dataDir: getDataDir(), eventBus, budgetGuard })
+  const proxy = new ProxyServer({
+    contextFile, configPath: cfgPath, projectRoot: workspace, dataDir: getDataDir(),
+    eventBus, budgetGuard, configManager: cfgMgr,
+  })
   try {
     const result = await proxy.start(proxyHost, port)
     proxyServer = proxy; isProxyRunning = true; proxyPort = result.port
     const watch = await startContextWatcher()
+    startMaintenance(proxy)
     updateTrayMenu()
     return {
       success: true, port: result.port, host: proxyHost,
       token: result.token, authEnabled: result.authEnabled,
+      cachePersist: result.cachePersist, requestLogEnabled: result.requestLogEnabled,
       warnings: result.warnings || [],
       context: contextResult ? { fileCount: contextResult.fileCount, estimatedTokens: contextResult.estimatedTokens, skippedCount: contextResult.skippedCount } : null,
       watch,
@@ -221,8 +315,22 @@ async function startProxy(port = DEFAULT_PROXY_PORT) {
   }
 }
 
+// FIX-09/FIX-12：定期清理过期缓存条目与过老的请求明细，避免长期运行无限增长
+function startMaintenance(proxy) {
+  stopMaintenance()
+  const run = () => { proxy.maintenance().catch(e => console.warn('[maintenance] 失败:', e.message)) }
+  setTimeout(run, 10000).unref?.()
+  maintenanceTimer = setInterval(run, 60 * 60 * 1000)
+  if (maintenanceTimer.unref) maintenanceTimer.unref()
+}
+
+function stopMaintenance() {
+  if (maintenanceTimer) { clearInterval(maintenanceTimer); maintenanceTimer = null }
+}
+
 async function stopProxy() {
   const wasRunning = !!proxyServer
+  stopMaintenance()
   await stopContextWatcher()
   if (proxyServer) {
     try { await proxyServer.stop() } catch {}
@@ -295,6 +403,18 @@ function updateTrayMenu() {
 }
 
 app.whenReady().then(() => {
+  // FIX-12：第二个实例直接退出，不要创建窗口/托盘/数据库连接
+  if (!gotSingleInstanceLock) return
+  // FIX-13：把历史版本遗留在 config.yaml 里的明文 Key 迁进 safeStorage 加密库
+  try {
+    const migrated = getSecretStore().migrateFromConfig()
+    if (migrated.migrated.length > 0) {
+      console.log(`[security] 已把 ${migrated.migrated.length} 个 provider 的明文 API Key 迁入加密存储（backend=${migrated.backend}）`)
+    }
+    if (migrated.backend === 'plaintext') {
+      recordSecurityEvent('warn', '当前环境没有可用的 safeStorage，API Key 只能以明文方式保存在 secrets.json 中。')
+    }
+  } catch (e) { recordSecurityEvent('error', `密钥迁移失败: ${e.message}`) }
   // FIX-S1：导航/弹窗/webview 白名单 + 默认拒绝所有权限请求
   navigationPolicy = createNavigationPolicy({
     appDir: __dirname,
@@ -317,7 +437,7 @@ app.whenReady().then(() => {
 })
 let _quitting = false
 app.on('window-all-closed', () => { if (isLinux) cleanupAndQuit(); else if (!isMac) app.quit() })
-app.on('before-quit', async (e) => { if (_quitting) return; _quitting = true; e.preventDefault(); await stopProxy(); app.exit(0) })
+app.on('before-quit', async (e) => { if (_quitting) return; _quitting = true; e.preventDefault(); stopMaintenance(); await stopProxy(); app.exit(0) })
 
 ipcMain.handle('get-platform', () => ({ os: process.platform, isLinux, isMac, isWin, usesFrame: isLinux }))
 
@@ -367,13 +487,82 @@ ipcMain.handle('get-security-status', () => {
     events: securityEvents.slice(-20),
   }
 })
-ipcMain.handle('get-config', () => loadConfig())
+// FIX-13：渲染进程永远拿不到明文 API Key（只给掩码 + has_api_key）
+ipcMain.handle('get-config', () => sanitizeConfigForRenderer(loadConfig()))
 ipcMain.handle('save-config', (_, newConfig) => {
   const ok = saveConfig(newConfig)
-  // 配置变更后重新评估预算与文件监视
+  // 配置变更后重新评估预算、降级链与文件监视
   if (ok && budgetGuard) { try { budgetGuard.notify() } catch {} }
+  if (ok && proxyServer) { try { proxyServer.refreshResilience() } catch {} }
   return ok
 })
+// FIX-13：密钥状态的只读视图（绝不含明文）
+ipcMain.handle('get-secrets-status', () => {
+  const store = getSecretStore()
+  let view = { providers: [] }
+  try { view = store.export() } catch { /* 读取失败时返回空视图 */ }
+  return { ...view, maskSample: store.maskKey('sk-1234567890abcdef') }
+})
+ipcMain.handle('delete-provider-key', (_, providerId) => {
+  if (!providerId || typeof providerId !== 'string') return { success: false, error: '缺少 provider 名称' }
+  const store = getSecretStore()
+  let removed = false
+  try { removed = store.deleteKey(providerId) } catch (e) { recordSecurityEvent('error', `删除密钥失败: ${e.message}`) }
+  // 注意：这里必须用「不带密钥解析器」的 ConfigManager，
+  // 否则 getProvider() 会把刚删掉的密钥又注回内存配置里。
+  try {
+    const raw = new ConfigManager(path.join(getDataDir(), 'config.yaml'))
+    const provider = (raw.config.providers || {})[providerId]
+    if (provider) {
+      provider.api_key = ''
+      delete provider.api_key_ref
+      raw.save()
+    }
+  } catch (e) { recordSecurityEvent('warn', `清理 api_key_ref 失败: ${e.message}`) }
+  return { success: true, removed }
+})
+/**
+ * FIX-13 / FIX-11：获取模型列表。
+ *
+ * 原来由渲染进程直接带着明文 Key 请求代理（fetch + X-Target-Base-Url）：
+ * 渲染层一旦拿不到明文（正是 FIX-13 的目标），这条路就断了，而且 Key 会暴露在页面里。
+ * 现在改为主进程代劳：Key 从加密库/环境变量解析，渲染层只拿到模型 ID 列表。
+ */
+ipcMain.handle('fetch-models', async (_, payload = {}) => {
+  const providerId = typeof payload.providerId === 'string' ? payload.providerId : ''
+  const baseUrl = typeof payload.baseUrl === 'string' ? payload.baseUrl.trim() : ''
+  if (!baseUrl) return { success: false, error: '请先填写基础 URL' }
+  let parsed
+  try { parsed = new URL(baseUrl) } catch { return { success: false, error: '基础 URL 不是合法 URL' } }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return { success: false, error: '基础 URL 必须使用 http 或 https' }
+  if (parsed.username || parsed.password) return { success: false, error: '基础 URL 不能内嵌用户名/密码' }
+
+  const { buildForwardHeaders, sendUpstream, joinUrl, resolveEnvApiKey } = require('./lib/proxy/forwarder')
+  const { normalizeGeminiBaseUrl } = require('./lib/proxy/protocol')
+  const { BUILTIN_PROVIDERS } = require('./lib/proxy/provider-registry')
+  const store = getSecretStore()
+  const supplied = typeof payload.apiKey === 'string' ? payload.apiKey.trim() : ''
+  let storedKey = ''
+  try { storedKey = providerId ? (store.getKey(providerId) || '') : '' } catch { storedKey = '' }
+  // 掩码原样回传时按「未修改」处理，用加密库里的真 Key
+  const isMask = supplied.length > 0 && storedKey.length > 0 && supplied === store.maskKey(storedKey)
+  const providerConfig = { format: 'openai', base_url: baseUrl }
+  const envKey = resolveEnvApiKey({ env: BUILTIN_PROVIDERS[providerId]?.env || [] })
+  const apiKey = (!supplied || isMask) ? (storedKey || envKey) : supplied
+  try {
+    const response = await sendUpstream({
+      providerConfig, method: 'GET',
+      url: joinUrl(normalizeGeminiBaseUrl(baseUrl), 'models'),
+      headers: buildForwardHeaders(providerConfig, apiKey, {}, {}),
+    })
+    const list = response.data?.data || response.data?.models || []
+    const models = list.map(m => m.id || m.model || m.name).filter(Boolean)
+    return { success: true, models }
+  } catch (e) {
+    return { success: false, error: e.response?.status ? ('HTTP ' + e.response.status) : e.message }
+  }
+})
+
 ipcMain.handle('select-folder', async () => {
   const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null
   const result = parent
@@ -403,7 +592,7 @@ ipcMain.handle('build-context', async (_, projectPath) => {
 ipcMain.handle('get-stats', async () => {
   const summary = tokenMonitor
     ? await tokenMonitor.getSummary()
-    : await (async () => { const m = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') }); try { return await m.getSummary() } finally { m.close() } })()
+    : await (async () => { const m = new TokenMonitor({ dbPath: path.join(getDataDir(), 'contextgate.db') }); try { return await m.getSummary() } finally { await m.close() } })()
   const cfgMgr = getConfigManager()
   const spent = tokenMonitor ? tokenMonitor.getTodayCostSync() : (summary.today?.cost || 0)
   const budget = require('./lib/monitor/budget').evaluateBudget(spent, cfgMgr.getMonitorConfig())

@@ -21,6 +21,12 @@ currency:
 # base_url 可省略，系统会从 models.dev 目录自动解析
 # 只需配置 api_key 和选择要使用的模型
 #
+# FIX-13：API Key 不再以明文写在这里。
+#   - 在 GUI 里填写 Key 时会存进 Electron safeStorage（Windows 走 DPAPI）加密库 secrets.json，
+#     配置里只留 api_key_ref: "secret"；历史遗留的明文 Key 会在首次启动时被自动迁走。
+#   - 无界面的 CLI（node cli.js serve）无法解密该库，请改用 provider 的标准环境变量
+#     （OPENAI_API_KEY / ANTHROPIC_API_KEY / DEEPSEEK_API_KEY ...），代理会自动使用它们。
+#
 # API Key 处理逻辑：
 #   1. 代理配置的 api_key 优先使用（如果不是占位符）
 #   2. 如果代理 api_key 为空或是占位符，自动使用客户端传来的 key
@@ -88,6 +94,53 @@ proxy:
   # 客户端用法：Authorization: Bearer <local_token> 或 X-ContextGate-Token: <local_token>
   local_token: ""
 
+  # ---- FIX-07：流式可靠性 ----
+  stream:
+    # 上游两个 chunk 之间超过该时长即判定为半开连接，代理会中止它并给客户端一个 SSE error 帧。
+    idle_timeout_ms: 60000
+    # 单条流式请求的总时长上限（毫秒）。0 表示不限。
+    total_timeout_ms: 0
+
+  # ---- FIX-08：重试 / 降级 / 熔断 / 限流 ----
+  resilience:
+    max_retries: 2
+    retry_statuses: [429, 500, 502, 503, 504]
+    base_delay_ms: 500
+    max_delay_ms: 8000
+    # 退避带随机抖动，避免所有客户端同时重试（thundering herd）
+    jitter: true
+    # 尊重上游返回的 Retry-After
+    respect_retry_after: true
+    # 写请求默认只在「可安全重放」时重试：带上 Idempotency-Key，或上游明确表示未处理（429/503）。
+    # 设为 true 会连 500/连接中断也重放，上游可能重复计费。
+    retry_non_idempotent: false
+    # 同时在飞的上游请求上限，超出的排队；队列满或等待超时返回 503。
+    max_concurrency: 32
+    max_queue: 64
+    queue_timeout_ms: 30000
+    # provider 降级链：主 provider 全部重试失败后按顺序尝试后面的 provider
+    fallback: {}
+    # 熔断：连续失败达到阈值后冷却期内直接快速失败，不再打上游
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+      cooldown_ms: 30000
+
+  # ---- FIX-10：Prompt Caching ----
+  prompt_cache:
+    enabled: true
+    # 为 Anthropic 形态的请求（含 /v1/messages 原生透传）自动注入 cache_control 断点
+    anthropic_cache_control: true
+    # OpenAI 侧不需要注入，但会检查前缀是否稳定（时间戳/UUID 等动态内容会破坏前缀缓存）
+    openai_prefix_stability: true
+    # 小于该 token 数的前缀不会缓存（OpenAI 官方最小可缓存前缀为 1024）
+    min_prefix_tokens: 1024
+
+  # ---- FIX-11：协议兼容 ----
+  protocols:
+    # 允许原生透传 /v1/messages（Claude Code）、/v1/responses（Codex CLI）、/v1/files、/v1/batches
+    native_passthrough: true
+
 # 安全配置
 security:
   # 是否允许 provider 用 tls.reject_unauthorized: false 关闭 TLS 证书校验。
@@ -101,6 +154,18 @@ security:
 cache:
   # 缓存条目 TTL（秒）。0 表示不过期。缓存 key 覆盖全部影响输出的参数。
   ttl_seconds: 3600
+  # 落盘：重启后缓存仍可用（默认写在 <数据目录>/cache 下）
+  persist: true
+  max_entries: 200
+  max_memory_mb: 100
+  max_disk_mb: 256
+  # 单条缓存落盘体积上限（字节），超过则只在内存里存活
+  persist_max_entry_bytes: 262144
+  # 上下文与缓存 key 的绑定方式：
+  #   hash = key 里带上下文 hash（保守，上下文一变旧条目不可复用）
+  #   off  = 不绑定。当前版本代理不会把工作区上下文注入请求，用户自己粘贴的上下文已在 messages 里、
+  #          已参与指纹，因此关掉绑定可以避免「改一个源文件就全表失效」。
+  context_binding: hash
 
 # Token 监控配置
 monitor:
@@ -113,6 +178,12 @@ monitor:
   # 设为 true 时，达到 budget_limit 后新请求会被拒绝（402），即"到额即拒"
   enforce_budget: false
   db_path: "contextgate.db"
+  # FIX-12：requests 明细保留天数（0 = 不清理）。日/月聚合不受影响。
+  retention_days: 90
+  # FIX-12：请求级脱敏日志（provider/模型/token/费用/耗时/错误摘要；绝不记录 prompt 与请求头）
+  request_log:
+    enabled: true
+    retention_days: 30
 
 # 上下文配置
 context:

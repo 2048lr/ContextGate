@@ -40,7 +40,14 @@ ContextGate is a desktop application that serves as an intelligent API proxy and
 | **Accurate metering** | Streams inject `stream_options.include_usage` so token/cost accounting is not zero; pricing comes from the models.dev catalog with a local fallback |
 | **Budgets** | `budget_limit` + warning/critical thresholds raise alerts, and optionally reject requests (`enforce_budget`) |
 | **MCP server** | Exposes `build_context` / `list_files` / `search` to Cursor, Claude Code and any MCP client |
-| **Multi-Provider** | Supports OpenAI, Zhipu AI, DeepSeek, and custom providers |
+| **Reliable streaming** | Client disconnects abort the upstream call (no more paying for tokens nobody reads), idle/total timeouts kill half-open connections, and interrupted streams emit an SSE `error` frame instead of a silent truncated 200 |
+| **Retry / fallback / circuit breaker** | 429/5xx retried with jittered backoff and `Retry-After`; per-provider fallback chains, circuit breaking and a local concurrency gate. Writes are only replayed when replaying is safe (`Idempotency-Key`, or the upstream said "not handled") |
+| **Persistent cache** | Exact-match cache keyed on every output-affecting field, with TTL, disk persistence, LRU/space caps, and *selective* invalidation (a source change no longer nukes the whole table) |
+| **Prompt caching** | Injects Anthropic `cache_control` breakpoints, keeps prefixes byte-stable (volatile timestamps are flagged), and reports cache read/write tokens with the money they save |
+| **Protocol compatibility** | OpenAI `/v1/chat/completions` + `/v1/responses`, Anthropic-native `/v1/messages`, `/v1/files`, `/v1/batches`, and raw multipart passthrough for audio/images; Google endpoints point at the OpenAI-compatible segment |
+| **Encrypted key storage** | API keys live in an Electron `safeStorage` (DPAPI) vault; the renderer only ever sees a mask, and `config.yaml` never contains plaintext |
+| **SQLite data layer** | WAL-mode incremental writes with indexes, retention policy, and a redacted request-level log (`GET /requests`) |
+| **Multi-Provider** | Supports OpenAI, Anthropic, Google, Zhipu AI, DeepSeek, and custom providers |
 | **Modern GUI** | GNOME-style dark theme with system tray integration |
 | **Cross-Platform** | Available for Windows (development on Linux/macOS is paused) |
 
@@ -134,14 +141,57 @@ proxy:
     host_check: true             # reject non-loopback Host headers
   local_token: ""                # generated on first launch
 
+  # FIX-07: streaming reliability
+  stream:
+    idle_timeout_ms: 60000       # abort when the upstream goes quiet for this long
+    total_timeout_ms: 0          # hard cap per stream (0 = unlimited)
+
+  # FIX-08: retry / fallback / circuit breaker / concurrency
+  resilience:
+    max_retries: 2
+    retry_statuses: [429, 500, 502, 503, 504]
+    base_delay_ms: 500
+    max_delay_ms: 8000
+    jitter: true
+    respect_retry_after: true
+    retry_non_idempotent: false  # true = also replay failed writes (may double-bill)
+    max_concurrency: 32
+    max_queue: 64
+    queue_timeout_ms: 30000
+    fallback: {}                 # e.g. { openai: ["deepseek"] }
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+      cooldown_ms: 30000
+
+  # FIX-10: prompt caching
+  prompt_cache:
+    enabled: true
+    anthropic_cache_control: true   # inject cache_control breakpoints for /v1/messages
+    openai_prefix_stability: true   # flag volatile prefixes that defeat prefix caching
+    min_prefix_tokens: 1024         # OpenAI's minimum cacheable prefix
+
+  # FIX-11: protocol passthrough
+  protocols:
+    native_passthrough: true     # /v1/messages, /v1/responses, /v1/files, /v1/batches
+
 cache:
   ttl_seconds: 3600              # 0 = never expire
+  persist: true                  # keep the cache across restarts
+  max_entries: 200
+  max_memory_mb: 100
+  max_disk_mb: 256
+  context_binding: hash          # "off" = a source-file change stops invalidating entries
 
 monitor:
   budget_limit: 10.00
   warning_threshold: 75
   critical_threshold: 90
   enforce_budget: false          # true = reject requests (402) once over budget
+  retention_days: 90             # prune request rows, keep daily/monthly aggregates
+  request_log:
+    enabled: true                # redacted per-request log, readable at GET /requests
+    retention_days: 30
 
 context:
   output_file: "full_context.txt"
@@ -170,11 +220,19 @@ uploaded unless you paste it into a client.
 
 What is stored on disk, in `%APPDATA%\ContextGate\`:
 
-- `config.yaml` — plain text, **including provider API keys**. See
-  [SECURITY.md](SECURITY.md) for the known limitation and the plan to move to
-  Electron `safeStorage` (DPAPI).
-- `contextgate.db` — request metadata only (provider, model, token counts, cost,
-  latency, cache flag). **Not** stored: prompts, responses, or API keys.
+- `config.yaml` — settings only. **No plaintext API keys**: keys added in the GUI go
+  into the encrypted vault, and existing plaintext keys are migrated out on first
+  launch (`api_key_ref: secret` marks them). Keys can also come from the provider's
+  standard environment variable (e.g. `OPENAI_API_KEY`), which is the way to feed the
+  headless CLI.
+- `secrets.json` — the API key vault. Encrypted with Electron `safeStorage`
+  (DPAPI on Windows). If `safeStorage` is unavailable the file is explicitly marked
+  `"insecure": true` and the in-app security panel says so.
+- `contextgate.db` — SQLite (WAL) with request metadata: provider, model, token
+  counts (including cache read/write), cost, latency, cache flag. Request *detail*
+  rows are pruned after `monitor.retention_days` (default 90); daily/monthly
+  aggregates are kept. **Not** stored: prompts, responses, or API keys.
+- `cache/` — the persistent response cache (exact-match only, TTL'd, size-capped).
 - `models-dev-cache.json` — the price catalog snapshot.
 
 Security posture (sandbox, navigation allowlist, auth, TLS downgrade, telemetry) is
@@ -233,7 +291,8 @@ use **the local token as the API key**:
 | **Cursor** | Base URL `http://127.0.0.1:12306/v1`, API key = local token |
 | **Continue** | `apiBase: http://127.0.0.1:12306/v1`, `apiKey: <local token>` |
 | **Cline** | Custom OpenAI-compatible endpoint, API key = local token |
-| **Claude Code / Codex CLI** | `ANTHROPIC_BASE_URL`/`OPENAI_BASE_URL` + `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` = local token |
+| **Claude Code** | `ANTHROPIC_BASE_URL=http://127.0.0.1:12306` + `ANTHROPIC_API_KEY` = local token (native `/v1/messages` passthrough) |
+| **Codex CLI** | `OPENAI_BASE_URL=http://127.0.0.1:12306/v1` + `OPENAI_API_KEY` = local token (`/v1/responses` passthrough) |
 | **MCP clients** | `node cli.js mcp <project>` (see above) |
 
 ---
@@ -251,8 +310,15 @@ ContextGate 是一款桌面应用程序，为 AI 助手提供智能 API 代理�
 - **本地令牌鉴权** - 所有端点都要求本地令牌，并校验 `Host`/`Origin`，阻断 DNS rebinding 与跨站访问
 - **可信计量** - 流式请求自动注入 `stream_options.include_usage`，token/费用不再恒为 0；价格以 models.dev 目录为准、本地表兜底
 - **预算告警与拦截** - `budget_limit` + 警告/临界阈值，可选 `enforce_budget` 到额即拒
+- **流式可靠性** - 客户端断开即中止上游（不再为空转的 token 付费），空闲/总时长超时会掐断半开连接，中断的流会发出 SSE `error` 帧而不是静默截断的 200
+- **重试 / 降级 / 熔断 / 限流** - 429/5xx 带 jitter 退避重试并尊重 `Retry-After`；支持 provider 降级链、熔断与本地并发闸门。写请求只有在「可安全重放」（带 `Idempotency-Key`，或上游明确表示未处理）时才会重试
+- **持久化缓存** - 缓存 key 覆盖所有影响输出的字段，带 TTL、落盘、LRU/容量上限，并且**选择性失效**（改一个源文件不再清空整张表）
+- **Prompt Caching** - 为 Anthropic 注入 `cache_control` 断点，保证前缀字节稳定（时间戳等动态内容会被检出），并统计缓存读/写 token 与其省下的金额
+- **协议兼容** - OpenAI `/v1/chat/completions` + `/v1/responses`、Anthropic 原生 `/v1/messages`、`/v1/files`、`/v1/batches`，以及 audio/images 的 multipart 原样透传；Google 端点指向 OpenAI 兼容段
+- **密钥加密存储** - API Key 存进 Electron `safeStorage`（Windows 走 DPAPI）加密库，渲染层只能看到掩码，`config.yaml` 里永远没有明文
+- **SQLite 数据层** - WAL 模式增量写入 + 索引 + 保留策略，并提供脱敏的请求级日志（`GET /requests`）
 - **MCP server** - 把 `build_context` / `list_files` / `search` 暴露给 Cursor、Claude Code 等 MCP 客户端
-- **多提供商支持** - 支持 OpenAI、智谱 AI、DeepSeek 等
+- **多提供商支持** - 支持 OpenAI、Anthropic、Google、智谱 AI、DeepSeek 等
 - **现代化界面** - GNOME 风格深色主题，系统托盘集成
 - **跨平台** - 当前仅支持 Windows（Linux/macOS 开发已暂停）
 
@@ -341,6 +407,50 @@ proxy:
     enabled: true            # 建议保持开启
     host_check: true         # 拒绝非回环 Host 头
   local_token: ""            # 首次启动自动生成
+  # FIX-07 流式可靠性
+  stream:
+    idle_timeout_ms: 60000   # 上游静默超过该时长即判定为半开并中止
+    total_timeout_ms: 0      # 单条流的总时长上限（0 = 不限）
+  # FIX-08 重试 / 降级 / 熔断 / 限流
+  resilience:
+    max_retries: 2
+    retry_statuses: [429, 500, 502, 503, 504]
+    base_delay_ms: 500
+    max_delay_ms: 8000
+    jitter: true
+    respect_retry_after: true
+    retry_non_idempotent: false  # true = 失败的写请求也重放（可能重复计费）
+    max_concurrency: 32
+    max_queue: 64
+    queue_timeout_ms: 30000
+    fallback: {}                 # 例如 { openai: ["deepseek"] }
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+      cooldown_ms: 30000
+  # FIX-10 Prompt Caching
+  prompt_cache:
+    enabled: true
+    anthropic_cache_control: true   # 为 /v1/messages 注入 cache_control 断点
+    openai_prefix_stability: true   # 检出会破坏前缀缓存的动态内容
+    min_prefix_tokens: 1024         # OpenAI 的最小可缓存前缀
+  # FIX-11 协议透传
+  protocols:
+    native_passthrough: true     # /v1/messages、/v1/responses、/v1/files、/v1/batches
+
+cache:
+  ttl_seconds: 3600          # 0 表示不过期
+  persist: true              # 重启后缓存仍可用
+  max_entries: 200
+  max_memory_mb: 100
+  max_disk_mb: 256
+  context_binding: hash      # "off" = 源码变化不再让缓存条目失效
+
+monitor:
+  retention_days: 90         # 清理请求明细，保留日/月聚合
+  request_log:
+    enabled: true            # 脱敏请求级日志，可通过 GET /requests 读取
+    retention_days: 30
 
 context:
   format: "markdown"         # markdown | xml
@@ -366,9 +476,15 @@ ContextGate 是本地优先的：**没有遥测、没有埋点、没有崩溃上
 
 磁盘上保存的内容（`%APPDATA%\ContextGate\`）：
 
-- `config.yaml` —— 明文，**包含 provider API Key**。已知限制与后续改造见 [SECURITY.md](SECURITY.md)。
-- `contextgate.db` —— 仅请求元数据（provider、模型、token 数、费用、耗时、是否命中缓存）。
+- `config.yaml` —— 只有设置，**不含明文 API Key**：在 GUI 里填的 Key 会进加密库，历史遗留的明文
+  Key 也会在首次启动时被迁走（迁移过的 provider 标记 `api_key_ref: secret`）。也可以用
+  provider 的标准环境变量（如 `OPENAI_API_KEY`）提供 Key —— 这是无界面的 CLI 的推荐方式。
+- `secrets.json` —— API Key 保险库，用 Electron `safeStorage`（Windows 为 DPAPI）加密。
+  若运行环境没有可用的 `safeStorage`，文件里会显式写入 `"insecure": true`，应用内安全面板也会标红。
+- `contextgate.db` —— SQLite（WAL），保存请求元数据：provider、模型、token 数（含缓存读/写）、
+  费用、耗时、是否命中缓存。请求**明细**按 `monitor.retention_days`（默认 90 天）清理，日/月聚合保留。
   **不保存** prompt、回答或 API Key。
+- `cache/` —— 持久化响应缓存（仅精确匹配，带 TTL 与容量上限）。
 - `models-dev-cache.json` —— 价格目录快照。
 
 安全状态（沙箱、导航白名单、鉴权、TLS 降级、遥测）可在应用内「设置 → 安全」查看，
@@ -420,7 +536,8 @@ ContextGate 也能以 [MCP](https://modelcontextprotocol.io/) server 形式运�
 | **Cursor** | Base URL `http://127.0.0.1:12306/v1`，API Key 填本地令牌 |
 | **Continue** | `apiBase: http://127.0.0.1:12306/v1`，`apiKey: <本地令牌>` |
 | **Cline** | 自定义 OpenAI 兼容端点，API Key 填本地令牌 |
-| **Claude Code / Codex CLI** | `ANTHROPIC_BASE_URL`/`OPENAI_BASE_URL` + 对应 API Key 填本地令牌 |
+| **Claude Code** | `ANTHROPIC_BASE_URL=http://127.0.0.1:12306` + `ANTHROPIC_API_KEY` 填本地令牌（原生 `/v1/messages` 透传） |
+| **Codex CLI** | `OPENAI_BASE_URL=http://127.0.0.1:12306/v1` + `OPENAI_API_KEY` 填本地令牌（`/v1/responses` 透传） |
 | **MCP 客户端** | `node cli.js mcp <项目路径>`（见上） |
 
 ---

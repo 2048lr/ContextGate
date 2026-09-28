@@ -83,6 +83,10 @@ function extractToken(req) {
   if (typeof headerToken === 'string' && headerToken.trim()) return headerToken.trim()
   const auth = req.headers?.authorization
   if (typeof auth === 'string' && auth.trim()) return auth.replace(/^Bearer\s+/i, '').trim()
+  // FIX-11：Anthropic 原生客户端（Claude Code 设 ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN）
+  // 把凭据放在 x-api-key 里；不认这个头就没法用 /v1/messages 接入。
+  const apiKey = req.headers?.['x-api-key']
+  if (typeof apiKey === 'string' && apiKey.trim()) return apiKey.trim()
   return ''
 }
 

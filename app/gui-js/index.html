@@ -205,7 +205,11 @@
             <div class="provider-editor">
               <div class="form-group">
                 <label>API 密钥:</label>
-                <input type="password" id="provider-api-key" placeholder="输入 API 密钥...">
+                <div class="key-input-row">
+                  <input type="password" id="provider-api-key" placeholder="输入 API 密钥...">
+                  <!-- FIX-13：密钥存进 safeStorage 加密库；留空=保留已保存的密钥，要删除必须显式点这个按钮 -->
+                  <button id="btn-delete-provider-key" class="tiny-btn" title="删除已保存的 API 密钥">🗑</button>
+                </div>
               </div>
               <div class="form-group">
                 <label>基础 URL:</label>

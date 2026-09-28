@@ -33,12 +33,15 @@ async function loadStats() {
     const s = await window.electronAPI.getStats()
     if (s) {
       // FIX-04：「今日成本」与「今日节省」是两个口径，不能再把 cost 当成节省
+      // FIX-10：Prompt Caching 的缓存读/写 token 也单独展示，方便判断前缀是否真的命中
       stats = {
         todayRequests: s.today?.requests || 0,
         todayTokens: s.today?.tokens || 0,
         todayCost: s.today?.cost || 0,
         todaySavings: s.today?.saved || 0,
         cacheHits: s.today?.cacheHits || 0,
+        cacheReadTokens: s.today?.cacheReadTokens || 0,
+        cacheWriteTokens: s.today?.cacheWriteTokens || 0,
       }
       budgetState = s.budget || null
       updateStatsUI()
@@ -115,6 +118,7 @@ function setupEventListeners() {
   document.getElementById('btn-add-provider').onclick = openAddProviderModal
   document.getElementById('btn-remove-provider').onclick = removeProvider
   document.getElementById('btn-fetch-models').onclick = fetchModels
+  document.getElementById('btn-delete-provider-key').onclick = deleteProviderKey
   document.getElementById('btn-confirm-add-provider').onclick = confirmAddProvider
   document.getElementById('btn-cancel-add-provider').onclick = closeAddProviderModal
   document.getElementById('btn-close-provider-modal').onclick = closeAddProviderModal
@@ -244,6 +248,23 @@ function confirmAddProvider() {
 }
 function removeProvider() { const n = document.getElementById('provider-select').value; if (!n || !confirm(`确认删除 "${n}"?`)) return; delete config.providers[n]; populateProviderSelect(); selectProvider() }
 
+/**
+ * FIX-13：删除某个 provider 已保存的 API Key。
+ * 「留空输入框」的语义是「保留」，所以删除必须是显式动作，否则用户没有任何办法撤销。
+ */
+async function deleteProviderKey() {
+  const n = document.getElementById('provider-select').value
+  if (!n) return
+  if (!confirm(`确认删除 "${n}" 已保存的 API 密钥？`)) return
+  const r = await window.electronAPI.deleteProviderKey(n)
+  if (!r?.success) { toast(r?.error || '删除失败', 'error'); return }
+  const p = (config.providers || {})[n]
+  if (p) { p.api_key = ''; p.has_api_key = false }
+  document.getElementById('provider-api-key').value = ''
+  document.getElementById('provider-api-key').placeholder = 'sk-...'
+  toast('已删除该提供商的 API 密钥', 'success')
+}
+
 function populateProviderSelect() {
   const sel = document.getElementById('provider-select'); sel.innerHTML = ''
   for (const n of Object.keys(config.providers || {})) { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o) }
@@ -255,7 +276,10 @@ function populateProviderSelect() {
 function selectProvider() {
   const n = document.getElementById('provider-select').value; if (!n) return
   const p = (config.providers || {})[n]; if (!p) return
-  document.getElementById('provider-api-key').value = p.api_key || ''
+  // FIX-13：主进程只把掩码交给渲染层；留空=保留已加密的密钥，输入新值=覆盖
+  const keyInput = document.getElementById('provider-api-key')
+  keyInput.value = p.api_key || ''
+  keyInput.placeholder = p.has_api_key ? '已加密保存：留空则保留，输入新值则覆盖' : 'sk-...'
   document.getElementById('provider-base-url').value = p.base_url || ''
   // 加载已保存的模型列表到复选框，避免切换提供商时模型丢失
   const container = document.getElementById('provider-models-checkboxes'); container.innerHTML = ''
@@ -271,14 +295,14 @@ function selectProvider() {
 async function fetchModels() {
   const baseUrl = document.getElementById('provider-base-url').value.trim(), apiKey = document.getElementById('provider-api-key').value.trim()
   if (!baseUrl) { toast('请先填写基础 URL', 'warn'); return }
-  if (!apiKey) { toast('请先填写 API 密钥', 'warn'); return }
+  const providerId = document.getElementById('provider-select').value
   const btn = document.getElementById('btn-fetch-models'); btn.disabled = true; btn.textContent = '⏳ 获取中...'
   try {
-    // 通过代理服务器转发请求，避免渲染进程直接请求外部 API 的 CORS 问题
-    const proxyHost = config.proxy?.host || '127.0.0.1'
-    const res = await fetch(`http://${proxyHost}:${proxyPort}/v1/models`, { headers: proxyHeaders({ 'Authorization': `Bearer ${apiKey}`, 'X-Target-Base-Url': baseUrl.replace(/\/+$/, '') }) })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const models = ((await res.json()).data || []).map(m => m.id || m.model || m.name).filter(Boolean)
+    // FIX-13：渲染层不再直接带着明文 Key 发请求；主进程用加密库里的密钥代取模型列表。
+    // 输入框里是掩码时会自动沿用已保存的密钥，因此「只想看看有哪些模型」无需重新输入 Key。
+    const r = await window.electronAPI.fetchModels({ providerId, baseUrl, apiKey })
+    if (!r?.success) throw new Error(r?.error || '获取失败')
+    const models = r.models || []
     if (!models.length) { toast('未返回模型列表', 'warn'); btn.disabled = false; btn.textContent = '⬇ 获取模型列表'; return }
     const container = document.getElementById('provider-models-checkboxes'); container.innerHTML = ''
     for (const m of models) {
@@ -321,6 +345,18 @@ async function loadSecurityStatus() {
   container.appendChild(securityRow('代理绑定地址', s.proxy.host, /^(127\.0\.0\.1|localhost|::1|\[::1\])$/.test(s.proxy.host) ? 'ok' : 'bad'))
   container.appendChild(securityRow('不安全 TLS 降级', s.proxy.allowInsecureTls ? `已允许（${s.proxy.providersRequestingInsecureTls.join(', ') || '无 provider 使用'}）` : '已禁用', s.proxy.allowInsecureTls ? 'bad' : 'ok'))
   container.appendChild(securityRow('遥测 / 崩溃上报', '未启用', 'ok'))
+  // FIX-13：密钥存储后端必须可见，否则用户无从知道自己的 Key 是不是明文躺着
+  try {
+    const secrets = await window.electronAPI.getSecretsStatus()
+    if (secrets) {
+      const ok = secrets.backend === 'safeStorage'
+      container.appendChild(securityRow(
+        'API Key 存储',
+        ok ? `safeStorage 加密（已保存 ${secrets.providers?.length || 0} 个）` : `明文存储（不安全，已保存 ${secrets.providers?.length || 0} 个）`,
+        ok ? 'ok' : 'bad',
+      ))
+    }
+  } catch { /* 读取失败时略过该行 */ }
   for (const p of s.problems || []) container.appendChild(securityRow('⚠ 检测到问题', p, 'bad'))
 }
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden') }

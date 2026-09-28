@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getConfig: () => ipcRenderer.invoke('get-config'),
   saveConfig: (config) => ipcRenderer.invoke('save-config', config),
   selectFolder: () => ipcRenderer.invoke('select-folder'),
+  // FIX-13：模型列表由主进程代取，渲染层不再需要（也拿不到）明文 Key
+  fetchModels: (payload) => ipcRenderer.invoke('fetch-models', payload),
   getBackgroundUrl: () => ipcRenderer.invoke('get-background-url'),
   getLocale: () => ipcRenderer.invoke('get-locale'),
   minimizeWindow: () => ipcRenderer.invoke('window-minimize'),
@@ -36,6 +38,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onProxyLog: (cb) => ipcRenderer.on('proxy-log', (_, data) => cb(data)),
   onProxyStopped: (cb) => ipcRenderer.on('proxy-stopped', () => cb()),
   getSecurityStatus: () => ipcRenderer.invoke('get-security-status'),
+  // FIX-13：密钥状态只读视图（绝不含明文），以及显式删除某个 provider 的密钥
+  getSecretsStatus: () => ipcRenderer.invoke('get-secrets-status'),
+  deleteProviderKey: (providerId) => ipcRenderer.invoke('delete-provider-key', providerId),
   getRendererSecurity: () => ({ sandboxed: process.sandboxed, contextIsolated: process.contextIsolated, electron: process.versions.electron, chrome: process.versions.chrome }),
   onBudgetAlert: (cb) => ipcRenderer.on('budget-alert', (_, data) => cb(data)),
   onContextUpdated: (cb) => ipcRenderer.on('context-updated', (_, data) => cb(data)),

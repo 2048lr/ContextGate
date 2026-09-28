@@ -44,6 +44,9 @@ class LRUCache {
 
   clear() { this.cache.clear(); this.currentMemory = 0 }
   get size() { return this.cache.size }
+  // 供上层做「按内容选择性失效」（FIX-09）：返回 key 的迭代器副本
+  keys() { return [...this.cache.keys()] }
+  get memoryBytes() { return this.currentMemory }
 
   _estimateSize(value) {
     if (!value) return 0
