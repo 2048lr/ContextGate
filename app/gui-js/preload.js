@@ -44,10 +44,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getRendererSecurity: () => ({ sandboxed: process.sandboxed, contextIsolated: process.contextIsolated, electron: process.versions.electron, chrome: process.versions.chrome }),
   onBudgetAlert: (cb) => ipcRenderer.on('budget-alert', (_, data) => cb(data)),
   onContextUpdated: (cb) => ipcRenderer.on('context-updated', (_, data) => cb(data)),
+  // FIX-16：自动更新（状态 + 手动触发；安装不接收参数）
+  getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  onUpdateStatus: (cb) => ipcRenderer.on('update-status', (_, data) => cb(data)),
+  // FIX-17：可观测性信息与请求日志导出
+  getObservabilityInfo: () => ipcRenderer.invoke('get-observability-info'),
+  exportRequests: (payload) => ipcRenderer.invoke('export-requests', payload),
   removeProxyListeners: () => {
     ipcRenderer.removeAllListeners('proxy-log')
     ipcRenderer.removeAllListeners('proxy-stopped')
     ipcRenderer.removeAllListeners('budget-alert')
     ipcRenderer.removeAllListeners('context-updated')
+    ipcRenderer.removeAllListeners('update-status')
   },
 })

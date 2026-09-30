@@ -11,6 +11,9 @@ const protocol = require('./protocol')
 const { relayStream, writeStreamHeaders, writeSSEError } = require('./stream-relay')
 const { ResilienceGate } = require('./resilience')
 const { applyPromptCache, promptCacheMetrics, PromptCacheStats } = require('./prompt-cache')
+const { LargeBodyGate, LargeBodyBusyError, parseByteSize } = require('./large-body')
+const { buildMetrics, PROMETHEUS_CONTENT_TYPE } = require('../monitor/metrics')
+const exportTools = require('../monitor/export')
 
 const JSON_CONTENT_TYPES = ['application/json', 'application/*+json', 'text/json']
 
@@ -84,15 +87,27 @@ function createRoutes(app, svc) {
   const resilience = svc.resilience || new ResilienceGate({ config: configManager.getResilienceConfig() })
   const promptCacheStats = svc.promptCacheStats || new PromptCacheStats()
   const requestLog = svc.requestLog || null
+  const observabilityConfig = configManager.getObservabilityConfig()
 
   // FIX-11：按内容类型分流 body 解析。
   // multipart / 二进制（audio、files、images/edits）必须原样透传，
   // 走 express.json 会被解析失败或被改写成 JSON 字符串。
   const jsonParser = express.json({ limit: maxBodySize, type: JSON_CONTENT_TYPES })
   const rawParser = express.raw({ limit: maxBodySize, type: () => true })
+  // FIX-15：超过阈值的大请求不走 body parser，直接以 socket 流透传。
+  // express.json 会把整个请求体缓冲成 JS 字符串（UTF-16），一个 8MB 的上下文请求
+  // 往往占用 20MB+ 内存；流式透传把这个开销降到与 socket 缓冲区同量级。
+  const largeBodyConfig = configManager.getLargeBodyConfig()
+  const largeBodyGate = svc.largeBodyGate || new LargeBodyGate(largeBodyConfig)
+  const maxBodyBytes = parseByteSize(maxBodySize, 32 * 1024 * 1024)
   app.use((req, res, next) => {
     const method = String(req.method || '').toUpperCase()
     if (method === 'GET' || method === 'HEAD' || method === 'DELETE' || method === 'OPTIONS') return next()
+    const declared = Number(req.headers['content-length'])
+    if (largeBodyGate.shouldStream(declared)) {
+      req._largeBody = { bytes: declared }
+      return next()
+    }
     if (protocol.isRawBodyRequest(req)) return rawParser(req, res, next)
     return jsonParser(req, res, next)
   })
@@ -165,6 +180,132 @@ function createRoutes(app, svc) {
     return false
   }
 
+  /**
+   * FIX-15：大请求体透传。
+   * 大请求不解析、不缓存、不做 prompt-cache 注入（这些都需要完整 body），
+   * 但保留鉴权、预算、provider 解析与响应字节的透明转发。
+   */
+  async function handleLargeBodyPassthrough(req, res, route, reqStart) {
+    const declared = req._largeBody?.bytes || 0
+    if (maxBodyBytes > 0 && declared > maxBodyBytes) {
+      try { req.resume() } catch { /* 忽略 */ }
+      eventBus.emit('request:log', {
+        type: 'error', method: req.method, path: req.path, provider: '', model: '',
+        error: `请求体 ${declared} 字节超过上限 ${maxBodySize}`, status: 413, responseTime: Date.now() - reqStart,
+      })
+      return res.status(413).json(openaiError(
+        `Request body exceeds the configured limit (${maxBodySize})`,
+        'invalid_request_error', 'request_too_large',
+      ))
+    }
+    try {
+      await largeBodyGate.run(() => pipeLargeBody(req, res, route, reqStart))
+    } catch (error) {
+      if (error instanceof LargeBodyBusyError) {
+        try { req.resume() } catch { /* 忽略 */ }
+        eventBus.emit('request:log', {
+          type: 'error', method: req.method, path: req.path, provider: '', model: '',
+          error: error.message, status: error.status || 429, responseTime: Date.now() - reqStart,
+        })
+        if (!res.headersSent) {
+          return res.status(error.status || 429).json(openaiError(error.message, 'rate_limit_error', 'large_request_busy'))
+        }
+        return undefined
+      }
+      throw error
+    }
+    return undefined
+  }
+
+  function forwardLargeResponse(response, res) {
+    const headers = { 'X-ContextGate-Mode': 'large-body-passthrough' }
+    const upstreamType = response.headers?.['content-type']
+    if (upstreamType) headers['Content-Type'] = upstreamType
+    res.writeHead(response.status || 200, headers)
+  }
+
+  /** 把上游响应流原样接到客户端；客户端断开时销毁上游流，避免继续下载 */
+  function waitForStream(stream, res) {
+    return new Promise(resolve => {
+      let settled = false
+      const finish = () => { if (!settled) { settled = true; resolve() } }
+      stream.on('error', () => { try { res.destroy() } catch { /* 忽略 */ } finish() })
+      stream.on('close', finish)
+      res.on('finish', finish)
+      res.on('close', () => { try { stream.destroy?.() } catch { /* 忽略 */ } finish() })
+      stream.pipe(res)
+    })
+  }
+
+  async function pipeLargeBody(req, res, route, reqStart) {
+    const declared = req._largeBody?.bytes || 0
+    const backendPath = protocol.upstreamPathFor(req.path)
+    const providerId = protocol.providerHintForPath(route.path, configManager)
+      || providerRegistry.detectProviderFromPath(backendPath, configManager)
+    const providerConfig = resolveCandidate(providerId)
+    if (!providerConfig.base_url) {
+      try { req.resume() } catch { /* 忽略 */ }
+      eventBus.emit('request:log', { type: 'error', method: req.method, path: req.path, provider: providerId, model: '', error: `Unknown provider: ${providerId}`, status: 400, responseTime: Date.now() - reqStart })
+      return res.status(400).json(openaiError(`Unknown provider: ${providerId}`, 'invalid_request_error', 'unknown_provider'))
+    }
+    if (!budgetAllows(req, res, { provider: providerId, model: '' })) { try { req.resume() } catch { /* 忽略 */ } return undefined }
+
+    const forwardHeaders = upstreamHeaders(req, svc.localToken)
+    const resolved = resolveApiKey(providerConfig, forwardHeaders.authorization, forwardHeaders['x-api-key'])
+    if (resolved.error) {
+      try { req.resume() } catch { /* 忽略 */ }
+      return res.status(401).json(openaiError(resolved.error, 'invalid_request_error', 'invalid_api_key'))
+    }
+    const headers = buildForwardHeaders(providerConfig, resolved.key, forwardHeaders, {
+      keepContentType: true,
+      contentType: req.headers['content-type'] || 'application/json',
+      routeId: route.id,
+    })
+    // 流式请求体必须带 Content-Length：axios 默认改用 chunked，部分上游会直接拒绝。
+    // Accept-Encoding 固定为 identity，保证响应是未压缩字节，可以逐字节转发。
+    headers['Content-Length'] = String(declared)
+    headers['Accept-Encoding'] = 'identity'
+    const { controller, dispose } = attachClientAbort(req, res)
+    const url = joinUrl(protocol.normalizeGeminiBaseUrl(providerConfig.base_url), backendPath)
+    let bytesOut = 0
+    try {
+      const response = await sendUpstream({
+        providerConfig, method: req.method, url, data: req, headers,
+        responseType: 'stream', signal: controller.signal,
+      })
+      response.data.on('data', chunk => { bytesOut += chunk.length })
+      forwardLargeResponse(response, res)
+      await waitForStream(response.data, res)
+      logRequest({
+        provider: providerId, model: '', method: req.method, path: req.path,
+        status: response.status || 200, responseTime: Date.now() - reqStart,
+        messagePreview: `[large ${declared}B → ${bytesOut}B]`,
+      })
+      return undefined
+    } catch (error) {
+      // 上游在返回响应头之后才失败：错误体同样是 stream，原样转发
+      if (error?.response?.data && typeof error.response.data.pipe === 'function') {
+        try {
+          forwardLargeResponse(error.response, res)
+          await waitForStream(error.response.data, res)
+        } catch { try { res.destroy() } catch { /* 忽略 */ } }
+      } else if (!res.headersSent) {
+        res.status(error.response?.status || 500).json(error.response?.data && typeof error.response.data === 'object'
+          ? error.response.data
+          : openaiError(error.message, 'api_error', 'upstream_error'))
+      } else {
+        try { res.destroy() } catch { /* 忽略 */ }
+      }
+      eventBus.emit('request:log', {
+        type: 'error', method: req.method, path: req.path, provider: providerId, model: '',
+        error: error.message, status: error.response?.status || 500, responseTime: Date.now() - reqStart,
+      })
+      return undefined
+    } finally {
+      dispose()
+    }
+  }
+
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', provider: 'ContextGate', version: VERSION })
   })
@@ -225,6 +366,8 @@ function createRoutes(app, svc) {
     const msgPreview = extractMsgPreview(messages)
 
     try {
+      // FIX-15：大请求走字节级透传（不解析、不缓存）
+      if (req._largeBody) return await handleLargeBodyPassthrough(req, res, route, reqStart)
       if (!isRaw) cacheManager.invalidateIfNeeded(svc.contextFile, svc.projectRoot)
 
       const backendPath = protocol.upstreamPathFor(req.path)
@@ -378,6 +521,14 @@ function createRoutes(app, svc) {
 
   app.post('/proxy/chat', async (req, res) => {
     const reqStart = Date.now()
+    // FIX-15：/proxy/chat 需要解析后的 body 才能取 provider/model，无法流式透传
+    if (req._largeBody) {
+      try { req.resume() } catch { /* 忽略 */ }
+      return res.status(413).json(openaiError(
+        'Request too large for /proxy/chat; send it to /v1/chat/completions, which streams large bodies straight to the upstream.',
+        'invalid_request_error', 'request_too_large',
+      ))
+    }
     const { provider = 'openai', model, messages, ...options } = req.body || {}
     const reqSize = JSON.stringify(req.body || {}).length
     const msgPreview = extractMsgPreview(messages)
@@ -454,6 +605,7 @@ function createRoutes(app, svc) {
       cache: cacheManager.stats(),
       promptCache: promptCacheStats.summary(),
       resilience: resilience.snapshot(),
+      largeBody: largeBodyGate.snapshot(),
       contextHash: cacheManager.getContextHash(),
       budget,
       security: {
@@ -479,6 +631,47 @@ function createRoutes(app, svc) {
     const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0)
     try { res.json({ entries: await requestLog.list({ limit, offset }) }) }
     catch (e) { res.status(500).json(openaiError(e.message, 'api_error')) }
+  })
+
+  // FIX-17：Prometheus 指标。受本地令牌保护（与其它端点一致），
+  // 采集端需要在 scrape 配置里带上 Authorization 头。
+  app.get(observabilityConfig.metrics.path, async (_req, res) => {
+    if (!observabilityConfig.metrics.enabled) {
+      return res.status(404).json(openaiError('Metrics endpoint is disabled', 'invalid_request_error', 'feature_disabled'))
+    }
+    let summary = null
+    try { summary = svc.getUsageSummary ? await svc.getUsageSummary() : null } catch { summary = null }
+    let budget = null
+    try { budget = svc.budgetGuard ? svc.budgetGuard.check() : null } catch { budget = null }
+    const text = buildMetrics({
+      summary: summary || {},
+      cache: { ...cacheManager.stats(), size: cacheManager.size },
+      promptCache: promptCacheStats.summary(),
+      budget,
+      largeBody: largeBodyGate.snapshot(),
+      version: VERSION,
+    })
+    res.set('Content-Type', PROMETHEUS_CONTENT_TYPE).send(text)
+  })
+
+  // FIX-17：把脱敏的请求日志导出为 CSV/JSON（默认上限见 observability.request_export.max_entries）
+  app.get('/requests/export', async (req, res) => {
+    if (!requestLog) return res.status(404).json(openaiError('Request log is disabled', 'invalid_request_error', 'feature_disabled'))
+    if (!observabilityConfig.request_export.enabled) {
+      return res.status(404).json(openaiError('Request export is disabled', 'invalid_request_error', 'feature_disabled'))
+    }
+    const maxEntries = observabilityConfig.request_export.max_entries
+    const requestedLimit = parseInt(req.query.limit, 10) || maxEntries
+    const limit = Math.min(Math.max(requestedLimit, 1), maxEntries)
+    const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0)
+    try {
+      const entries = await requestLog.list({ limit, offset })
+      const payload = exportTools.serialize(entries, { format: req.query.format })
+      res.setHeader('Content-Disposition', `attachment; filename="contextgate-requests.${payload.extension}"`)
+      res.set('Content-Type', payload.contentType).send(payload.body)
+    } catch (e) {
+      res.status(500).json(openaiError(e.message, 'api_error'))
+    }
   })
 
   app.get('/providers', (_req, res) => {
@@ -516,12 +709,15 @@ function createRoutes(app, svc) {
 
   // FIX-01：未知端点也返回 JSON，而不是 Express 默认的 HTML 页面
   app.use((req, res) => {
+    // FIX-15：大请求在这里没被消费，必须排空，否则连接会一直挂着等客户端传完
+    if (req._largeBody) { try { req.resume() } catch { /* 忽略 */ } }
     res.status(404).json(openaiError(`Unknown endpoint: ${req.method} ${req.path}`, 'invalid_request_error', 'unknown_endpoint'))
   })
 
   // FIX-01：统一错误中间件 —— body-parser 的 413 原先会被渲染成 HTML
-  app.use((err, _req, res, next) => {
+  app.use((err, req, res, next) => {
     if (res.headersSent) return next(err)
+    if (req && req._largeBody) { try { req.resume() } catch { /* 忽略 */ } }
     if (err && (err.type === 'entity.too.large' || err.status === 413)) {
       return res.status(413).json(openaiError(
         `Request body exceeds the configured limit (${maxBodySize}). Increase proxy.max_body_size to allow larger payloads.`,

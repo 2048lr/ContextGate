@@ -105,6 +105,18 @@ function setupEventListeners() {
       if (insecureTlsToggle.checked) toast('开启后 provider 可关闭 TLS 校验，API Key 可能被中间人截获', 'error')
     })
   }
+  // FIX-17：请求日志导出
+  const exportCsv = document.getElementById('btn-export-csv')
+  if (exportCsv) exportCsv.onclick = () => exportRequests('csv')
+  const exportJson = document.getElementById('btn-export-json')
+  if (exportJson) exportJson.onclick = () => exportRequests('json')
+  // FIX-16：软件更新
+  const checkUpdate = document.getElementById('btn-check-update')
+  if (checkUpdate) checkUpdate.onclick = async () => { checkUpdate.disabled = true; try { renderUpdateStatus(await window.electronAPI.checkForUpdates()) } catch {} checkUpdate.disabled = false }
+  const downloadUpdate = document.getElementById('btn-download-update')
+  if (downloadUpdate) downloadUpdate.onclick = async () => { downloadUpdate.disabled = true; try { renderUpdateStatus(await window.electronAPI.downloadUpdate()) } catch {} }
+  const installUpdate = document.getElementById('btn-install-update')
+  if (installUpdate) installUpdate.onclick = () => window.electronAPI.installUpdate()
   document.getElementById('btn-settings').onclick = openSettings
   document.getElementById('btn-close-settings').onclick = closeSettings
   document.getElementById('btn-save-settings').onclick = saveSettings
@@ -315,7 +327,57 @@ async function fetchModels() {
   } catch (e) { btn.disabled = false; btn.textContent = '⬇ 获取模型列表'; toast('获取失败: ' + e.message, 'error') }
 }
 
-function openSettings() { loadConfigToSettings(); loadSecurityStatus(); document.getElementById('settings-modal').classList.remove('hidden') }
+function openSettings() { loadConfigToSettings(); loadSecurityStatus(); loadUpdateStatus(); loadObservabilityInfo(); document.getElementById('settings-modal').classList.remove('hidden') }
+
+/** FIX-17：把脱敏请求日志导出为 CSV/JSON（主进程负责弹保存框与写文件） */
+async function exportRequests(format) {
+  try {
+    const r = await window.electronAPI.exportRequests({ format })
+    if (r?.success) toast(`已导出 ${r.count} 条请求日志`, 'success')
+    else if (r?.error && r.error !== '已取消') toast('导出失败: ' + r.error, 'error')
+  } catch (e) { toast('导出失败: ' + e.message, 'error') }
+}
+
+function renderObservabilityInfo(info) {
+  const el = document.getElementById('metrics-endpoint')
+  if (!el) return
+  if (!info) { el.textContent = 'Prometheus: --'; return }
+  const m = info.metrics || {}
+  const backend = info.requestLog?.format || 'sqlite'
+  if (m.enabled === false) el.textContent = 'Prometheus: 已关闭'
+  else if (m.url) el.textContent = `Prometheus: ${m.url}（日志后端: ${backend}）`
+  else el.textContent = `Prometheus: 启动代理后可用 ${m.path}（日志后端: ${backend}）`
+}
+
+async function loadObservabilityInfo() {
+  try { renderObservabilityInfo(await window.electronAPI.getObservabilityInfo()) } catch { /* 读取失败时保持原样 */ }
+}
+
+const UPDATE_LABELS = {
+  idle: '尚未检查', checking: '检查中…', available: '有新版本', 'up-to-date': '已是最新',
+  downloading: '下载中…', downloaded: '已下载，待安装', error: '检查失败', unsupported: '自动更新不可用',
+}
+
+/** FIX-16：把更新状态机的输出渲染成一行人话 + 按钮可用性 */
+function renderUpdateStatus(status) {
+  const el = document.getElementById('update-status')
+  const dl = document.getElementById('btn-download-update')
+  const inst = document.getElementById('btn-install-update')
+  if (!el || !status) return
+  let text = UPDATE_LABELS[status.status] || status.status || '未知'
+  if (status.status === 'available' && status.availableVersion) text = `发现新版本 v${status.availableVersion}（当前 v${status.currentVersion}）`
+  else if (status.status === 'downloaded') text = `v${status.downloadedVersion || status.availableVersion} 已下载，重启即可安装`
+  else if (status.status === 'downloading' && status.progress) text = `下载中 ${Math.round(status.progress.percent || 0)}%`
+  else if (status.status === 'unsupported') text = `自动更新不可用：${status.reason || '未知原因'}`
+  else if (status.status === 'error') text = `检查更新失败：${status.error || '未知错误'}`
+  if (dl) dl.disabled = !(status.supported && status.status === 'available')
+  if (inst) inst.disabled = !(status.supported && status.status === 'downloaded')
+  el.textContent = text
+}
+
+async function loadUpdateStatus() {
+  try { renderUpdateStatus(await window.electronAPI.getUpdateStatus()) } catch { /* 读取失败时保持原样 */ }
+}
 
 function securityRow(label, value, state) {
   const row = document.createElement('div')
@@ -465,6 +527,8 @@ function setupProxyListeners() {
     }
   })
   window.electronAPI.onProxyStopped(() => { proxyRunning = false; updateProxyUI() })
+  // FIX-16：主进程推送的更新状态
+  window.electronAPI.onUpdateStatus(s => renderUpdateStatus(s))
   // FIX-04：预算阈值告警（原先三个阈值配置项从未生效）
   window.electronAPI.onBudgetAlert(state => {
     budgetState = state

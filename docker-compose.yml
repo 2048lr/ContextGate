@@ -1,0 +1,21 @@
+# FIX-18：无头代理的 compose 示例。
+# 使用前把 config.yaml 放在仓库根目录（或修改下面的挂载路径）。
+services:
+  contextgate:
+    build: .
+    image: contextgate:latest
+    ports:
+      - "127.0.0.1:12306:12306"
+    environment:
+      # Key 用环境变量提供；容器内不会写入明文配置
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+      - ${PROJECT_DIR:-.}:/workspace:ro
+      # 统计库 / 缓存 / 请求日志；挂在 /data 上，与只读的项目目录解耦
+      - contextgate-data:/data
+    restart: unless-stopped
+
+volumes:
+  contextgate-data:

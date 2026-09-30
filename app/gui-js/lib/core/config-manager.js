@@ -9,7 +9,16 @@ const {
   DEFAULT_MIN_CACHEABLE_PREFIX_TOKENS,
   DEFAULT_CACHE_MAX_DISK_MB, DEFAULT_CACHE_PERSIST_MAX_ENTRY_BYTES,
   DEFAULT_RETENTION_DAYS, DEFAULT_REQUEST_LOG_RETENTION_DAYS, DEFAULT_REQUEST_LOG_MAX_ENTRIES,
+  DEFAULT_LARGE_BODY_THRESHOLD_BYTES, DEFAULT_LARGE_BODY_MAX_CONCURRENT,
+  DEFAULT_LARGE_BODY_MAX_QUEUE, DEFAULT_LARGE_BODY_QUEUE_TIMEOUT_MS,
+  DEFAULT_METRICS_PATH, DEFAULT_REQUEST_EXPORT_LIMIT,
 } = require('./constants')
+
+/** 把配置里的数值/尺寸写法收敛成非负整数 */
+function toNonNegativeInt (value, fallback) {
+  const n = Number(value)
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback
+}
 
 class ConfigManager {
   constructor(configPath) {
@@ -215,9 +224,56 @@ class ConfigManager {
     const raw = this.config.monitor?.request_log || {}
     return {
       enabled: true,
+      // FIX-17：请求日志后端可选 sqlite（默认，可查询/导出）或 jsonl（便于直接喂给采集器）
+      format: 'sqlite',
+      file: 'requests.jsonl',
       retention_days: DEFAULT_REQUEST_LOG_RETENTION_DAYS,
       max_entries: DEFAULT_REQUEST_LOG_MAX_ENTRIES,
       ...raw,
+    }
+  }
+
+  // FIX-15：大请求体的阈值与并发闸门
+  getLargeBodyConfig() {
+    const raw = this.config.proxy?.large_body || {}
+    return {
+      enabled: raw.enabled !== false,
+      threshold_bytes: toNonNegativeInt(raw.threshold_bytes, DEFAULT_LARGE_BODY_THRESHOLD_BYTES),
+      max_concurrent: toNonNegativeInt(raw.max_concurrent, DEFAULT_LARGE_BODY_MAX_CONCURRENT),
+      max_queue: toNonNegativeInt(raw.max_queue, DEFAULT_LARGE_BODY_MAX_QUEUE),
+      queue_timeout_ms: toNonNegativeInt(raw.queue_timeout_ms, DEFAULT_LARGE_BODY_QUEUE_TIMEOUT_MS),
+    }
+  }
+
+  // FIX-17：可观测性（Prometheus 指标 / CSV/JSON 导出）
+  getObservabilityConfig() {
+    const raw = this.config.observability || {}
+    const metrics = raw.metrics || {}
+    const requestExport = raw.request_export || {}
+    return {
+      metrics: {
+        enabled: metrics.enabled !== false,
+        // Express 路由必须以 / 开头；配置写错时回退到默认路径而不是让代理启动崩溃
+        path: (typeof metrics.path === 'string' && metrics.path.startsWith('/')) ? metrics.path : DEFAULT_METRICS_PATH,
+      },
+      request_export: {
+        enabled: requestExport.enabled !== false,
+        max_entries: toNonNegativeInt(requestExport.max_entries, DEFAULT_REQUEST_EXPORT_LIMIT),
+      },
+    }
+  }
+
+  // FIX-16：自动更新（默认开启检查、关闭自动下载；仅打包版可生效）
+  getUpdatesConfig() {
+    const raw = this.config.updates || {}
+    return {
+      enabled: raw.enabled !== false,
+      auto_download: raw.auto_download === true,
+      auto_install_on_quit: raw.auto_install_on_quit === true,
+      check_interval_hours: toNonNegativeInt(raw.check_interval_hours, 6),
+      ...raw,
+      // channel 在 spread 之后再归一化一次，避免写错的值透传到更新器
+      channel: raw.channel === 'beta' ? 'beta' : 'stable',
     }
   }
 }

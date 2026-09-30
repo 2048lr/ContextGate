@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: win
+            script: build:win
+          - os: ubuntu-latest
+            target: linux
+            script: build:linux
+          - os: macos-latest
+            target: mac
+            script: build:mac
+    defaults:
+      run:
+        working-directory: app/gui-js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/gui-js/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Version consistency
+        run: npm run verify:version
+      - name: Build
+        # 代码签名：如果配置了 CSC_LINK / CSC_KEY_PASSWORD，electron-builder 会自动签名。
+        # 未配置时仍然产出未签名安装包（并在 README 中明示 SmartScreen 警告）。
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npm run ${{ matrix.script }} -- --publish never
+      - name: Report artifact sizes
+        run: npm run report:size
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contextgate-${{ matrix.target }}
+          path: |
+            app/gui-js/dist/*.exe
+            app/gui-js/dist/*.blockmap
+            app/gui-js/dist/*.yml
+            app/gui-js/dist/*.AppImage
+            app/gui-js/dist/*.deb
+            app/gui-js/dist/*.dmg
+            app/gui-js/dist/*.zip
+          if-no-files-found: warn
+
+  publish:
+    name: publish release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true

@@ -94,6 +94,19 @@ proxy:
   # 客户端用法：Authorization: Bearer <local_token> 或 X-ContextGate-Token: <local_token>
   local_token: ""
 
+  # ---- FIX-15：大请求体的内存策略 ----
+  # 超过阈值（也超过 max_body_size 时先返回 413）的请求不再整体解析进内存，
+  # 而是把请求体直接流式透传给上游；代价是这类请求不参与响应缓存与 prompt-cache 注入。
+  large_body:
+    enabled: true
+    # 阈值（字节，支持 1mb 这类写法；测试里也可直接写数字）
+    threshold_bytes: 1mb
+    # 同时在途的大请求上限，超出的排队
+    max_concurrent: 2
+    # 队列长度上限；队列满或等待超时返回 429 large_request_busy
+    max_queue: 16
+    queue_timeout_ms: 30000
+
   # ---- FIX-07：流式可靠性 ----
   stream:
     # 上游两个 chunk 之间超过该时长即判定为半开连接，代理会中止它并给客户端一个 SSE error 帧。
@@ -183,7 +196,35 @@ monitor:
   # FIX-12：请求级脱敏日志（provider/模型/token/费用/耗时/错误摘要；绝不记录 prompt 与请求头）
   request_log:
     enabled: true
+    # FIX-17：后端可选 sqlite（默认，可通过 GET /requests 查询与导出）或 jsonl（一行一条，便于采集器 tail）
+    format: "sqlite"
+    # format=jsonl 时的文件名（相对数据目录；绝对路径亦可）
+    file: "requests.jsonl"
     retention_days: 30
+
+# ---- FIX-17：可观测与导出 ----
+observability:
+  metrics:
+    # Prometheus 文本格式指标（/metrics）。端点与其他 API 一样要求本地令牌。
+    enabled: true
+    path: "/metrics"
+  request_export:
+    # 允许通过 GET /requests/export?format=csv|json 导出脱敏请求日志
+    enabled: true
+    max_entries: 5000
+
+# ---- FIX-16：自动更新 ----
+updates:
+  # 只有打包版本（app.isPackaged）才会真正加载 electron-updater
+  enabled: true
+  # stable = 只接受正式版；beta = 同时接受预发布版
+  channel: "stable"
+  # 发现新版本后是否自动下载（默认只提示，由用户点击下载）
+  auto_download: false
+  # 退出时是否自动安装已下载的更新
+  auto_install_on_quit: false
+  # 自动检查更新的间隔（小时）；0 表示只在启动后检查一次
+  check_interval_hours: 6
 
 # 上下文配置
 context:

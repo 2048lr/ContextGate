@@ -42,6 +42,7 @@ const { ConfigManager } = require('./lib/core/config-manager')
 const { DEFAULT_PROXY_HOST, DEFAULT_PROXY_PORT } = require('./lib/core/constants')
 const { createNavigationPolicy, installNavigationGuards } = require('./lib/security/navigation')
 const { createSecretStore, absorbConfigSecrets } = require('./lib/core/secret-store')
+const { createUpdater } = require('./lib/core/updater')
 
 const isLinux = process.platform === 'linux'
 const isMac = process.platform === 'darwin'
@@ -59,6 +60,9 @@ let navigationPolicy = null
 // FIX-13：密钥库（safeStorage/DPAPI 加密），惰性创建
 let secretStore = null
 let maintenanceTimer = null
+// FIX-16：自动更新控制器与定时检查
+let updater = null
+let updateTimer = null
 const eventBus = new EventBus()
 // FIX-S1：渲染进程通过 preload 上报自身的沙箱/隔离状态，主进程据此做启动自检
 let rendererSecurityReport = null
@@ -292,6 +296,8 @@ async function startProxy(port = DEFAULT_PROXY_PORT) {
   const proxy = new ProxyServer({
     contextFile, configPath: cfgPath, projectRoot: workspace, dataDir: getDataDir(),
     eventBus, budgetGuard, configManager: cfgMgr,
+    // FIX-17：/metrics 需要用量总览，由主进程的 TokenMonitor 提供
+    getUsageSummary: () => (tokenMonitor ? tokenMonitor.getSummary() : Promise.resolve(null)),
   })
   try {
     const result = await proxy.start(proxyHost, port)
@@ -390,15 +396,62 @@ function createTray() {
   tray.on(handler, () => { if (mainWindow) { mainWindow.isVisible() ? mainWindow.hide() : (mainWindow.show(), mainWindow.focus()) } })
 }
 
+/**
+ * FIX-16：自动更新初始化。
+ * 只有「打包版本 + 用户未关闭更新」时 electron-updater 才会被加载；其余情况
+ * 控制器会返回一个带 reason 的 unsupported 状态，UI 据此明确告知而不是静默失效。
+ */
+function initUpdater() {
+  stopUpdater()
+  const cfgMgr = getConfigManager()
+  const updateCfg = cfgMgr.getUpdatesConfig()
+  updater = createUpdater({
+    app,
+    configManager: cfgMgr,
+    logger: {
+      log: console.log,
+      warn: message => recordSecurityEvent('warn', message),
+      error: message => recordSecurityEvent('error', message),
+    },
+    onStatus: status => { sendToUI('update-status', status); updateTrayMenu() },
+  })
+  const status = updater.status()
+  if (status.supported) {
+    // 启动后延迟检查，避免和窗口/代理启动抢资源
+    setTimeout(() => { updater?.check().catch(() => {}) }, 15000).unref?.()
+    if (updateCfg.check_interval_hours > 0) {
+      updateTimer = setInterval(() => { updater?.check().catch(() => {}) }, updateCfg.check_interval_hours * 3600 * 1000)
+      if (updateTimer.unref) updateTimer.unref()
+    }
+  }
+  updateTrayMenu()
+  return status
+}
+
+function stopUpdater() {
+  if (updateTimer) { clearInterval(updateTimer); updateTimer = null }
+  if (updater) { try { updater.dispose() } catch { /* 忽略 */ } updater = null }
+}
+
 function updateTrayMenu() {
   if (!tray || tray.isDestroyed()) return
   const template = [
     { label: '显示窗口', click: () => { if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus() } } },
     { type: 'separator' },
     { label: isProxyRunning ? '停止代理' : '启动代理', click: () => isProxyRunning ? stopProxy() : startProxy(proxyPort) },
-    { type: 'separator' },
-    { label: '退出', click: () => { stopProxy(); if (!isLinux && mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy(); app.quit() } },
   ]
+  // FIX-16：只有打包版本才显示更新入口
+  if (updater && updater.status().supported) {
+    const status = updater.status()
+    template.push({ type: 'separator' })
+    if (status.status === 'downloaded') {
+      template.push({ label: `重启以安装 v${status.downloadedVersion || status.availableVersion}`, click: () => updater.quitAndInstall() })
+    } else {
+      template.push({ label: '检查更新', click: () => updater.check({ manual: true }).catch(() => {}) })
+    }
+  }
+  template.push({ type: 'separator' })
+  template.push({ label: '退出', click: () => { stopProxy(); if (!isLinux && mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy(); app.quit() } })
   tray.setContextMenu(Menu.buildFromTemplate(template))
 }
 
@@ -430,6 +483,8 @@ app.whenReady().then(() => {
   loadConfig()
   createWindow()
   createTray()
+  // FIX-16：初始化自动更新（未打包或无 electron-updater 时退化为 unsupported）
+  try { initUpdater() } catch (e) { recordSecurityEvent('warn', `初始化自动更新失败: ${e.message}`) }
   const problems = auditSandboxConfiguration()
   for (const p of problems) recordSecurityEvent('error', p)
 
@@ -437,7 +492,7 @@ app.whenReady().then(() => {
 })
 let _quitting = false
 app.on('window-all-closed', () => { if (isLinux) cleanupAndQuit(); else if (!isMac) app.quit() })
-app.on('before-quit', async (e) => { if (_quitting) return; _quitting = true; e.preventDefault(); stopMaintenance(); await stopProxy(); app.exit(0) })
+app.on('before-quit', async (e) => { if (_quitting) return; _quitting = true; e.preventDefault(); stopMaintenance(); stopUpdater(); await stopProxy(); app.exit(0) })
 
 ipcMain.handle('get-platform', () => ({ os: process.platform, isLinux, isMac, isWin, usesFrame: isLinux }))
 
@@ -598,6 +653,56 @@ ipcMain.handle('get-stats', async () => {
   const budget = require('./lib/monitor/budget').evaluateBudget(spent, cfgMgr.getMonitorConfig())
   return { ...summary, budget }
 })
+// FIX-16：自动更新 IPC。渲染层只看到状态对象，安装动作不允许传参，避免被页面诱导
+ipcMain.handle('get-update-status', () => (updater ? updater.status() : { supported: false, reason: 'not-initialized', status: 'unsupported' }))
+ipcMain.handle('check-for-updates', async () => {
+  if (!updater) return { supported: false, reason: 'not-initialized', status: 'unsupported' }
+  return updater.check({ manual: true })
+})
+ipcMain.handle('download-update', async () => {
+  if (!updater) return { supported: false, reason: 'not-initialized', status: 'unsupported' }
+  return updater.download()
+})
+ipcMain.handle('install-update', () => (updater ? updater.quitAndInstall() : false))
+
+// FIX-17：可观测性信息（指标端点与请求日志后端）+ 把脱敏请求日志导出成 CSV/JSON
+ipcMain.handle('get-observability-info', () => {
+  const cfgMgr = getConfigManager()
+  const obs = cfgMgr.getObservabilityConfig()
+  const logCfg = cfgMgr.getRequestLogConfig()
+  return {
+    metrics: {
+      enabled: obs.metrics.enabled,
+      path: obs.metrics.path,
+      url: isProxyRunning ? `http://127.0.0.1:${proxyPort}${obs.metrics.path}` : null,
+    },
+    requestLog: { enabled: logCfg.enabled !== false, format: logCfg.format || 'sqlite' },
+    export: { enabled: obs.request_export.enabled, maxEntries: obs.request_export.max_entries },
+  }
+})
+ipcMain.handle('export-requests', async (_, payload = {}) => {
+  const log = proxyServer ? proxyServer.requestLog : null
+  if (!log) return { success: false, error: '请求日志未启用（或代理未运行）' }
+  const format = payload.format === 'csv' ? 'csv' : 'json'
+  const limit = Math.min(Number(payload.limit) > 0 ? Number(payload.limit) : 5000, 20000)
+  try {
+    const entries = await log.list({ limit, offset: 0 })
+    const { serialize } = require('./lib/monitor/export')
+    const out = serialize(entries, { format })
+    const options = {
+      defaultPath: path.join(app.getPath('documents'), `contextgate-requests.${out.extension}`),
+      filters: format === 'csv' ? [{ name: 'CSV', extensions: ['csv'] }] : [{ name: 'JSON', extensions: ['json'] }],
+    }
+    const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null
+    const result = parent ? await dialog.showSaveDialog(parent, options) : await dialog.showSaveDialog(options)
+    if (result.canceled || !result.filePath) return { success: false, error: '已取消' }
+    await fs.promises.writeFile(result.filePath, out.body, 'utf8')
+    return { success: true, path: result.filePath, count: entries.length }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+})
+
 ipcMain.handle('get-local-token', () => {
   const cfgMgr = getConfigManager()
   return { token: cfgMgr.get('proxy.local_token', null), enabled: cfgMgr.get('proxy.auth.enabled') !== false }

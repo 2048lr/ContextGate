@@ -15,7 +15,11 @@
   <a href="#english">English</a> | <a href="#中文">中文</a>
 </p>
 
-> **⚠️ Notice:** Linux and macOS platform development has been **paused**. The project currently focuses on **Windows** only. Linux/macOS support may be revisited in the future.
+> **⚠️ Notice:** The desktop GUI is developed **Windows-first**. Linux and macOS
+> **build targets are configured again** (AppImage/deb and dmg/zip, see
+> [docs/release-and-updates.md](docs/release-and-updates.md)), and the headless gateway
+> runs anywhere Node does ([docs/docker.md](docs/docker.md)); the GUI has not been
+> re-verified on those platforms yet.
 
 ---
 
@@ -47,9 +51,15 @@ ContextGate is a desktop application that serves as an intelligent API proxy and
 | **Protocol compatibility** | OpenAI `/v1/chat/completions` + `/v1/responses`, Anthropic-native `/v1/messages`, `/v1/files`, `/v1/batches`, and raw multipart passthrough for audio/images; Google endpoints point at the OpenAI-compatible segment |
 | **Encrypted key storage** | API keys live in an Electron `safeStorage` (DPAPI) vault; the renderer only ever sees a mask, and `config.yaml` never contains plaintext |
 | **SQLite data layer** | WAL-mode incremental writes with indexes, retention policy, and a redacted request-level log (`GET /requests`) |
+| **Prometheus metrics** | Token-protected `GET /metrics` exposes requests, tokens, cost, savings, cache/prompt-cache hit rates, budget state and the large-request gate — no extra dependency |
+| **Request export** | Redacted request log at `GET /requests`, exportable as CSV/JSON over HTTP or from **Settings → Monitor**; optional JSONL backend for log shippers ([docs/observability.md](docs/observability.md)) |
+| **Large-request streaming** | Bodies above `proxy.large_body.threshold_bytes` bypass the JSON parser and stream straight to the upstream, guarded by a concurrency gate (429 `large_request_busy` when saturated) |
+| **Automatic updates** | `electron-updater` with stable/beta channels and delta blockmaps; dev/CLI builds report `unsupported` with an explicit reason instead of failing silently |
+| **Headless / Docker** | `node cli.js serve` runs without Electron, and a Dockerfile ships the gateway with a healthcheck ([docs/docker.md](docs/docker.md)) |
+| **CI + version guard** | GitHub Actions run lint, unit/integration tests and `npm audit`; `npm run verify:version` keeps package/lock/HTML/README versions identical |
 | **Multi-Provider** | Supports OpenAI, Anthropic, Google, Zhipu AI, DeepSeek, and custom providers |
 | **Modern GUI** | GNOME-style dark theme with system tray integration |
-| **Cross-Platform** | Available for Windows (development on Linux/macOS is paused) |
+| **Cross-Platform** | Windows-first GUI; Linux (AppImage/deb) and macOS (dmg/zip) build targets are configured, and the gateway runs headless anywhere |
 
 ### Quick Start
 
@@ -77,9 +87,12 @@ npm run verify:sandbox
 npm run build:win
 ```
 
-> **Code signing is not configured.** Released installers are unsigned, so Windows
-> SmartScreen will warn on first run. See [SECURITY.md](SECURITY.md) for how the
-> security posture is verified and disclosed.
+> **Code signing is not configured out of the box.** Released installers are unsigned
+> unless the build environment provides `CSC_LINK`/`CSC_KEY_PASSWORD` (Windows) or the
+> Apple notarization variables, so Windows SmartScreen will warn on first run.
+> Packaged builds do ship an update channel (`electron-updater`) — see
+> [docs/release-and-updates.md](docs/release-and-updates.md). Security posture and
+> disclosure are described in [SECURITY.md](SECURITY.md).
 
 > **Windows builds are 64-bit only.** Electron dropped 32-bit Windows artifacts in
 > v44 (it now publishes `win32-x64` and `win32-arm64` only), so `npm run build:win`
@@ -113,7 +126,35 @@ node cli.js mcp /path/to/project
 
 # View usage statistics
 node cli.js stats
+
+# Export the redacted request log as CSV or JSON
+node cli.js export --format csv --output requests.csv
+
+# Render Prometheus metrics offline (same text format as GET /metrics)
+node cli.js metrics
 ```
+
+### Observability & exports
+
+- **Prometheus**: `GET /metrics` (token required) exports requests, tokens, cost, savings,
+  cache/prompt-cache hit rates, budget state and the large-request gate. Scrape config and the
+  full metric list live in [docs/observability.md](docs/observability.md).
+- **Request export**: the redacted request log is readable at `GET /requests` and exportable
+  as CSV/JSON at `GET /requests/export?format=csv|json`, from **Settings → Monitor**, or with
+  `node cli.js export`. Set `monitor.request_log.format: jsonl` to ship it to a log collector.
+- **Langfuse / Helicone**: see the integration notes in
+  [docs/observability.md](docs/observability.md); ContextGate never uploads anything itself.
+
+### Updates
+
+Packaged builds self-update through GitHub Releases:
+
+- Channel is `updates.channel: stable | beta`; new versions are advertised in
+  **Settings → Security → Software updates** and the tray menu.
+- Development builds, the CLI and machines without `electron-updater` report
+  `unsupported` **with a reason** rather than failing silently.
+- Installers are currently **unsigned** unless `CSC_LINK`/`CSC_KEY_PASSWORD` are set at build
+  time — see [docs/release-and-updates.md](docs/release-and-updates.md).
 
 ### Configuration
 
@@ -318,9 +359,15 @@ ContextGate 是一款桌面应用程序，为 AI 助手提供智能 API 代理�
 - **密钥加密存储** - API Key 存进 Electron `safeStorage`（Windows 走 DPAPI）加密库，渲染层只能看到掩码，`config.yaml` 里永远没有明文
 - **SQLite 数据层** - WAL 模式增量写入 + 索引 + 保留策略，并提供脱敏的请求级日志（`GET /requests`）
 - **MCP server** - 把 `build_context` / `list_files` / `search` 暴露给 Cursor、Claude Code 等 MCP 客户端
+- **Prometheus 指标** - 受令牌保护的 `GET /metrics` 暴露请求数、token、费用、节省、缓存/Prompt Caching 命中率、预算状态与大请求闸门，无额外依赖
+- **请求日志导出** - `GET /requests` 查询、`GET /requests/export` 导出 CSV/JSON，也可在「设置 → 监控」或 `node cli.js export` 导出；可选 JSONL 后端便于采集器接入
+- **大请求流式透传** - 超过 `proxy.large_body.threshold_bytes` 的请求体不解析、直接流式转发，并有大请求并发闸门（饱和返回 429 `large_request_busy`）
+- **自动更新** - `electron-updater` 支持 stable/beta 通道与差量更新；开发版/CLI 返回带原因的 `unsupported`，不再静默失效
+- **无头 / Docker** - `node cli.js serve` 不依赖 Electron，仓库提供带健康检查的 Dockerfile（[docs/docker.md](docs/docker.md)）
+- **CI 与版本守护** - GitHub Actions 跑 lint、单测/集成测试与 `npm audit`；`npm run verify:version` 保证 package/lock/HTML/README 版本一致
 - **多提供商支持** - 支持 OpenAI、Anthropic、Google、智谱 AI、DeepSeek 等
 - **现代化界面** - GNOME 风格深色主题，系统托盘集成
-- **跨平台** - 当前仅支持 Windows（Linux/macOS 开发已暂停）
+- **跨平台** - 界面以 Windows 为先；Linux（AppImage/deb）与 macOS（dmg/zip）构建目标已恢复配置，无头网关可在任何有 Node 的环境运行
 
 ### 快速开始
 
@@ -348,7 +395,9 @@ npm run verify:sandbox
 npm run build:win
 ```
 
-> **未配置文件签名。** 发布产物是未签名的，首次运行会触发 SmartScreen 警告。
+> **默认未配置文件签名。** 除非构建环境提供 `CSC_LINK`/`CSC_KEY_PASSWORD`（Windows）或
+> Apple 公证变量，发布产物是未签名的，首次运行会触发 SmartScreen 警告。打包版已接入
+> `electron-updater` 更新通道，签名与发布流程见 [docs/release-and-updates.md](docs/release-and-updates.md)；
 > 安全状态的验证与披露方式见 [SECURITY.md](SECURITY.md)。
 
 > **Windows 产物只提供 64 位。** Electron 从 v44 起不再发布 32 位 Windows 产物
@@ -382,7 +431,31 @@ node cli.js mcp /项目路径
 
 # 查看使用统计
 node cli.js stats
+
+# 导出脱敏请求日志（CSV/JSON）
+node cli.js export --format csv --output requests.csv
+
+# 离线渲染 Prometheus 指标（与 GET /metrics 同一文本格式）
+node cli.js metrics
 ```
+
+### 可观测与导出
+
+- **Prometheus**：`GET /metrics`（需令牌）导出请求数、token、费用、节省、缓存/Prompt Caching
+  命中率、预算状态与大请求闸门；抓取配置与完整指标表见 [docs/observability.md](docs/observability.md)。
+- **请求日志导出**：脱敏请求日志可通过 `GET /requests` 查询、`GET /requests/export?format=csv|json`
+  导出，也可在「设置 → 监控」点击，或用 `node cli.js export`；把
+  `monitor.request_log.format` 设为 `jsonl` 可直接喂给日志采集器。
+- **Langfuse / Helicone**：接入方式见 [docs/observability.md](docs/observability.md)；
+  ContextGate 自身不会把任何数据上传到第三方。
+
+### 自动更新
+
+打包版本通过 GitHub Releases 自更新：
+
+- 通道由 `updates.channel: stable | beta` 控制；新版本会在「设置 → 安全 → 软件更新」与托盘菜单提示。
+- 开发版、CLI、缺少 `electron-updater` 的环境返回**带原因的** `unsupported`，不会静默失败。
+- 未配置签名时安装包仍是未签名的，详见 [docs/release-and-updates.md](docs/release-and-updates.md)。
 
 ### 配置
 

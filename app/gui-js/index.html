@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="version" content="5.5.0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: file: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https: http:">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data:; font-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:* http://[::1]:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
   <title>ContextGate</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -282,6 +282,15 @@
             <label>数据库路径:</label>
             <input type="text" id="db-path" value="contextgate.db">
           </div>
+          <div class="form-group">
+            <label>可观测与导出:</label>
+            <div class="models-toolbar">
+              <button id="btn-export-csv" class="small-btn">⬇ 请求日志 CSV</button>
+              <button id="btn-export-json" class="small-btn secondary">⬇ 请求日志 JSON</button>
+            </div>
+            <div class="info-value" id="metrics-endpoint">Prometheus: --</div>
+            <small class="form-hint">指标端点受本地令牌保护，采集端需带 Authorization: Bearer &lt;本地令牌&gt;</small>
+          </div>
         </div>
         
         <div id="tab-scanner" class="tab-pane">
@@ -353,6 +362,16 @@
           <div class="form-group">
             <label>遥测与崩溃上报:</label>
             <div class="info-value">未启用（应用不发送任何遥测；仅在你配置 provider 时才会发起外部请求）</div>
+          </div>
+          <div class="form-group">
+            <label>软件更新:</label>
+            <div class="info-value" id="update-status">尚未检查</div>
+            <div class="models-toolbar">
+              <button id="btn-check-update" class="small-btn">检查更新</button>
+              <button id="btn-download-update" class="small-btn secondary" disabled>下载更新</button>
+              <button id="btn-install-update" class="small-btn secondary" disabled>重启并安装</button>
+            </div>
+            <small class="form-hint">更新经 GitHub Releases 分发；开发版与未打包运行时不会联网检查</small>
           </div>
         </div>
 

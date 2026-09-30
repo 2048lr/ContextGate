@@ -46,6 +46,8 @@ class ProxyServer {
     this.resilience = options.resilience || new ResilienceGate({ config: this.configManager.getResilienceConfig() })
     this.promptCacheStats = options.promptCacheStats || new PromptCacheStats()
     this.requestLog = options.requestLog || null
+    // FIX-17：/metrics 需要用量总览；由主进程注入 tokenMonitor.getSummary 之类的读取器
+    this.getUsageSummary = options.getUsageSummary || null
     this.localToken = null
     this.app = express()
     this.server = null
@@ -60,14 +62,25 @@ class ProxyServer {
       .map(([name]) => name)
   }
 
-  /** FIX-12：请求级脱敏日志（可选；装配失败不应影响代理可用性） */
+  /** FIX-12 / FIX-17：请求级脱敏日志（可选；装配失败不应影响代理可用性） */
   _createRequestLog() {
     if (this.requestLog) return this.requestLog
     const cfg = this.configManager.getRequestLogConfig()
     if (cfg.enabled === false) return null
+    const dataDir = this.dataDir || process.cwd()
     try {
+      if (cfg.format === 'jsonl') {
+        const { JsonlRequestLog } = require('../monitor/jsonl-request-log')
+        const filePath = path.isAbsolute(cfg.file) ? cfg.file : path.join(dataDir, cfg.file || 'requests.jsonl')
+        this.requestLog = new JsonlRequestLog({
+          filePath,
+          retentionDays: cfg.retention_days,
+          logger: console,
+        })
+        return this.requestLog
+      }
       const { RequestLog } = require('../monitor/request-log')
-      const dbPath = path.join(this.dataDir || process.cwd(), 'contextgate.db')
+      const dbPath = path.join(dataDir, 'contextgate.db')
       this.requestLog = new RequestLog({
         dbPath,
         retentionDays: cfg.retention_days,
@@ -109,6 +122,7 @@ class ProxyServer {
       proxyServer: this,
       contextFile: this.contextFile,
       projectRoot: this.projectRoot,
+      getUsageSummary: this.getUsageSummary,
     })
     this._initialized = true
     return this

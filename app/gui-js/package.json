@@ -3,6 +3,9 @@
   "version": "5.5.0",
   "description": "AI Context Management & Proxy System",
   "main": "main.js",
+  "bin": {
+    "contextgate": "cli.js"
+  },
   "scripts": {
     "start": "electron .",
     "cli": "node cli.js",
@@ -10,7 +13,13 @@
     "lint:fix": "eslint lib/ cli.js main.js preload.js --fix",
     "test": "node --test test/*.test.js",
     "test:single-process": "node --test --test-isolation=none test/*.test.js",
+    "test:integration": "node --test test/p0-proxy.test.js test/p1-stream.test.js test/p1-protocol.test.js test/p1-resilience.test.js test/p1-cache-persist.test.js test/p1-datastore.test.js test/p2-large-body.test.js test/p2-observability.test.js test/p2-platform.test.js",
+    "audit": "npm audit --registry=https://registry.npmjs.org/ --audit-level=high",
+    "audit:prod": "npm audit --registry=https://registry.npmjs.org/ --omit=dev --audit-level=high",
     "verify:sandbox": "node scripts/verify-sandbox.js",
+    "verify:version": "node scripts/verify-version.js",
+    "verify:package": "node scripts/verify-version.js && node scripts/preflight-build.js",
+    "report:size": "node scripts/report-build-size.js",
     "test:monitor": "node --test test/monitor.test.js",
     "test:proxy": "node --test test/proxy.test.js",
     "build": "electron-builder",
@@ -19,7 +28,11 @@
     "prebuild:win:x64": "node scripts/preflight-build.js",
     "build:win:x64": "electron-builder --win --x64",
     "prebuild:win:arm64": "node scripts/preflight-build.js",
-    "build:win:arm64": "electron-builder --win --arm64"
+    "build:win:arm64": "electron-builder --win --arm64",
+    "build:linux": "electron-builder --linux",
+    "build:mac": "electron-builder --mac",
+    "build:all": "electron-builder --win --linux --mac",
+    "release:win": "npm run build:win"
   },
   "author": "JerryLiu",
   "homepage": "https://github.com/2048lr/ContextGate",
@@ -35,20 +48,35 @@
     "chokidar": "^3.5.3",
     "cli-table3": "^0.6.3",
     "commander": "^12.0.0",
+    "electron-updater": "^6.8.9",
     "express": "^4.18.2",
     "ignore": "^5.3.0",
     "js-yaml": "^4.1.0",
     "ora": "^5.4.1",
     "sql.js": "^1.9.0"
   },
+  "overrides": {
+    "qs": "^6.16.0"
+  },
   "build": {
     "appId": "com.contextgate.app",
     "productName": "ContextGate",
     "copyright": "Copyright © 2026 JerryLiu",
+    "asar": true,
+    "compression": "maximum",
+    "generateUpdatesFilesForAllChannels": true,
     "directories": {
       "output": "dist",
       "buildResources": "build"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "2048lr",
+        "repo": "ContextGate",
+        "releaseType": "release"
+      }
+    ],
     "files": [
       "**/*",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
@@ -61,7 +89,18 @@
       "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
       "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
       "!**/{appveyor.yml,.travis.yml,circle.yml}",
-      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+      "!test/**",
+      "!docs/**",
+      "!dist/**",
+      "!.npm-cache/**",
+      "!.electron-cache/**",
+      "!.electron-builder-cache/**",
+      "!.version-history.json",
+      "!package-lock.json",
+      "!.npmrc",
+      "!eslint.config.cjs",
+      "!scripts/verify-sandbox.html"
     ],
     "extraResources": [
       {
@@ -96,7 +135,52 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "differentialPackage": true,
+      "artifactName": "ContextGate-Setup-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "Development",
+      "icon": "build/icon.png",
+      "artifactName": "ContextGate-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
     }
   }
 }
