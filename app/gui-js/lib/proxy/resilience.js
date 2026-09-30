@@ -183,7 +183,11 @@ class ConcurrencyLimiter {
           err.status = 503
           reject(err)
         }, this.queueTimeoutMs)
-        if (entry.timer.unref) entry.timer.unref()
+        // 不要 unref()：这个 timer 是 acquire() 唯一的 settle 来源。unref 之后
+        // 如果它是事件循环里最后一个 handle，进程/测试 runner 会在 reject 之前
+        // 就把循环排空，调用方永远等不到结果（ERR_TEST_FAILURE：
+        // "Promise resolution is still pending but the event loop has already resolved"）。
+        // _release() 会 clearTimeout，最坏情况也只多留 queueTimeoutMs。
       }
       this.queue.push(entry)
     })
@@ -244,7 +248,9 @@ class ResilienceGate {
       maxConcurrency: cfg.max_concurrency, maxQueue: cfg.max_queue, queueTimeoutMs: cfg.queue_timeout_ms,
     })
     this.logger = options.logger || console
-    this.sleep = options.sleep || (ms => new Promise(r => { const t = setTimeout(r, ms); if (t.unref) t.unref() }))
+    // 退避 sleep 同理不能 unref：它是重试链路里唯一的 resume 信号，unref 会让
+    // 「等待退避」的请求在事件循环空转时被直接丢掉，重试永远不发生。
+    this.sleep = options.sleep || (ms => new Promise(r => { setTimeout(r, ms) }))
     this.now = options.now || (() => Date.now())
     this.stats = { retries: 0, fallbacks: 0, circuitRejections: 0, attempts: 0 }
   }

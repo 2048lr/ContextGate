@@ -54,7 +54,11 @@ jobs:
           cache: npm
           cache-dependency-path: app/gui-js/package-lock.json
       - run: npm ci
-      - run: npm audit --audit-level=high
+      # app/gui-js/.npmrc 把 registry 指向 registry.npmmirror.com（国内装包快），
+      # 但镜像没有实现 /-/npm/v1/security/* 审计端点，直接 audit 会 404 失败。
+      # 装包仍然走镜像（lockfile 里的 resolved 也是镜像地址），只有审计这一步
+      # 显式回到官方 registry。
+      - run: npm audit --audit-level=high --registry=https://registry.npmjs.org/
 
   packaging:
     name: packaging config

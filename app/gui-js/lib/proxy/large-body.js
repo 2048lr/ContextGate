@@ -107,7 +107,9 @@ class LargeBodyGate {
           this._rejected++
           reject(new LargeBodyBusyError('Timed out waiting for a large-request slot'))
         }, this.queueTimeoutMs)
-        if (typeof waiter.timer.unref === 'function') waiter.timer.unref()
+        // 同 resilience.js：这个 timer 是排队 promise 唯一的 settle 来源，
+        // unref 之后事件循环可能在 reject 前就被排空，调用方永远挂住。
+        // _release() 会 clearTimeout，不会把进程多留住。
       }
       this._queue.push(waiter)
     })

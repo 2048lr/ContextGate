@@ -1,5 +1,7 @@
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
+const { execFileSync } = require('node:child_process')
+const path = require('node:path')
 
 const {
   ResilienceGate, CircuitBreaker, ConcurrencyLimiter,
@@ -135,6 +137,28 @@ describe('FIX-08 并发闸门', () => {
     const held = await limiter.acquire()
     await assert.rejects(() => limiter.acquire(), e => e.code === 'CG_QUEUE_TIMEOUT')
     held.release()
+  })
+
+  // 回归：排队超时的 timer 曾经 unref()，于是当它是事件循环里最后一个 handle 时，
+  // 进程会在 reject 之前就退出，acquire() 永远不 settle。必须放在子进程里验证：
+  // 测试 runner 自己会撑住事件循环，同进程内测不出这个 bug。
+  it('排队超时的 timer 不会被事件循环提前排空（子进程验证）', () => {
+    const script = `
+      const { ConcurrencyLimiter } = require(${JSON.stringify(path.join(__dirname, '..', 'lib', 'proxy', 'resilience.js'))})
+      ;(async () => {
+        const limiter = new ConcurrencyLimiter({ maxConcurrency: 1, maxQueue: 5, queueTimeoutMs: 20 })
+        const held = await limiter.acquire()
+        try {
+          await limiter.acquire()
+          console.log('RESOLVED_UNEXPECTEDLY')
+        } catch (e) {
+          console.log('SETTLED:' + e.code)
+        }
+        held.release()
+      })()
+    `
+    const out = execFileSync(process.execPath, ['-e', script], { encoding: 'utf8', timeout: 10000 })
+    assert.match(out, /SETTLED:CG_QUEUE_TIMEOUT/, `子进程没有等到超时 reject，输出=${JSON.stringify(out)}`)
   })
 
   it('释放后槽位转交给排队者', async () => {
