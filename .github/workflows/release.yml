@@ -29,8 +29,8 @@ jobs:
       run:
         working-directory: app/gui-js
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -51,7 +51,7 @@ jobs:
         run: npm run ${{ matrix.script }} -- --publish never
       - name: Report artifact sizes
         run: npm run report:size
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: contextgate-${{ matrix.target }}
           path: |
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
       - uses: softprops/action-gh-release@v2
